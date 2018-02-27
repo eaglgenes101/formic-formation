@@ -27,7 +27,7 @@ BA
 Ants are created with probability after finding food, alternating between A and B. In the formation, the gatherer alternates between an A-phase marcher and a B-phase marcher, depending on the formation matcher she last created. 
 
 General behavior:
-======
+------
 
 Ants march in lockstep, with phase A and phase B ants alternating between signal-sending and moving. Ants always move such that they remain adjavent to other ants. 
 
