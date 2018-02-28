@@ -6,12 +6,57 @@ The oldest marcher still in the formation initiates the signal.
 
 */
 
+//Returns a number to guess whether we, the current marcher of either phase, are the end of the line. 
+//If we are, then we hold special significance as the current working last worker in the line. 
 function is_formation_sentinel()
 {
-	//We are NOT the sentinel if we are alone 
-	//or we have one adjacent ally and it isn't an opposite-phase marcher orthogonal to us
-	//TODO
+	var num_neighbors = 0;
+	var like_orth_neighbors = 0;
+	var diff_orth_neighbors = 0;
+	var like_diag_neighbors = 0;
+	var diff_diag_neighbors = 0;
+	var queen_pos = null;
+	var gatherer_pos = null;
+
+	for (try_cell of SCAN_ORDER)
+	{
+		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
+		{
+			num_neighbors++;
+			if (view[try_cell].ant.type === this_ant().type)
+			{
+				if (try_cell%2 === 0) like_diag_neighbors++;
+				else like_orth_neighbors++;
+			}
+			else if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
+			{
+				if (try_cell%2 === 0) diff_diag_neighbors++;
+				else diff_orth_neighbors++;
+			}
+			//The queen and gatherer act as the right formation sentinel, so count them too
+			else if (view[try_cell].ant.type === QUEEN) queen_pos = try_cell;
+			else if (view[try_cell].ant.type === GATHERER) gatherer_pos = try_cell;
+		}
+	}
+
+	//Match FALSE for a worker with fewer than 2 or more than 3 neighbors
+	if (num_neighbors <= 1 || num_neighbors >= 4) return false;
+
+	//For those with 2 neighbors, check that workers are where we expect them
+	if (num_neighbors === 2)
+	{
+		
+	}
+
+	//For those with 3 neighbors, check that two of three are in position 
+	//and that the last isn't where we would expect the end
+
 	
+	
+}
+
+function phase()
+{
 }
 
 function marcher_a_decision()

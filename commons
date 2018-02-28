@@ -1,43 +1,50 @@
-//Constants
-var MARCHER_A = 1;
-var MARCHER_B = 2;
-var GATHERER = 3;
-var QUEEN = 5;
+//Ant types
+const MARCHER_A = 1;
+const MARCHER_B = 2;
+const GATHERER = 3;
+const QUEEN = 5;
 
-//Lookup tables (All scan orders generated with random.org)
-var SCAN_ORDER = 		[0,6,3,8,5,1,2,7];
-var INCOMPLETE_SCAN_ORDER = 	[2,6,1,7,0,5];
-var HALF_SCAN_ORDER = 		[8,2,1,5];
-var SPARSE_SCAN_ORDER = 	[3,5];
-var LH_ENUMERATION = [	[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
-			[3,6,7,8,5,2,1,0],	[4,4,4,4,4,4,4,4],	[5,2,1,0,3,6,7,8],
-			[6,7,8,5,2,1,0,3],	[7,8,5,2,1,0,3,6],	[8,5,2,1,0,3,6,7]];
-var FREE_ORDER = [	[0,1,3,6,2,5,7,8,4], 	[1,0,2,5,3,6,8,7,4], 	[2,5,1,0,8,7,3,6,4],
+//Scan order lookup tables (generated with random.org's numbers)
+const SCAN_ORDER = 		[0,6,3,8,5,1,2,7];
+const INCOMPLETE_SCAN_ORDER = 	[2,6,1,7,0,5];
+const HALF_SCAN_ORDER = 	[8,2,1,5];
+const SPARSE_SCAN_ORDER = 	[3,5];
+
+//Submission attempt order lookup tables
+const FREE_ORDER = [	[0,1,3,6,2,5,7,8,4], 	[1,0,2,5,3,6,8,7,4], 	[2,5,1,0,8,7,3,6,4],
 			[3,6,0,1,7,8,2,5,4], 	[4],                 	[5,2,8,7,1,0,6,3,4],
-			[6,3,7,8,0,1,5,2,4], 	[7,8,6,3,5,2,0,1,4], 	[8,7,5,2,6,3,1,0,4]];
-var RIGHT_ORDER = [	[0,1,3,6,7,4], 		[1,0,3,4], 		[2,5,1,0,3,4],
+			[6,3,7,8,0,1,5,2,4], 	[7,8,6,3,5,2,0,1,4], 	[8,7,5,2,6,3,1,0,4]	];
+const RIGHT_ORDER = [	[0,1,3,6,7,4], 		[1,0,3,4], 		[2,5,1,0,3,4],
 			[3,6,7,4],     		[4],       		[5,2,1,4],
-			[6,3,7,8,5,4], 		[7,8,5,4], 		[8,7,5,2,1,4]];
-var LEFT_ORDER = [	[0,3,1,2,5,4], 		[1,2,5,4], 		[2,1,5,8,7,4],
+			[6,3,7,8,5,4], 		[7,8,5,4], 		[8,7,5,2,1,4]		];
+const LEFT_ORDER = [	[0,3,1,2,5,4], 		[1,2,5,4], 		[2,1,5,8,7,4],
 			[3,0,1,4],     		[4],       		[5,8,7,4],
-			[6,7,3,0,1,4], 		[7,6,3,4], 		[8,5,7,6,3,4]];
+			[6,7,3,0,1,4], 		[7,6,3,4], 		[8,5,7,6,3,4]		];
+
+//Spacial information lookup tables
+const LH_ENUMERATION = [[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
+			[3,6,7,8,5,2,1,0],	[4],			[5,2,1,0,3,6,7,8],
+			[6,7,8,5,2,1,0,3],	[7,8,5,2,1,0,3,6],	[8,5,2,1,0,3,6,7]	];
+const NEIGHBORS = [	[0,1,3,4],		[1,0,2,3,5,4],		[2,5,1,4],
+			[3,6,0,7,1,4],		[1,3,5,7,8,6,2,0,4],	[5,2,8,1,7,4],
+			[6,3,7,4],		[7,8,6,5,3,4],		[8,7,5,4]		];
 
 //Downstream signal colors (travel instantaneously)
-var CLEAR_COLOR = 0; //We're all ready! Let's go!
-var FOUND_FOOD_COLOR = 1; //We found food!
-var OBSTRUCTED_WORKER_COLOR = 2; //We found an enemy worker!
-var GATHERER_EXISTS_COLOR = 3; //Gatherer: "I'm still here!"
+const CLEAR_COLOR = 0; //We're all ready! Let's go!
+const FOUND_FOOD_COLOR = 1; //We found food!
+const OBSTRUCTED_WORKER_COLOR = 2; //We found an enemy worker!
+const GATHERER_EXISTS_COLOR = 3; //Gatherer: "I'm still here!"
 
 //Upstream signal colors (travel at lightspeed)
-var MOVE_COLOR = 4; //Alright, everybody move on
-var REALIGN_COLOR = 5; //Stop, let's realign the ranks
-var TEST_COLOR = 6; //Where in creation order are you? 
-var PANIC_COLOR = 7; //Everyone! Scatter! 
+const MOVE_COLOR = 4; //Alright, everybody move on
+const REALIGN_COLOR = 5; //Stop, let's realign the ranks
+const TEST_COLOR = 6; //Where in creation order are you? 
+const PANIC_COLOR = 7; //Everyone! Scatter! 
 
 //Tuneables
-var MOVEMENT_RAND_THRESHOLD = 4;
-var GATHERER_SPAWN_THRESHOLD = 1;
-var WORKER_SPAWN_THRESHOLD = 2;
+const MOVEMENT_RAND_THRESHOLD = 4;
+const GATHERER_SPAWN_THRESHOLD = 1;
+const WORKER_SPAWN_THRESHOLD = 2;
 
 /*
 Functions shared by all ant types
@@ -152,3 +159,10 @@ function saboteur()
 		return {cell:1};
 	}
 }
+
+
+
+
+
+
+
