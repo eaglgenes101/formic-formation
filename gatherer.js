@@ -39,7 +39,7 @@ function early_gatherer()
 		if (view[5].food > 0 && (queen_cell === 8 || queen_cell === 2 || queen_cell === 1 || queen_cell === 7))
 			return {cell:5};
 	}
-	return {cell:RH_ENUMERATION[queen_cell][7]};
+	return {cell:LH_ENUMERATION[queen_cell][7]};
 	
 }
 

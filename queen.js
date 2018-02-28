@@ -17,7 +17,7 @@ function opening_queen()
 
 	//Actively avoid other workers
 	for (try_cell of SCAN_ORDER)
-		if (view[try_cell].ant !== null) return {cell:RH_ENUMERATION[try_cell][4]};
+		if (view[try_cell].ant !== null) return {cell:LH_ENUMERATION[try_cell][4]};
 
 	//If the color at the current cell is 0 (white), color it 4 (cyan)
 	if (view[4].color !== 6) return {cell: 4, color: 6};
@@ -40,6 +40,7 @@ function opening_queen()
 //Early-phase queen (when the queen and the gatherer are moving together at lightspeed, trying to find more food)
 function early_queen()
 {
+
 	//Find the gatherer, revolve counterclockwise around her
 	var gatherer_cell = null;
 	for (try_cell of SCAN_ORDER)
@@ -50,9 +51,15 @@ function early_queen()
 			break;
 		}
 	}
-	if (gatherer_cell === null || gatherer_cell%2 === 0)
-		return {cell:4};
-	return {cell:RH_ENUMERATION[gatherer_cell][1]};
+
+	if (gatherer_cell === null || gatherer_cell%2 === 0) return {cell:4};
+
+
+	//Once the gatherer is orthogonal to us, spawn an A-phase marcher
+	if (gatherer_cell%2 === 1 && this_ant().food > 0) return {cell:LH_ENUMERATION[gatherer_cell][2], type:MARCHER_A}
+
+
+	return {cell:LH_ENUMERATION[gatherer_cell][1]};
 }
 
 function queen_decision()

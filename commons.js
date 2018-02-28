@@ -9,7 +9,7 @@ var SCAN_ORDER = 		[0,6,3,8,5,1,2,7];
 var INCOMPLETE_SCAN_ORDER = 	[2,6,1,7,0,5];
 var HALF_SCAN_ORDER = 		[8,2,1,5];
 var SPARSE_SCAN_ORDER = 	[3,5];
-var RH_ENUMERATION = [	[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
+var LH_ENUMERATION = [	[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
 			[3,6,7,8,5,2,1,0],	[4,4,4,4,4,4,4,4],	[5,2,1,0,3,6,7,8],
 			[6,7,8,5,2,1,0,3],	[7,8,5,2,1,0,3,6],	[8,5,2,1,0,3,6,7]];
 var FREE_ORDER = [	[0,1,3,6,2,5,7,8,4], 	[1,0,2,5,3,6,8,7,4], 	[2,5,1,0,8,7,3,6,4],
@@ -94,7 +94,7 @@ function saboteur()
 {
 	//Actively avoid other allied workers
 	for (try_cell of SCAN_ORDER)
-		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true) return {cell:RH_ENUMERATION[try_cell][4]};
+		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true) return {cell:LH_ENUMERATION[try_cell][4]};
 
 	//Obstruct enemy workers
 	for (try_cell of INCOMPLETE_SCAN_ORDER)
