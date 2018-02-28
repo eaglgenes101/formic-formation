@@ -16,10 +16,10 @@ Overview:
 This submission aims to create a line of ants that can sweep the area. Colors are used as signals to help the queen coordinate the line, not as trailmarkers. 
 
 This submission uses three types of workers in addition to the queen:
-    Type 1: Formation marcher, A phase
-    Type 2: Formation matcher, B phase
-    Type 3: Gatherer
-    Type 4: Reserved for future use
+*    Type 1: Formation marcher, A phase
+*    Type 2: Formation matcher, B phase
+*    Type 3: Gatherer
+*    Type 4: Reserved for future use
 
 Ants are created in a full-width diagonal line as follows: 
 
