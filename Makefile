@@ -2,7 +2,7 @@
 all: collected
 	minify --type js collected > all
 
-collected: *.js main
-	cat *.js main > collected
+collected: commons *.js main
+	cat commons *.js main > collected
 
 #

@@ -59,7 +59,7 @@ function early_queen()
 	if (gatherer_cell%2 === 1 && this_ant().food > 0) return {cell:LH_ENUMERATION[gatherer_cell][2], type:MARCHER_A}
 
 
-	return {cell:LH_ENUMERATION[gatherer_cell][1]};
+	return {cell:LH_ENUMERATION[gatherer_cell][7]};
 }
 
 function queen_decision()
@@ -84,7 +84,7 @@ function queen_decision()
 	*/
 	if (gatherer_count === 1)
 	{
-		return sanitize(early_queen(), LEFT_ORDER);
+		return sanitize(early_queen(), RIGHT_ORDER);
 	}
 	return sanitize(opening_queen(), FREE_ORDER);
 }
