@@ -26,12 +26,12 @@ function mul(a,b)
 	return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
 }
 
-function low_word(x) 
+function lo_b(x) 
 {
 	return x & 0xffff;
 }
 
-function high_word(x)
+function hi_b(x)
 {
 	return (x >>> 16) & 0xffff;
 }
@@ -48,11 +48,11 @@ function rotl(v,n)
 
 function update(source, low, high)
 {
-	var b00 = low_word(PRIME32_2);
-	var b16 = high_word(PRIME32_2);
+	var b00 = lo_b(PRIME32_2);
+	var b16 = hi_b(PRIME32_2);
 
-	var sLow = low_word(source);
-	var sHigh = high_word(source);
+	var sLow = lo_b(source);
+	var sHigh = hi_b(source);
 	var c16, c00;
 	c00 = low * b00;
 	c16 = c00 >>> 16;
@@ -72,8 +72,8 @@ function update(source, low, high)
 	a00 = v & 0xFFFF;
 	a16 = v >>> 16;
 
-	b00 = low_word(PRIME32_1);
-	b16 = high_word(PRIME32_1);
+	b00 = lo_b(PRIME32_1);
+	b16 = hi_b(PRIME32_1);
 
 	c00 = a00 * b00;
 	c16 = c00 >>> 16;
@@ -119,7 +119,7 @@ function view_digest()
 			buffer[cell] = 5002 | (view[cell].food&1) | ((view[cell].color&7) << 13);
 		}
 	}
-	return new Uint8Array(buffer.buffer);
+	return buffer;
 }
 
 //Pseudorandom generation of 32 bits based on current ant state
@@ -127,15 +127,15 @@ function ant_rand()
 {
 	var input = view_digest();
 
-	var _v1 = update((SEED + PRIME32_1plus2) & 0xffffffff	, (input[1] << 8) | input[0], 	(input[3] << 8) | input[2]);
-	var _v2 = update((SEED + PRIME32_2) & 0xffffffff	, (input[5] << 8) | input[4], 	(input[7] << 8) | input[6]);
-	var _v3 = update(SEED					, (input[9] << 8) | input[8], 	(input[11] << 8) | input[10]);
-	var _v4 = update((SEED - PRIME32_1) & 0xffffffff	, (input[13] << 8) | input[12], (input[15] << 8) | input[14]);
+	var _v1 = update((SEED + PRIME32_1plus2) & 0xffffffff	, input[0], input[1]);
+	var _v2 = update((SEED + PRIME32_2) & 0xffffffff	, input[2], input[3]);
+	var _v3 = update(SEED					, input[4], input[5]);
+	var _v4 = update((SEED - PRIME32_1) & 0xffffffff	, input[6], input[7]);
 
 	var h32 = rotl(_v1, 1) + rotl(_v2, 7) + rotl(_v3, 12) + rotl(_v4, 18) + 18;
 
-	h32 = mul(rotl((h32 + input[16] * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
-	h32 = mul(rotl((h32 + input[17] * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
+	h32 = mul(rotl((h32 + lo_b(input[8]) * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
+	h32 = mul(rotl((h32 + hi_b(input[8]) * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
 
 	h32 = mul(h32 ^ (h32 >>> 15), PRIME32_2);
 	h32 = mul(h32 ^ (h32 >>> 13), PRIME32_3);
@@ -145,5 +145,5 @@ function ant_rand()
 
 function random_choice(prob)
 {
-	return (ant_rand()+0x80000000)/(0x100000000); < prob;
+	return (ant_rand()+0x80000000)/(0x100000000) < prob;
 }
