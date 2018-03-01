@@ -5,35 +5,26 @@
 //The xxHash implementation used was derived from https://github.com/shibukawa/xxhash.jsx, and
 //is licensed under the MIT license. 
 
-const PRIME32_1 = 	2654435761;
-const PRIME32_2 = 	2246822519;
-const PRIME32_3 = 	3266489917;
-const PRIME32_4 = 	668265263;
-const PRIME32_5 = 	374761393;
-const PRIME32_1plus2 = 	606290984;
+const P_1 = 	2654435761;
+const P_2 = 	2246822519;
+const P_3 = 	3266489917;
+const P_4 = 	668265263;
+const P_5 = 	374761393;
+const P_6 = 	606290984;
+const M16 = 	65535;
+const M32 = 	4294967295;
 
 //Randomly generated seed
-const SEED = 0xde9f3f44; 
+const SEED = 	3734978372; 
 
-function mul(a,b)
+function lo_w(x) 
 {
-	var ah  = (a >>> 16) & 0xffff;
-	var al = a & 0xffff;
-	var bh  = (b >>> 16) & 0xffff;
-	var bl = b & 0xffff;
-	// the shift by 0 fixes the sign on the high part
-	// the final |0 converts the unsigned value into a signed value
-	return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+	return x & M16;
 }
 
-function lo_b(x) 
+function hi_w(x)
 {
-	return x & 0xffff;
-}
-
-function hi_b(x)
-{
-	return (x >>> 16) & 0xffff;
+	return (x >>> 16) & M16;
 }
 
 function fromBits(l,h)
@@ -46,43 +37,57 @@ function rotl(v,n)
 	return (v << (n&32)) | (v >>> (-n&32));
 }
 
+function mul(a,b)
+{
+	var ah  = (a >>> 16) & M16;
+	var al = a & M16;
+	var bh  = (b >>> 16) & M16;
+	var bl = b & M16;
+	// the shift by 0 fixes the sign on the high part
+	// the final |0 converts the unsigned value into a signed value
+	return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
+}
+
+function umul(a,bh,bl)
+{
+	var ah  = (a >>> 16) & M16;
+	var al = a & M16;
+	// the shift by 0 fixes the sign on the high part
+	return (al * bl) + (((ah * bl + al * bh) << 16) >>> 0);
+}
+
+function new_update(source, low, high)
+{
+	return mul(rotl((source + umul(P_2, high, low))&M32, 13), P_1);
+}
+
 function update(source, low, high)
 {
-	var b00 = lo_b(PRIME32_2);
-	var b16 = hi_b(PRIME32_2);
+	var c00 = low * lo_w(P_2);
+	var c16 = c00 >>> 16;
 
-	var sLow = lo_b(source);
-	var sHigh = hi_b(source);
-	var c16, c00;
-	c00 = low * b00;
-	c16 = c00 >>> 16;
+	c16 += high * lo_w(P_2);
+	c16 &= M16;  // Not required but improves performance
+	c16 += low * hi_w(P_2);
 
-	c16 += high * b00;
-	c16 &= 0xFFFF;  // Not required but improves performance
-	c16 += low * b16;
-
-	var a00 = sLow + (c00 & 0xFFFF);
+	var a00 = lo_w(source) + (c00 & M16);
 	var a16 = a00 >>> 16;
 
-	a16 += sHigh + (c16 & 0xFFFF);
+	a16 += hi_w(source) + (c16 & M16);
 
-	var v = (a16 << 16) | (a00 & 0xFFFF);
-	v = (v << 13) | (v >>> 19);
+	var v = rotl((a16 << 16) | (a00 & M16), 13);
 
-	a00 = v & 0xFFFF;
+	a00 = v & M16;
 	a16 = v >>> 16;
 
-	b00 = lo_b(PRIME32_1);
-	b16 = hi_b(PRIME32_1);
-
-	c00 = a00 * b00;
+	c00 = a00 * lo_w(P_1);
 	c16 = c00 >>> 16;
 
-	c16 += a16 * b00;
-	c16 &= 0xFFFF; // Not required but improves performance
-	c16 += a00 * b16;
+	c16 += a16 * lo_w(P_1);
+	c16 &= M16; // Not required but improves performance
+	c16 += a00 * hi_w(P_1);
 
-	return fromBits(c00 & 0xFFFF, c16 & 0xFFFF);
+	return fromBits(c00 & M16, c16 & M16);
 }
 
 //Generates a packed array view of an ant
@@ -103,20 +108,20 @@ function view_digest()
 		{
 			if (view[cell].ant.type === QUEEN)
 			{
-				buffer[cell] = ((view[cell].ant.friend?0:2501) + view[cell].ant.food) | ((view[cell].color&7) << 13);
+				buffer[cell] = ((view[cell].ant.friend?0:2501) + view[cell].ant.food) | (view[cell].color << 13);
 			}
 			else
 			{
 				buffer[cell] = 5008 
-						| (view[cell].ant.type&3) 
-						| ((view[cell].ant.food&1) << 2) 
-						| ((view[cell].ant.friend&1) << 3) 
-						| ((view[cell].color&7) << 13);
+						| (view[cell].ant.type & 3) 
+						| (view[cell].ant.food << 2) 
+						| (view[cell].ant.friend << 3) 
+						| (view[cell].color << 13);
 			}
 		}
 		else
 		{
-			buffer[cell] = 5002 | (view[cell].food&1) | ((view[cell].color&7) << 13);
+			buffer[cell] = 5002 | view[cell].food | (view[cell].color << 13);
 		}
 	}
 	return buffer;
@@ -127,23 +132,23 @@ function ant_rand()
 {
 	var input = view_digest();
 
-	var _v1 = update((SEED + PRIME32_1plus2) & 0xffffffff	, input[0], input[1]);
-	var _v2 = update((SEED + PRIME32_2) & 0xffffffff	, input[2], input[3]);
-	var _v3 = update(SEED					, input[4], input[5]);
-	var _v4 = update((SEED - PRIME32_1) & 0xffffffff	, input[6], input[7]);
+	var _v1 = update((SEED + P_6) & M32, input[0], input[1]);
+	var _v2 = update((SEED + P_2) & M32, input[2], input[3]);
+	var _v3 = update( SEED             , input[4], input[5]);
+	var _v4 = update((SEED - P_1) & M32, input[6], input[7]);
 
 	var h32 = rotl(_v1, 1) + rotl(_v2, 7) + rotl(_v3, 12) + rotl(_v4, 18) + 18;
 
-	h32 = mul(rotl((h32 + lo_b(input[8]) * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
-	h32 = mul(rotl((h32 + hi_b(input[8]) * PRIME32_5) & 0xffffffff, 11), PRIME32_1);
+	h32 = mul(rotl((h32 + lo_w(input[8]) * P_5) & M32, 11), P_1);
+	h32 = mul(rotl((h32 + hi_w(input[8]) * P_5) & M32, 11), P_1);
 
-	h32 = mul(h32 ^ (h32 >>> 15), PRIME32_2);
-	h32 = mul(h32 ^ (h32 >>> 13), PRIME32_3);
+	h32 = mul(h32 ^ (h32 >>> 15), P_2);
+	h32 = mul(h32 ^ (h32 >>> 13), P_3);
 	return h32 ^ (h32 >>> 16);
 
 }
 
 function random_choice(prob)
 {
-	return (ant_rand()+0x80000000)/(0x100000000) < prob;
+	return (ant_rand()>>>0)/(M32+1) < prob;
 }
