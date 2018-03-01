@@ -26,12 +26,12 @@ function mul(a,b)
 	return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0)|0);
 }
 
-function low(x) 
+function low_word(x) 
 {
 	return x & 0xffff;
 }
 
-function high(x)
+function high_word(x)
 {
 	return (x >>> 16) & 0xffff;
 }
@@ -48,11 +48,11 @@ function rotl(v,n)
 
 function update(source, low, high)
 {
-	var b00 = low(PRIME32_2);
-	var b16 = high(PRIME32_2);
+	var b00 = low_word(PRIME32_2);
+	var b16 = high_word(PRIME32_2);
 
-	var sLow = low(source);
-	var sHigh = high(source);
+	var sLow = low_word(source);
+	var sHigh = high_word(source);
 	var c16, c00;
 	c00 = low * b00;
 	c16 = c00 >>> 16;
@@ -72,8 +72,8 @@ function update(source, low, high)
 	a00 = v & 0xFFFF;
 	a16 = v >>> 16;
 
-	b00 = low(PRIME32_1);
-	b16 = high(PRIME32_1);
+	b00 = low_word(PRIME32_1);
+	b16 = high_word(PRIME32_1);
 
 	c00 = a00 * b00;
 	c16 = c00 >>> 16;
@@ -97,35 +97,35 @@ function view_digest()
 	//Food: 5003
 	//Worker: 5008 + type + 4*laden + 8*friendly
 	var buffer = new Int16Array(9);
-	for (cell = 0; cell < 9; cell++)
+	for (var cell = 0; cell < 9; cell++)
 	{
 		if (view[cell].ant !== null)
 		{
 			if (view[cell].ant.type === QUEEN)
 			{
-				buffer[cell] = ((view[cell].ant.friend?0:2501) + view[cell].ant.food) | (view[cell].color << 13);
+				buffer[cell] = ((view[cell].ant.friend?0:2501) + view[cell].ant.food) | ((view[cell].color&7) << 13);
 			}
 			else
 			{
 				buffer[cell] = 5008 
 						| (view[cell].ant.type&3) 
-						| (view[cell].ant.food << 2) 
-						| (view[cell].ant.friend << 3) 
-						| (view[cell].color << 13);
+						| ((view[cell].ant.food&1) << 2) 
+						| ((view[cell].ant.friend&1) << 3) 
+						| ((view[cell].color&7) << 13);
 			}
 		}
 		else
 		{
-			buffer[cell] = 5002 | view[cell].food | (view[cell].color << 13);
+			buffer[cell] = 5002 | (view[cell].food&1) | ((view[cell].color&7) << 13);
 		}
 	}
-	return buffer;
+	return new Uint8Array(buffer.buffer);
 }
 
 //Pseudorandom generation of 32 bits based on current ant state
 function ant_rand()
 {
-	var input = new Uint8Array(view_digest());
+	var input = view_digest();
 
 	var _v1 = update((SEED + PRIME32_1plus2) & 0xffffffff	, (input[1] << 8) | input[0], 	(input[3] << 8) | input[2]);
 	var _v2 = update((SEED + PRIME32_2) & 0xffffffff	, (input[5] << 8) | input[4], 	(input[7] << 8) | input[6]);
@@ -145,5 +145,5 @@ function ant_rand()
 
 function random_choice(prob)
 {
-	return ((ant_rand()>>>0)/(1<<32)) < prob;
+	return (ant_rand()+0x80000000)/(0x100000000); < prob;
 }
