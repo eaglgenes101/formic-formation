@@ -12,11 +12,11 @@ function opening_queen()
 	if (this_ant().food > 0) return {cell:0, type:GATHERER};
 
 	//If one of the adjacent spaces has food, gather it
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of random_permutation(SCAN_MOVES))
 		if (view[try_cell].food === 1) return {cell:try_cell};
 
 	//Actively avoid other workers
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of random_permutation(SCAN_MOVES))
 		if (view[try_cell].ant !== null) return {cell:LH_ENUMERATION[try_cell][4]};
 
 	//If the color at the current cell is 0 (white), color it 4 (cyan)
@@ -43,7 +43,7 @@ function early_queen()
 
 	//Find the gatherer, revolve counterclockwise around her
 	var gatherer_cell = null;
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of random_permutation(SCAN_MOVES))
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true && view[try_cell].ant.type === GATHERER)
 		{
@@ -66,7 +66,7 @@ function queen_decision()
 {
 	marcher_count = 0;
 	gatherer_count = 0;
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of SCAN_MOVES)
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
 		{

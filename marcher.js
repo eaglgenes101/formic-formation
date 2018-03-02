@@ -18,7 +18,7 @@ function is_formation_sentinel()
 	var queen_pos = null;
 	var gatherer_pos = null;
 
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of SCAN_MOVES)
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
 		{
@@ -39,18 +39,25 @@ function is_formation_sentinel()
 		}
 	}
 
-	//Match FALSE for a worker with fewer than 2 or more than 3 neighbors
-	if (num_neighbors <= 1 || num_neighbors >= 4) return false;
+	//For 1 neighbor, check that this neighbor is the opposite-phase worker and is orthogonal to us
+	if (num_neighbors === 1)
+	{
+	}
 
 	//For those with 2 neighbors, check that workers are where we expect them
-	if (num_neighbors === 2)
+	else if (num_neighbors === 2)
 	{
 		
 	}
 
 	//For those with 3 neighbors, check that two of three are in position 
 	//and that the last isn't where we would expect the end
+	else if (num_neighbors === 3)
+	{
+	}
 
+	//Return false in all other cases
+	else return false;
 	
 	
 }
@@ -62,9 +69,13 @@ function phase()
 function marcher_a_decision()
 {
 	//Currently stubbed
+	
+	return sanitize(saboteur(), FREE_ORDER);
 }
 
 function marcher_b_decision()
 {
 	//Currently stubbed
+
+	return sanitize(saboteur(), FREE_ORDER);
 }

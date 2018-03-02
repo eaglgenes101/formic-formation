@@ -9,7 +9,7 @@ function early_gatherer()
 	//Revolve clockwise around the queen
 	var queen_cell = null;
 	var food_count = 0;
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of SCAN_MOVES)
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true && view[try_cell].ant.type === QUEEN)
 		{
@@ -47,7 +47,7 @@ function gatherer_decision()
 {
 	marcher_count = 0;
 	queen_count = 0;
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of SCAN_MOVES)
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
 		{

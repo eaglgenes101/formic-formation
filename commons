@@ -4,22 +4,18 @@ const MARCHER_B = 2;
 const GATHERER = 3;
 const QUEEN = 5;
 
-//Scan order lookup tables (generated with random.org's numbers)
-const SCAN_ORDER = 		[0,6,3,8,5,1,2,7];
-const INCOMPLETE_SCAN_ORDER = 	[2,6,1,7,0,5];
-const HALF_SCAN_ORDER = 	[8,2,1,5];
-const SPARSE_SCAN_ORDER = 	[3,5];
 
-//Submission attempt order lookup tables
-const FREE_ORDER = [	[0,1,3,6,2,5,7,8,4], 	[1,0,2,5,3,6,8,7,4], 	[2,5,1,0,8,7,3,6,4],
-			[3,6,0,1,7,8,2,5,4], 	[4],                 	[5,2,8,7,1,0,6,3,4],
-			[6,3,7,8,0,1,5,2,4], 	[7,8,6,3,5,2,0,1,4], 	[8,7,5,2,6,3,1,0,4]	];
-const RIGHT_ORDER = [	[0,1,3,6,7,4], 		[1,0,3,4], 		[2,5,1,0,3,4],
-			[3,6,7,4],     		[4],       		[5,2,1,4],
-			[6,3,7,8,5,4], 		[7,8,5,4], 		[8,7,5,2,1,4]		];
-const LEFT_ORDER = [	[0,3,1,2,5,4], 		[1,2,5,4], 		[2,1,5,8,7,4],
-			[3,0,1,4],     		[4],       		[5,8,7,4],
-			[6,7,3,0,1,4], 		[7,6,3,4], 		[8,5,7,6,3,4]		];
+//Move attempt order lookup tables
+const SCAN_MOVES = [0,1,2,3,5,6,7,8];
+const FREE_ORDER = [	[1,3,6,2,5,7,8], 	[0,2,5,3,6,8,7], 	[5,1,0,8,7,3,6],
+			[6,0,1,7,8,2,5], 	[],                 	[2,8,7,1,0,6,3],
+			[3,7,8,0,1,5,2], 	[8,6,3,5,2,0,1], 	[7,5,2,6,3,1,0]	];
+const RIGHT_ORDER = [	[1,3,6,7], 		[0,3], 			[5,1,0,3],
+			[6,7],     		[],       		[2,1],
+			[3,7,8,5], 		[8,5], 			[7,5,2,1]	];
+const LEFT_ORDER = [	[3,1,2,5], 		[2,5], 			[1,5,8,7],
+			[0,1],     		[],       		[8,7],
+			[7,3,0,1], 		[6,3], 			[5,7,6,3]	];
 
 //Spacial information lookup tables
 const LH_ENUMERATION = [[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
@@ -30,26 +26,95 @@ const NEIGHBORS = [	[0,1,3,4],		[1,0,2,3,5,4],		[2,5,1,4],
 			[6,3,7,4],		[7,8,6,5,3,4],		[8,7,5,4]		];
 
 //Downstream signal colors (travel instantaneously)
-const CLEAR_COLOR = 0; //We're all ready! Let's go!
-const FOUND_FOOD_COLOR = 1; //We found food!
-const OBSTRUCTED_WORKER_COLOR = 2; //We found an enemy worker!
-const GATHERER_EXISTS_COLOR = 3; //Gatherer: "I'm still here!"
+const DOWN_MARCH = 0; //We're all ready! Let's go!
+const DOWN_FOOD = 1; //We found food!
+const DOWN_STALLED = 2; //There's no obstruction, but we're waiting for a ready signal
+const DOWN_GATHERER = 3; //Gatherer: "I'm still here!"
 
 //Upstream signal colors (travel at lightspeed)
-const MOVE_COLOR = 4; //Alright, everybody move on
-const REALIGN_COLOR = 5; //Stop, let's realign the ranks
-const TEST_COLOR = 6; //Where in creation order are you? 
-const PANIC_COLOR = 7; //Everyone! Scatter! 
+const UP_REALIGN_A = 4; //Realign phase A
+const UP_REALIGN_B = 5; //Realign phase B
+const UP_READY = 6; //Ready to move as soon as the sentinel is aligned
+const UP_PANIC = 7; //Everyone! Scatter! 
+
+//Random seeds
+const INIT_SEED = 3734978372;
+const FINAL_SEED = 2338395782;
 
 //Tuneables
-const MOVEMENT_RAND_THRESHOLD = 4;
-const GATHERER_SPAWN_THRESHOLD = 1;
-const WORKER_SPAWN_THRESHOLD = 2;
+
 
 /*
 Functions shared by all ant types
 */
 
+//Xorshift pseudo-rng used to help ants make decisions with probability more granular than 1/4
+//There are many situations where the function is _NOT_ applicable, such as in the middle of empty space, 
+//so use caution when using the functions defined here
+var state = null;
+
+function rand_init()
+{
+	state = INIT_SEED;
+	for (var cell = 0; cell < 9; cell++)
+	{
+		state ^= view[cell].color;
+		state ^= view[cell].food << 3;
+		if (view[cell].ant !== null)
+		{
+			state ^= view[cell].ant.friend << 4;
+			state ^= view[cell].ant.type << 5;
+			state ^= view[cell].ant.food << 8;
+		}
+		ant_rand(); //Mix it in
+	}
+	state ^= FINAL_SEED;
+	if (state === 0) state = 1;
+}
+
+function ant_rand()
+{
+	if (state === null) rand_init(); //Lazy initialization
+	state ^= state << 13;
+	state ^= state >>> 17;
+	state ^= state << 5;
+	return state >>> 0;
+}
+
+//Applications of the output of ant_rand()
+function random_choice(prob)
+{
+	return ant_rand()/4294967296 < prob;
+}
+
+//Generate a random permutation
+function random_subset(array, num)
+{
+	var return_array = array.slice();
+	for (var i = 0; i < num; i++)
+	{
+		var rand_index = i + ant_rand()%(array.length - i)
+		var x_val = return_array[rand_index];
+		return_array[rand_index] = return_array[i];
+		return_array[i] = x_val;
+	}
+	return return_array.slice(0, num);
+}
+
+function random_permutation(array)
+{
+	var return_array = array.slice();
+	for (var i = 0; i < array.length-1; i++)
+	{
+		var rand_index = i + ant_rand()%(array.length - i)
+		var x_val = return_array[rand_index];
+		return_array[rand_index] = return_array[i];
+		return_array[i] = x_val;
+	}
+	return return_array;
+}
+
+//This ant convenience function
 function this_ant()
 {
 	return view[4].ant;
@@ -69,14 +134,15 @@ function sanitize(prospective, trial_matrix)
 	//Prevent birthing of workers in occupied areas
 	if (prospective.hasOwnProperty("type"))
 	{
-		for (try_cell of trial_matrix[prospective.cell])
-		{
+		//Check the prospective cell first
+		if (view[prospective.cell].food === 0 && view[prospective.cell].ant === null)
+			return prospective;
+		for (try_cell of random_permutation(trial_matrix[prospective.cell]))
 			if (view[try_cell].food === 0 && view[try_cell].ant === null)
 			{
 				prospective.cell = try_cell;
 				return prospective;
 			}
-		}
 		return {cell:4};
 	}
 
@@ -84,15 +150,16 @@ function sanitize(prospective, trial_matrix)
 	if (prospective.hasOwnProperty("color"))
 		return prospective;
 
-
-	for (try_cell of trial_matrix[prospective.cell])
-	{
+	//Check the prospective cell
+	if (view[prospective.cell].ant === null)
+		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prospective.cell].food === 0)
+			return prospective;
+	for (try_cell of random_permutation(trial_matrix[prospective.cell]))
 		if (view[try_cell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[try_cell].food === 0))
 		{
 			prospective.cell = try_cell;
 			return prospective;
 		}
-	}
 	return {cell:4};
 }
 
@@ -100,15 +167,15 @@ function sanitize(prospective, trial_matrix)
 function saboteur()
 {
 	//Actively avoid other allied workers
-	for (try_cell of SCAN_ORDER)
+	for (try_cell of random_permutation(SCAN_MOVES))
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true) return {cell:LH_ENUMERATION[try_cell][4]};
 
 	//Obstruct enemy workers
-	for (try_cell of INCOMPLETE_SCAN_ORDER)
+	for (try_cell of random_subset(SCAN_MOVES, 6))
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === false) return {cell:try_cell};
 
 	var c = this_ant().type+1
-	for (try_cell of INCOMPLETE_SCAN_ORDER)
+	for (try_cell of random_subset(SCAN_MOVES, 6))
 		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
 		{
 			c = view[try_cell].color
@@ -118,9 +185,8 @@ function saboteur()
 	//If there are more than 2 colored neighbors, settle in and scramble
 	//Otherwise, do straight-line motion
 	var colored_neighbors = 0;
-	for (try_cell of SCAN_ORDER)
-		if (view[try_cell].color > 1)
-			colored_neighbors++;
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (view[try_cell].color > 1) colored_neighbors++;
 	if (colored_neighbors > 2)
 	{
 		//Recolor squares at random
