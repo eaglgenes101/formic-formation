@@ -25,20 +25,8 @@ function early_gatherer()
 		return {cell:4};
 	//If a food cell is adjacent to the queen, get it
 	if (this_ant().food === 0)
-	{
-		if (view[0].food > 0 && (queen_cell === 1 || queen_cell === 3)) return {cell:0};
-		if (view[2].food > 0 && (queen_cell === 1 || queen_cell === 5)) return {cell:2};
-		if (view[8].food > 0 && (queen_cell === 7 || queen_cell === 5)) return {cell:8};
-		if (view[6].food > 0 && (queen_cell === 7 || queen_cell === 3)) return {cell:6};
-		if (view[1].food > 0 && (queen_cell === 0 || queen_cell === 2 || queen_cell === 3 || queen_cell === 5))
-			return {cell:1};
-		if (view[3].food > 0 && (queen_cell === 0 || queen_cell === 6 || queen_cell === 1 || queen_cell === 7))
-			return {cell:3};
-		if (view[7].food > 0 && (queen_cell === 8 || queen_cell === 6 || queen_cell === 3 || queen_cell === 5))
-			return {cell:7};
-		if (view[5].food > 0 && (queen_cell === 8 || queen_cell === 2 || queen_cell === 1 || queen_cell === 7))
-			return {cell:5};
-	}
+		for (try_cell of random_permutation(SCAN_MOVES))
+			if (view[try_cell].food > 0 && NEIGHBORS[try_cell].includes(queen_cell)) return {cell:try_cell};
 	return {cell:LH_ENUMERATION[queen_cell][1]};
 	
 }

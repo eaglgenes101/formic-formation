@@ -24,14 +24,12 @@ function opening_queen()
 
 	//If any of the ground is cyan, avoid it.
 	//Otherwise, just choose a direction that won't cause a run-in. 
-	else if (view[0].color !== 6 && view[8].color === 6) return {cell:0};
-	else if (view[2].color !== 6 && view[6].color === 6) return {cell:2};
-	else if (view[6].color !== 6 && view[2].color === 6) return {cell:6};
-	else if (view[8].color !== 6 && view[0].color === 6) return {cell:8};
-	else if (view[2].color === 6 && view[6].color === 6 && view[0].color !== 6) return {cell:0};
-	else if (view[0].color === 6 && view[8].color === 6 && view[2].color !== 6) return {cell:2};
-	else if (view[0].color === 6 && view[8].color === 6 && view[6].color !== 6) return {cell:6};
-	else if (view[2].color === 6 && view[6].color === 6 && view[8].color !== 6) return {cell:8};
+	//Try to move in straight lines
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]] !== 1) return {cell:try_cell};
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][2]] !== 1 && 
+				view[LH_ENUMERATION[try_cell][6]] !== 1) return {cell:try_cell};
 
 	else return {cell:0};
 	
@@ -54,10 +52,8 @@ function early_queen()
 
 	if (gatherer_cell === null || gatherer_cell%2 === 0) return {cell:4};
 
-
 	//Once the gatherer is orthogonal to us, spawn an A-phase marcher
-	if (gatherer_cell%2 === 1 && this_ant().food > 0) return {cell:LH_ENUMERATION[gatherer_cell][2], type:MARCHER_A}
-
+	if (gatherer_cell%2 === 1 && this_ant().food > 0) return {cell:LH_ENUMERATION[gatherer_cell][2], type:MARCHER_A};
 
 	return {cell:LH_ENUMERATION[gatherer_cell][7]};
 }

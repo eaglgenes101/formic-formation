@@ -4,9 +4,7 @@ const MARCHER_B = 2;
 const GATHERER = 3;
 const QUEEN = 5;
 
-
 //Move attempt order lookup tables
-const SCAN_MOVES = [0,1,2,3,5,6,7,8];
 const FREE_ORDER = [	[1,3,6,2,5,7,8], 	[0,2,5,3,6,8,7], 	[5,1,0,8,7,3,6],
 			[6,0,1,7,8,2,5], 	[],                 	[2,8,7,1,0,6,3],
 			[3,7,8,0,1,5,2], 	[8,6,3,5,2,0,1], 	[7,5,2,6,3,1,0]	];
@@ -18,6 +16,9 @@ const LEFT_ORDER = [	[3,1,2,5], 		[2,5], 			[1,5,8,7],
 			[7,3,0,1], 		[6,3], 			[5,7,6,3]	];
 
 //Spacial information lookup tables
+const SCAN_MOVES = [0,1,2,3,5,6,7,8];
+const CORNERS = [0,2,6,8];
+const EDGES = [1,3,5,7];
 const LH_ENUMERATION = [[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
 			[3,6,7,8,5,2,1,0],	[4],			[5,2,1,0,3,6,7,8],
 			[6,7,8,5,2,1,0,3],	[7,8,5,2,1,0,3,6],	[8,5,2,1,0,3,6,7]	];
@@ -42,7 +43,8 @@ const INIT_SEED = 3734978372;
 const FINAL_SEED = 2338395782;
 
 //Tuneables
-
+SABOTEUR_RECOLOR_PROB = 0.8;
+SABOTEUR_OBSTRUCT_PROB = 0.8;
 
 /*
 Functions shared by all ant types
@@ -120,12 +122,12 @@ function this_ant()
 	return view[4].ant;
 }
 
-//Movement submission sanitizer, for lone units
+//Movement submission sanitizer
 function sanitize(prospective, trial_matrix)
 {
 	//Bounds-checking
 	if (prospective.cell < 0 || prospective.cell > 8) prospective.cell = 4;
-	if (prospective.color < 1 || prospective.color > 7) delete prospective.color;
+	if (prospective.color < 1 || prospective.color > 8) delete prospective.color;
 	if (prospective.type < 1 || prospective.type > 4) delete prospective.type;
 
 	//Prevent workers from trying to birth worker ants
@@ -171,11 +173,19 @@ function saboteur()
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true) return {cell:LH_ENUMERATION[try_cell][4]};
 
 	//Obstruct enemy workers
-	for (try_cell of random_subset(SCAN_MOVES, 6))
-		if (view[try_cell].ant !== null && view[try_cell].ant.friend === false) return {cell:try_cell};
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (view[try_cell].ant !== null && view[try_cell].ant.friend === false) 
+		{
+			if (random_choice(SABOTEUR_RECOLOR_PROB))
+			{
+				var rand_neighbors = random_subset(NEIGHBORS[try_cell], 2);
+				return {cell:rand_neighbors[0], color:view[rand_neighbors[1]].color};
+			}
+			else if (random_choice(SABOTEUR_OBSTRUCT_PROB)) return {cell:try_cell};
+		}
 
 	var c = this_ant().type+1
-	for (try_cell of random_subset(SCAN_MOVES, 6))
+	for (try_cell of random_subset(SCAN_MOVES, 7))
 		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
 		{
 			c = view[try_cell].color
@@ -185,26 +195,19 @@ function saboteur()
 	//If there are more than 2 colored neighbors, settle in and scramble
 	//Otherwise, do straight-line motion
 	var colored_neighbors = 0;
-	for (try_cell of random_permutation(SCAN_MOVES))
-		if (view[try_cell].color > 1) colored_neighbors++;
+	for (try_cell of SCAN_MOVES) if (view[try_cell].color > 1) colored_neighbors++;
 	if (colored_neighbors > 2)
 	{
-		//Recolor squares at random
-		if (view[1].color !== view[6].color && view[6].color !== 1)
-			return {cell:1, color:view[6].color};
-		//if (view[3].color !== view[5].color && view[3].color !== 1)
-		if (view[2].color !== view[3].color)
-			return {cell:3, color:view[2].color};
-
-		//Try to not move away from color
-		if (view[1].color !== 1 && (view[0].color !== 1 && view[2].color !== 1)) return {cell:1};
-		if (view[3].color !== 1 && (view[0].color !== 1 && view[6].color !== 1)) return {cell:3};
-		if (view[5].color !== 1 && (view[8].color !== 1 && view[2].color !== 1)) return {cell:5};
-		if (view[7].color !== 1 && (view[8].color !== 1 && view[6].color !== 1)) return {cell:7};
-		if (view[1].color !== 1 && (view[0].color !== 1 || view[2].color !== 1)) return {cell:1};
-		if (view[3].color !== 1 && (view[0].color !== 1 || view[6].color !== 1)) return {cell:3};
-		if (view[5].color !== 1 && (view[8].color !== 1 || view[2].color !== 1)) return {cell:5};
-		if (view[7].color !== 1 && (view[8].color !== 1 || view[6].color !== 1)) return {cell:7};
+		//Recolor squares, with a pattern that is surprisingly good at breaking deadlocks
+		if (view[1].color !== view[6].color && view[6].color !== 1) return {cell:1, color:view[6].color};
+		if (view[2].color !== view[3].color) return {cell:3, color:view[2].color};
+		
+		for (try_cell of random_permutation(EDGES))
+			if (view[try_cell].color !== 1 && (view[LH_ENUMERATION[try_cell][1]] !== 1 && 
+					view[LH_ENUMERATION[try_cell][7]] !== 1) return {cell:try_cell};
+		for (try_cell of random_permutation(EDGES))
+			if (view[try_cell].color !== 1 && (view[LH_ENUMERATION[try_cell][1]] !== 1 || 
+					view[LH_ENUMERATION[try_cell][7]] !== 1) return {cell:try_cell};
 
 		return {cell:1};
 	}
@@ -213,14 +216,11 @@ function saboteur()
 		if (view[4].color === 1) return {cell: 4, color: c};
 
 		//Try to move in straight lines
-		if (view[0].color === 1 && view[8].color !== 1) return {cell:0};
-		if (view[2].color === 1 && view[6].color !== 1) return {cell:2};
-		if (view[6].color === 1 && view[2].color !== 1) return {cell:6};
-		if (view[8].color === 1 && view[0].color !== 1) return {cell:8};	
-		if (view[2].color !== 1 && view[6].color !== 1 && view[0].color === 1) return {cell:0};
-		if (view[0].color !== 1 && view[8].color !== 1 && view[2].color === 1) return {cell:2};
-		if (view[0].color !== 1 && view[8].color !== 1 && view[6].color === 1) return {cell:6};
-		if (view[2].color !== 1 && view[6].color !== 1 && view[8].color === 1) return {cell:8};
+		for (try_cell of random_permutation(CORNERS))
+			if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]] !== 1) return {cell:try_cell};
+		for (try_cell of random_permutation(CORNERS))
+			if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][2]] !== 1 && 
+					view[LH_ENUMERATION[try_cell][6]] !== 1) return {cell:try_cell};
 
 		return {cell:1};
 	}
