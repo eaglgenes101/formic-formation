@@ -203,11 +203,13 @@ function saboteur()
 		if (view[2].color !== view[3].color) return {cell:3, color:view[2].color};
 		
 		for (try_cell of random_permutation(EDGES))
-			if (view[try_cell].color !== 1 && (view[LH_ENUMERATION[try_cell][1]] !== 1 && 
-					view[LH_ENUMERATION[try_cell][7]] !== 1) return {cell:try_cell};
+			if (view[try_cell].color !== 1) 
+				if (view[LH_ENUMERATION[try_cell][1]] !== 1 && view[LH_ENUMERATION[try_cell][7]] !== 1) 
+					return {cell:try_cell};
 		for (try_cell of random_permutation(EDGES))
-			if (view[try_cell].color !== 1 && (view[LH_ENUMERATION[try_cell][1]] !== 1 || 
-					view[LH_ENUMERATION[try_cell][7]] !== 1) return {cell:try_cell};
+			if (view[try_cell].color !== 1) 
+				if (view[LH_ENUMERATION[try_cell][1]] !== 1 || view[LH_ENUMERATION[try_cell][7]] !== 1) 
+					return {cell:try_cell};
 
 		return {cell:1};
 	}
@@ -217,10 +219,12 @@ function saboteur()
 
 		//Try to move in straight lines
 		for (try_cell of random_permutation(CORNERS))
-			if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]] !== 1) return {cell:try_cell};
+			if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]].color !== 1) 
+				return {cell:try_cell};
 		for (try_cell of random_permutation(CORNERS))
-			if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][2]] !== 1 && 
-					view[LH_ENUMERATION[try_cell][6]] !== 1) return {cell:try_cell};
+			if (view[try_cell].color === 1)
+				if (view[LH_ENUMERATION[try_cell][2]].color !== 1 && view[LH_ENUMERATION[try_cell][6]].color !== 1) 
+					return {cell:try_cell};
 
 		return {cell:1};
 	}

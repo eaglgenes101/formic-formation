@@ -1,3 +1,5 @@
+"use strict";
+
 function debug(message)
 {
 	console.log(message);

@@ -6,9 +6,9 @@ This is the (currently incomplete) Marrching Formation submission for Formic Fun
 Building:
 ------
 
-On a Unix-like system, install babel-minify, then run make. An unminified version can be found in "collected", and a minified submission can be found in "all". 
+On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "debug", an unminified submission can be found in "collected", and a minified submission can be found in "all". 
 
-You can also generate the file manually by running "cat commons *.js main" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
+You can also generate the file manually by running "cat noprint commons *.js main" or "cat noprint commons *.js main" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
 
 Overview:
 ------

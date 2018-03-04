@@ -26,10 +26,12 @@ function opening_queen()
 	//Otherwise, just choose a direction that won't cause a run-in. 
 	//Try to move in straight lines
 	for (try_cell of random_permutation(CORNERS))
-		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]] !== 1) return {cell:try_cell};
+		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]].color !== 1) 
+			return {cell:try_cell};
 	for (try_cell of random_permutation(CORNERS))
-		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][2]] !== 1 && 
-				view[LH_ENUMERATION[try_cell][6]] !== 1) return {cell:try_cell};
+		if (view[try_cell].color === 1)
+			if (view[LH_ENUMERATION[try_cell][2]].color !== 1 && view[LH_ENUMERATION[try_cell][6]].color !== 1) 
+				return {cell:try_cell};
 
 	else return {cell:0};
 	
