@@ -17,7 +17,7 @@ function opening_queen()
 
 	//Actively avoid other workers
 	for (try_cell of random_permutation(SCAN_MOVES))
-		if (view[try_cell].ant !== null) return {cell:LH_ENUMERATION[try_cell][4]};
+		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][4]};
 
 	//If the color at the current cell is 0 (white), color it 4 (cyan)
 	if (view[4].color !== 6) return {cell: 4, color: 6};
@@ -26,11 +26,11 @@ function opening_queen()
 	//Otherwise, just choose a direction that won't cause a run-in. 
 	//Try to move in straight lines
 	for (try_cell of random_permutation(CORNERS))
-		if (view[try_cell].color === 1 && view[LH_ENUMERATION[try_cell][4]].color !== 1) 
+		if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) 
 			return {cell:try_cell};
 	for (try_cell of random_permutation(CORNERS))
 		if (view[try_cell].color === 1)
-			if (view[LH_ENUMERATION[try_cell][2]].color !== 1 && view[LH_ENUMERATION[try_cell][6]].color !== 1) 
+			if (view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
 				return {cell:try_cell};
 
 	else return {cell:0};
@@ -40,24 +40,23 @@ function opening_queen()
 //Early-phase queen (when the queen and the gatherer are moving together at lightspeed, trying to find more food)
 function early_queen()
 {
-
 	//Find the gatherer, revolve counterclockwise around her
 	var gatherer_cell = null;
 	for (try_cell of random_permutation(SCAN_MOVES))
 	{
-		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true && view[try_cell].ant.type === GATHERER)
+		if (is_ally(try_cell) && view[try_cell].ant.type === GATHERER)
 		{
 			gatherer_cell = try_cell;
 			break;
 		}
 	}
 
-	if (gatherer_cell === null || gatherer_cell%2 === 0) return {cell:4};
+	if (gatherer_cell === null || CORNERS.includes(gatherer_cell)) return {cell:4};
 
 	//Once the gatherer is orthogonal to us, spawn an A-phase marcher
-	if (gatherer_cell%2 === 1 && this_ant().food > 0) return {cell:LH_ENUMERATION[gatherer_cell][2], type:MARCHER_A};
+	if (EDGES.includes(gatherer_cell) && this_ant().food > 0) return {cell:CCW[gatherer_cell][2], type:MARCHER_A};
 
-	return {cell:LH_ENUMERATION[gatherer_cell][7]};
+	return {cell:CCW[gatherer_cell][7]};
 }
 
 function queen_decision()
@@ -66,7 +65,7 @@ function queen_decision()
 	gatherer_count = 0;
 	for (try_cell of SCAN_MOVES)
 	{
-		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
+		if (is_ally(try_cell))
 		{
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
 				marcher_count++;

@@ -11,7 +11,7 @@ function early_gatherer()
 	var food_count = 0;
 	for (try_cell of SCAN_MOVES)
 	{
-		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true && view[try_cell].ant.type === QUEEN)
+		if (is_ally(try_cell) && view[try_cell].ant.type === QUEEN)
 		{
 			queen_cell = try_cell;
 			break;
@@ -27,14 +27,14 @@ function early_gatherer()
 	if (this_ant().food === 0)
 		for (try_cell of random_permutation(SCAN_MOVES))
 			if (view[try_cell].food > 0 && NEIGHBORS[try_cell].includes(queen_cell)) return {cell:try_cell};
-	return {cell:LH_ENUMERATION[queen_cell][1]};
+	return {cell:CCW[queen_cell][1]};
 	
 }
 
 function gatherer_decision()
 {
 	marcher_count = 0;
-	queen_count = 0;
+	queen_pos = null;
 	for (try_cell of SCAN_MOVES)
 	{
 		if (view[try_cell].ant !== null && view[try_cell].ant.friend === true)
@@ -42,16 +42,14 @@ function gatherer_decision()
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
 				marcher_count++;
 			if (view[try_cell].ant.type === QUEEN)
-				queen_count++;
+				queen_pos = try_cell;
 		}
 	}
-	/*
-	if (marcher_count > 0)
+	if (queen_pos !== null && marcher_count > 0)
 	{
-		
+		//
 	}
-	*/
-	if (queen_count === 1)
+	else if (queen_pos !== null)
 	{
 		return sanitize(early_gatherer(), LEFT_ORDER);
 	}
