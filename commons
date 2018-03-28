@@ -56,6 +56,7 @@ const FINAL_SEED = 2338395782;
 //Tuneables
 SABOTEUR_RECOLOR_PROB = 0.8;
 SABOTEUR_OBSTRUCT_PROB = 0.8;
+QUEEN_SPAWN_PROB = 0.8;
 
 /*
 Functions shared by all ant types

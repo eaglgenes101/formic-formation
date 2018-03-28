@@ -2,8 +2,8 @@
 all: collected debug
 	minify --type js collected > all
 
-collected: noprint commons *.js main
-	cat noprint commons *.js main > for_release
+collected: noprint commons patterns *.js main
+	cat noprint commons patterns *.js main > for_release
 
-debug: print commons *.js main
-	cat print commons *.js main > for_debug
+debug: print commons patterns *.js main
+	cat print commons patterns *.js main > for_debug
