@@ -220,7 +220,7 @@ function mdecide_four_stairs(corner)
 		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 	}
 	
-	return {cell:4, color:PRECEDENCE[primary][secondary]};
+	return {cell:4, color:PRECEDENCES[primary][secondary]};
 	
 	
 }
@@ -242,7 +242,7 @@ function marcher_decision()
 	switch (neighbor_type(corner))
 	{
 		case ONE_EDGE: return marcher_step_watch(mdecide_one_edge(corner));
-		case TWO_EDGE_BENT: return mar	cher_step_watch(mdecide_two_edge_bent(corner));
+		case TWO_EDGE_BENT: return marcher_step_watch(mdecide_two_edge_bent(corner));
 		case TWO_EDGE_STRAIGHT: return marcher_step_watch(mdecide_two_edge_straight(corner));
 		case EDGE_CORNER_LEFT: return marcher_step_watch(mdecide_edge_corner_left(corner));
 		case EDGE_CORNER_RIGHT: return marcher_step_watch(mdecide_edge_corner_right(corner));

@@ -53,8 +53,9 @@ function early_queen()
 
 	if (gatherer_cell === null || CORNERS.includes(gatherer_cell)) return {cell:4};
 
-	//Once the gatherer is orthogonal to us, spawn an A-phase marcher
-	if (EDGES.includes(gatherer_cell) && this_ant().food > 0) return {cell:CCW[gatherer_cell][2], type:MARCHER_A};
+	//Once the gatherer is orthogonal to us, spawn a marcher
+	if (EDGES.includes(gatherer_cell) && this_ant().food > 0) 
+		return {cell:CCW[gatherer_cell][4], type:random_choice(.5)?MARCHER_A:MARCHER_B};
 
 	return {cell:CCW[gatherer_cell][7]};
 }
@@ -132,7 +133,7 @@ function qdecide_three_march(corner)
 		return {cell: 4, color:UP_READY};
 	}
 	
-	return {cell:4, color:PRECEDENCE[primary][secondary]};
+	return {cell:4, color:PRECEDENCES[primary][secondary]};
 }
 
 function qdecide_three_recover(corner)
@@ -195,7 +196,7 @@ function qdecide_three_queen_stand(corner)
 		return {cell: 4, color:UP_READY};
 	}
 	
-	return {cell:4, color:PRECEDENCE[primary][secondary]};
+	return {cell:4, color:PRECEDENCES[primary][secondary]};
 }
 
 function qdecide_three_gatherer_walk(corner)

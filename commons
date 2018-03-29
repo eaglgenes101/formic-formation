@@ -132,7 +132,7 @@ function random_permutation(array)
 //Convenience functions condensing common operations
 function signal_beats(first, second)
 {
-	return PRECEDENCE[first][second] === first;
+	return PRECEDENCES[first][second] === first;
 }
 
 function this_ant()
