@@ -174,6 +174,7 @@ function mdecide_four_stairs(corner)
 	}
 
 	for (var i = 1; i <= 8; i++)
+	{
 		if (counts[i] === 5) //Too easy
 		{
 			primary = i;
@@ -190,6 +191,7 @@ function mdecide_four_stairs(corner)
 			if (singular_colors.length === 2) secondary = based_precedence(primary, singular_colors);
 			else secondary = pair_colors[0];
 		}
+	}
 
 	if (primary === null)
 	{

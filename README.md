@@ -8,7 +8,7 @@ Building:
 
 On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "debug", an unminified submission can be found in "collected", and a minified submission can be found in "all". 
 
-You can also generate the file manually by running "noprint commons patterns *.js main releasefooter" or "cat print commons patterns *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
+You can also generate the file manually by running "cat noprint commons patterns *.js main releasefooter" or "cat print commons patterns *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
 
 Overview:
 ------
@@ -39,7 +39,7 @@ The first two ants created are a gatherer and an A-phase marcher. After that, an
 Early phase
 ------
 
-When the queen spawns, she performs a bog-standard half-lightspeed straight-line walk, trying to avoid retracing her path. Once this gets her a single piece of food, she spawns a gatherer, and from there, the pair move diagonally at lightspeed until food is found, after which the queen spawns an A-phase marcher, and the marching strategy takes off. 
+When the queen spawns, she performs a bog-standard half-lightspeed straight-line walk, trying to avoid retracing her path. Once this gets her a single piece of food, she spawns a gatherer, and from there, the pair move diagonally at lightspeed until food is found, after which the queen spawns a marcher, and the marching strategy takes off. 
 
 General behavior:
 ------

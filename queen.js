@@ -108,6 +108,7 @@ function qdecide_three_march(corner)
 	}
 
 	for (var i = 1; i <= 8; i++)
+	{
 		if (counts[i] === 4) //Too easy
 		{
 			primary = i;
@@ -118,6 +119,7 @@ function qdecide_three_march(corner)
 			primary = i;
 			secondary = singular_colors[0];
 		}
+	}
 
 	if (primary === null)
 	{
@@ -171,6 +173,7 @@ function qdecide_three_queen_stand(corner)
 	}
 
 	for (var i = 1; i <= 8; i++)
+	{
 		if (counts[i] === 4) //Too easy
 		{
 			primary = i;
@@ -181,6 +184,7 @@ function qdecide_three_queen_stand(corner)
 			primary = i;
 			secondary = singular_colors[0];
 		}
+	}
 
 	if (primary === null)
 	{
@@ -191,7 +195,7 @@ function qdecide_three_queen_stand(corner)
 	//Now with those found
 
 	//Reply to stalled with ready
-	if (primary === 3)
+	if (primary === DOWN_STALLED)
 	{
 		return {cell: 4, color:UP_READY};
 	}
