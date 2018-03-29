@@ -158,9 +158,9 @@ function mdecide_four_stairs(corner)
 	var counts = [0,0,0,0,0,0,0,0,0]
 	counts[view[4].color]++;
 	counts[view[corner].color]++;
-	counts[view[CCW[corner][1]]]++;
-	counts[view[CCW[corner][3]]]++;
-	counts[view[CCW[corner][4]]]++;
+	counts[view[CCW[corner][1]].color]++;
+	counts[view[CCW[corner][3]].color]++;
+	counts[view[CCW[corner][4]].color]++;
 
 	//Try to trim away all but two colors, the primary and secondary color
 	var primary = null;
