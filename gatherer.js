@@ -18,8 +18,10 @@ function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
 	if (view[corner].color === DOWN_FOOD && view[CCW[corner][1]].color === DOWN_FOOD)
+	{
 		return {cell:CCW[corner][7]};
-
+	}
+	//return {cell:CCW[corner][2]};
 	//If none of the signals fit, go the color
 	return {cell:4, color:PRECEDENCES[view[corner].color][view[CCW[corner][1]].color]};
 	
@@ -28,8 +30,8 @@ function gdecide_edge_corner_left(corner)
 function gdecide_edge_corner_right(corner)
 {
 	if ([DOWN_MARCH, DOWN_FOOD].includes(view[corner].color) && [DOWN_MARCH, DOWN_FOOD].includes(view[CCW[corner][7]].color))
-		return {cell:CCW[corner][5]};
-	if (is_ally(corner) && view[corner].ant.type === QUEEN])
+		return {cell:CCW[corner][6]};
+	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
 	return {cell:4, color:PRECEDENCES[view[corner].color][view[CCW[corner][1]].color]};
 	
@@ -104,16 +106,18 @@ function gatherer_decision()
 		if (is_ally(try_cell))
 		{
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
+			{
 				marcher_count++;
+			}
 			if (view[try_cell].ant.type === QUEEN)
 				queen_pos = try_cell;
 		}
 	}
-	if (this_ant().food > 0)
+	if (this_ant().food > 0 && marcher_count > 0)
 	{
 		return gatherer_step_watch(gatherer_return());
 	}
-	else if (queen_pos !== null && marcher_count === 1)
+	else if ((queen_pos !== null) && (marcher_count > 0))
 	{
 		return gatherer_step_watch(gatherer_formation());
 	}
@@ -125,5 +129,8 @@ function gatherer_decision()
 	{
 		return sanitize(early_gatherer(), LEFT_ORDER);
 	}
-	else return sanitize(saboteur(), FREE_ORDER);
+	else 
+	{
+		return sanitize(saboteur(), FREE_ORDER);
+	}
 }

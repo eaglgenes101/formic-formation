@@ -13,7 +13,10 @@ function mdecide_one_edge(corner)
 {
 	//This is only meaningful if the edge neighbor is a queen
 	if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === QUEEN)
-		return {cell:CCW[corner][2]};
+	{
+		if (view[CCW[corner][1]].ant.food > 0) return {cell:CCW[corner][3]};
+		else return {cell:CCW[corner][2]};
+	}
 	else //Break away
 		return sanitize(saboteur(), FREE_ORDER);
 }
@@ -48,6 +51,9 @@ function mdecide_edge_corner_left(corner)
 	if (num_realigning_neighbors > 1) return {cell:4, color:UP_REALIGN_END};
 	if (num_ready_neighbors > 1) return {cell:4, color:UP_READY};
 
+	if (view[corner].ant.type === GATHERER && view[CCW[corner][1]].ant.type === QUEEN)
+		return {cell:4};
+
 	//If none of the signals fit, go by the march
 	return {cell:CCW[corner][2]};
 	
@@ -55,6 +61,7 @@ function mdecide_edge_corner_left(corner)
 
 function mdecide_edge_corner_right(corner)
 {
+
 	//Marching, or recovering? 
 	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
 	var num_realigning_neighbors = 0;
@@ -148,7 +155,7 @@ function mdecide_four_stairs(corner)
 {
 	//This pattern, though always still, is most complex, since most signalling happens along this pattern
 	//First, get the color counts in ourself and the surrounding neighbors, since we'll need it all we can get. 
-	var counts = [0,0,0,0,0,0,0,0]
+	var counts = [0,0,0,0,0,0,0,0,0]
 	counts[view[4].color]++;
 	counts[view[corner].color]++;
 	counts[view[CCW[corner][1]]]++;
@@ -160,17 +167,17 @@ function mdecide_four_stairs(corner)
 	var secondary = null;
 	var singular_colors = [];
 	var pair_colors = [];
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 	{
 		if (counts[i] === 1) singular_colors.push(i);
 		else if (counts[i] === 2) pair_colors.push(i);
 	}
 
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 		if (counts[i] === 5) //Too easy
 		{
 			primary = i;
-			secondary = 7;
+			secondary = UP_PANIC;
 		}
 		else if (counts[i] === 4) //Also too easy
 		{
@@ -191,21 +198,21 @@ function mdecide_four_stairs(corner)
 	}
 
 	//Now with those found
-	if ((primary === 0 || secondary === 0))
+	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
 	{
 		if (view[CCW[corner][5]].food === 1) return {cell:4, color:DOWN_FOOD};
 		if (view[CCW[corner][6]].food === 1) return {cell:4, color:DOWN_FOOD};
 		if (view[CCW[corner][7]].food === 1) return {cell:4, color:UP_REALIGN};
 		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
 	}
-	if ((primary === 1 || secondary === 1))
+	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
 	{
 		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
 		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 	}
-	if ((primary === 4 || secondary === 4))
+	if ((primary === UP_REALIGN || secondary === UP_REALIGN))
 	{
 		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
 		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
@@ -235,7 +242,7 @@ function marcher_decision()
 	switch (neighbor_type(corner))
 	{
 		case ONE_EDGE: return marcher_step_watch(mdecide_one_edge(corner));
-		case TWO_EDGE_BENT: return matcher_step_watch(mdecide_two_edge_bent(corner));
+		case TWO_EDGE_BENT: return mar	cher_step_watch(mdecide_two_edge_bent(corner));
 		case TWO_EDGE_STRAIGHT: return marcher_step_watch(mdecide_two_edge_straight(corner));
 		case EDGE_CORNER_LEFT: return marcher_step_watch(mdecide_edge_corner_left(corner));
 		case EDGE_CORNER_RIGHT: return marcher_step_watch(mdecide_edge_corner_right(corner));

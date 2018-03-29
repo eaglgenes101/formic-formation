@@ -17,9 +17,9 @@ function opening_queen()
 
 	//Actively avoid other workers
 	for (try_cell of random_permutation(SCAN_MOVES))
-		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][4]};
+		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][6]};
 
-	//If the color at the current cell is 0 (white), color it 4 (cyan)
+	//If the color at the current cell is 1 (white), color it 6 (green)
 	if (view[4].color !== 6) return {cell: 4, color: 6};
 
 	//If any of the ground is cyan, avoid it.
@@ -33,7 +33,7 @@ function opening_queen()
 			if (view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
 				return {cell:try_cell};
 
-	else return {cell:0};
+	return {cell:0};
 	
 }
 
@@ -89,7 +89,7 @@ function qdecide_three_march(corner)
 {
 	//Propogate signals
 
-	var counts = [0,0,0,0,0,0,0,0]
+	var counts = [0,0,0,0,0,0,0,0,0]
 	counts[view[4].color]++;
 	counts[view[corner].color]++;
 	counts[view[CCW[corner][1]]]++;
@@ -100,17 +100,17 @@ function qdecide_three_march(corner)
 	var secondary = null;
 	var singular_colors = [];
 	var pair_colors = [];
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 	{
 		if (counts[i] === 1) singular_colors.push(i);
 		else if (counts[i] === 2) pair_colors.push(i);
 	}
 
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 		if (counts[i] === 4) //Too easy
 		{
 			primary = i;
-			secondary = 7;
+			secondary = UP_PANIC;
 		}
 		else if (counts[i] === 3) //Also too easy
 		{
@@ -127,7 +127,7 @@ function qdecide_three_march(corner)
 	//Now with those found
 
 	//Reply to stalled with ready
-	if (primary === 3)
+	if (primary === DOWN_STALLED)
 	{
 		return {cell: 4, color:UP_READY};
 	}
@@ -152,7 +152,7 @@ function qdecide_three_queen_stand(corner)
 {
 	//Propogate signals
 
-	var counts = [0,0,0,0,0,0,0,0]
+	var counts = [0,0,0,0,0,0,0,0,0]
 	counts[view[4].color]++;
 	counts[view[corner].color]++;
 	counts[view[CCW[corner][1]]]++;
@@ -163,13 +163,13 @@ function qdecide_three_queen_stand(corner)
 	var secondary = null;
 	var singular_colors = [];
 	var pair_colors = [];
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 	{
 		if (counts[i] === 1) singular_colors.push(i);
 		else if (counts[i] === 2) pair_colors.push(i);
 	}
 
-	for (var i = 0; i < 8; i++)
+	for (var i = 1; i <= 8; i++)
 		if (counts[i] === 4) //Too easy
 		{
 			primary = i;

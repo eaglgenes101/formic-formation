@@ -2,8 +2,10 @@
 
 function is_gatherer_marcher(cell)
 {
-	//First, check that the cell we called on is actually a gatherer in a corner
-	if (!CORNERS.includes(cell) || !is_ally(cell) || view[cell].ant.type !== GATHERER) return false;
+	//First, check that the cell we called on is actually an unladen gatherer
+	if (!is_ally(cell) || view[cell].ant.food > 0 || view[cell].ant.type !== GATHERER) return false;
+
+	if (this_ant().type === QUEEN) return true;
 
 	lh_cell = CCW[cell][1];
 	rh_cell = CCW[cell][7];
@@ -52,6 +54,25 @@ function is_other(cell)
 //Ambiguities are resolved by trying to maintain a counterclockwise ordering of neighbors starting from 0. 
 function view_corner()
 {
+	var scores = [0,0,0,0];
+	for (var i = 0; i < 4; i++)
+	{
+		for (var j = 0; j < 8; j++)
+		{
+			scores[i] *= 2;
+			var try_cell = CCW[CORNERS[i]][j];
+			if (is_ally(try_cell) && (is_like(try_cell) || is_other(try_cell)))
+				scores[i]++;
+		}
+	}
+	if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > scores[3])
+		return CORNERS[0];
+	else if (scores[1] > scores[2] && scores[1] > scores[3])
+		return CORNERS[1];
+	else if (scores[2] > scores[3])
+		return CORNERS[2];
+	else return CORNERS[3];
+	/*
 	//Count the number of corner neighbors
 	var corners = [];
 	for (try_cell of CORNERS)
@@ -114,6 +135,7 @@ function view_corner()
 		}
 		else return 0; //You're on your own here
 	}
+	*/
 }
 
 
@@ -128,9 +150,6 @@ function view_corner()
 /****
   aBa
   ****/const TWO_EDGE_STRAIGHT = 21;
-/*a**
-  *B*
-  a***/const TWO_CORNER_BENT = 22;
 /*b**
   aB*
   ****/const EDGE_CORNER_LEFT = 22;
@@ -155,9 +174,9 @@ function view_corner()
 /*ba*
   aB*
   ****/const THREE_GATHERER_WALK = 34;
-/****
-  ***
-  ****/const THREE_MARCHER_HANG = 35;
+/*ba*
+  *B*
+  **b*/const THREE_MARCHER_HANG = 35;
 /*ba*
   *B*
   *ab*/const FOUR_Z = 40;
@@ -183,7 +202,8 @@ function neighbor_type(top_left)
 		return (edges[1] === CCW[edges[0]][4]) ? TWO_EDGE_STRAIGHT : TWO_EDGE_BENT;
 	else if (corners.length === 1 && edges.length === 1)
 	{
-		if (edges[0] === CCW[top_left][1]) return EDGE_CORNER_LEFT 
+		if (edges[0] === CCW[top_left][1]) return EDGE_CORNER_LEFT;
+		if (edges[0] === CCW[top_left][5]) return EDGE_CORNER_SKEWED;
 		if (edges[0] === CCW[top_left][7]) return EDGE_CORNER_RIGHT;
 		return null;
 	}
@@ -193,8 +213,13 @@ function neighbor_type(top_left)
 		if (edges.includes(CCW[top_left][3]) && edges.includes(CCW[top_left][7])) return THREE_STAND;
 		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][5])) return THREE_RECOVER;
 		if (edges.includes(CCW[top_left][5]) && edges.includes(CCW[top_left][7])) return THREE_QUEEN_STAND;
+		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][7])) return THREE_GATHERER_WALK;
 		//Detect cases where a gatherer is going a walk along the line
 		return null;
+	}
+	else if (corners.length === 2 && edges.length === 1)
+	{
+		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][1])) return THREE_MARCHER_HANG;
 	}
 	else if (corners.length === 2 && edges.length === 2)
 	{
