@@ -180,11 +180,11 @@ function working_signals()
 	var counts = [0,0,0,0,0,0,0,0,0]
 	for (var i = 0; i < 9; i++)
 	{
-		if (is_ally(try_cell) && (is_like(try_cell) || is_other(try_cell)))
+		if (is_ally(i) && (is_like(i) || is_other(i)))
 		{
-			if (try_cell === 4)
+			if (i === 4)
 				counts[view[i].color]++;
-			else if (CORNERS.includes(try_cell)) //Favor downstream signals from corners
+			else if (CORNERS.includes(i)) //Favor downstream signals from corners
 			{
 				if (view[i].color <= 4) counts[view[i].color] += 3;
 				else counts[view[i].color]++;

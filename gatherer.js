@@ -65,6 +65,8 @@ function early_gatherer()
 	if (this_ant().food === 0)
 		for (try_cell of random_permutation(SCAN_MOVES))
 			if (view[try_cell].food > 0 && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
+	if (view[queen_cell].color === DOWN_FOOD)
+		return {cell:CCW[queen_cell][7]};
 	return {cell:CCW[queen_cell][1]};
 	
 }

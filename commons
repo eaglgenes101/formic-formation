@@ -271,6 +271,10 @@ function saboteur()
 
 function multisig_precedence(candidates)
 {
+	if (candidates.length === 0)
+		return 0;
+	if (candidates.length === 1)
+		return candidates[0];
 	var wins = new Array(candidates.length);
 	for (var i = 0; i < candidates.length; i++)
 	{
@@ -297,7 +301,13 @@ function based_precedence(base, candidates)
 	{
 		if (candidates[i] !== base && signal_beats(candidates[i], base)) allowed.push(candidates[i]);
 	}
-	if (allowed.length === 0) allowed.concat(candidates);
+	if (allowed.length === 0) 
+	{
+		for (var i = 0; i < candidates.length; i++)
+		{
+			if (candidates[i] !== base) allowed.push(candidates[i]);
+		}
+	}
 	return multisig_precedence(allowed);
 	
 }

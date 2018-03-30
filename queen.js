@@ -64,6 +64,7 @@ function early_queen()
 function queen_step_watch(candidate)
 {
 	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return {cell:4, color:UP_PANIC};
+	if (candidate.cell === 4) return candidate;
 	if (is_enemy(candidate.cell)) return {cell:4, color:UP_PANIC};
 	if (is_ally(candidate.cell)) return {cell:4};
 	return candidate;
