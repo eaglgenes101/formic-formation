@@ -54,8 +54,8 @@ function early_queen()
 	if (gatherer_cell === null || CORNERS.includes(gatherer_cell)) return {cell:4};
 
 	//Once the gatherer is orthogonal to us, spawn a marcher
-	if (EDGES.includes(gatherer_cell) && this_ant().food > 0) 
-		return {cell:CCW[gatherer_cell][4], type:random_choice(.5)?MARCHER_A:MARCHER_B};
+	if (EDGES.includes(gatherer_cell) && this_ant().food > 2) 
+		return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
 
 	return {cell:CCW[gatherer_cell][7]};
 }
@@ -265,7 +265,7 @@ function queen_decision()
 		{
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
 				marcher_count++;
-			if (view[try_cell].ant.type === GATHERER && is_other(try_cell))
+			if (view[try_cell].ant.type === GATHERER && (EDGES.includes(try_cell) || is_gatherer_marcher(try_cell)))
 				gatherer_count++;
 		}
 	}

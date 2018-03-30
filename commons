@@ -272,7 +272,7 @@ function multisig_precedence(candidates)
 	{
 		for (var j = 0; j < i; j++)
 		{
-			if (singal_beats(candidates[i], candidates[j])) wins[i]++;
+			if (signal_beats(candidates[i], candidates[j])) wins[i]++;
 			else wins[j]++;
 		}
 	}

@@ -14,6 +14,11 @@ function gatherer_step_watch(candidate)
 	return candidate;
 }
 
+function gdecide_two_edge_bent(corner)
+{
+	return {cell:CCW[corner][4]};
+}
+
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
@@ -91,8 +96,9 @@ function gatherer_formation()
 	var corner = view_corner();
 	switch (neighbor_type(corner))
 	{
-		case EDGE_CORNER_LEFT: return marcher_step_watch(gdecide_edge_corner_left(corner));
-		case EDGE_CORNER_RIGHT: return marcher_step_watch(gdecide_edge_corner_right(corner));
+		case EDGE_CORNER_LEFT: return gatherer_step_watch(gdecide_edge_corner_left(corner));
+		case EDGE_CORNER_RIGHT: return gatherer_step_watch(gdecide_edge_corner_right(corner));
+		case TWO_EDGE_BENT: return gatherer_step_watch(gdecide_two_edge_bent(corner));
 		default: return sanitize(early_gatherer(), LEFT_ORDER);
 	}
 }

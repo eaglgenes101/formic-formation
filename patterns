@@ -144,6 +144,9 @@ function view_corner()
 /****
   aB*
   ****/const ONE_EDGE = 10;
+/*a**
+  *B*
+  ****/const ONE_CORNER = 11;
 /****
   aB*
   *a**/const TWO_EDGE_BENT = 20;
@@ -197,6 +200,7 @@ function neighbor_type(top_left)
 	var edges = [];
 	for (try_cell of EDGES)
 		if (is_ally(try_cell) && is_other(try_cell)) edges.push(try_cell);
+	if (corners.length === 1 && edges.length === 0) return ONE_CORNER;
 	if (corners.length === 0 && edges.length === 1) return ONE_EDGE;
 	if (corners.length === 0 && edges.length === 2)
 		return (edges[1] === CCW[edges[0]][4]) ? TWO_EDGE_STRAIGHT : TWO_EDGE_BENT;

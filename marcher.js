@@ -6,8 +6,12 @@ Marchers work by pattern-matching, choosing their movement based on the patterns
 
 */
 
-// 10 functions to determine what to do for each of the 10 canonical views
-// All other views cause dispatch to the saboteur routine
+function mdecide_one_corner(corner)
+{
+	if (view[corner].ant.type === QUEEN)
+		return {cell:4};
+	else return sanitize(saboteur(), FREE_ORDER);
+}
 
 function mdecide_one_edge(corner)
 {
@@ -37,6 +41,10 @@ function mdecide_two_edge_straight(corner)
 
 function mdecide_edge_corner_left(corner)
 {
+	//Special logic for arranging corners correctly
+	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN)
+		return {cell:CCW[corner][3]};
+
 	//Marching, or recovering? 
 	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
 	var num_realigning_neighbors = 0;
@@ -61,6 +69,10 @@ function mdecide_edge_corner_left(corner)
 
 function mdecide_edge_corner_right(corner)
 {
+	//Special logic do early-game correctly
+	if (view[corner].ant.type === GATHERER && view[CCW[corner][7]].ant.type === QUEEN)
+		if (view[CCW[corner][4]].ant.type !== this_ant().type)
+			return {cell:CCW[corner][5]};
 
 	//Marching, or recovering? 
 	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
@@ -115,13 +127,80 @@ function mdecide_three_stand(corner)
 	
 }
 
+function mdecide_three_queen_stand(corner)
+{
+	//Propogate signals
+
+	var counts = [0,0,0,0,0,0,0,0,0]
+	counts[view[4].color]++;
+	counts[view[corner].color]++;
+	counts[view[CCW[corner][1]].color]++;
+	counts[view[CCW[corner][3]].color]++;
+
+	//Try to trim away all but two colors, the primary and secondary color
+	var primary = null;
+	var secondary = null;
+	var singular_colors = [];
+	var pair_colors = [];
+	for (var i = 1; i <= 8; i++)
+	{
+		if (counts[i] === 1) singular_colors.push(i);
+		else if (counts[i] === 2) pair_colors.push(i);
+	}
+
+	for (var i = 1; i <= 8; i++)
+	{
+		if (counts[i] === 4) //Too easy
+		{
+			primary = i;
+			secondary = 7;
+		}
+		else if (counts[i] === 3) //Also too easy
+		{
+			primary = i;
+			secondary = singular_colors[0];
+		}
+	}
+
+	if (primary === null)
+	{
+		primary = multisig_precedence( (pair_colors.length === 0) ? singular_colors : pair_colors);
+		secondary = based_precedence( primary, (pair_colors.length < 2) ? singular_colors : pair_colors);
+	}
+
+	//Now with those found
+	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
+	{
+		if (view[CCW[corner][5]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (view[CCW[corner][6]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (view[CCW[corner][7]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
+	}
+	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
+	{
+		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+	}
+	if ((primary === UP_REALIGN || secondary === UP_REALIGN))
+	{
+		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+	}
+
+	return {cell:4, color:PRECEDENCES[primary][secondary]};
+}
+
 function mdecide_three_recover(corner)
 {
 	//This should only happen in the middle of recovery
 	return {cell:4, color:UP_REALIGN};
 }
 
-function mdecide_three_hang(corner)
+function mdecide_three_marcher_hang(corner)
 {
 	return {cell:4};
 }
@@ -202,9 +281,9 @@ function mdecide_four_stairs(corner)
 	//Now with those found
 	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
 	{
-		if (view[CCW[corner][5]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (view[CCW[corner][5]].food === 1) return {cell:4, color:UP_REALIGN};
 		if (view[CCW[corner][6]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (view[CCW[corner][7]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (view[CCW[corner][7]].food === 1) return {cell:4, color:DOWN_FOOD};
 		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
 	}
 	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
@@ -231,7 +310,13 @@ function mdecide_four_stairs(corner)
 function marcher_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
-	if (view[candidate.cell].food !== 0) return {cell:4, color:DOWN_FOOD};
+	if (view[candidate.cell].food !== 0) 
+	{
+		var sees_queen = false;
+		for (try_cell of EDGES)
+			if (is_ally(try_cell) && view[try_cell].ant.type === QUEEN) sees_queen = true;
+		if (!sees_queen) return {cell:4, color:DOWN_FOOD};
+	}
 	if (is_harvestable(candidate.cell)) return {cell:4, color:DOWN_FOOD};
 	if (view[candidate.cell].ant !== null) return {cell:4, color:UP_PANIC};
 	return candidate;
@@ -243,6 +328,7 @@ function marcher_decision()
 	if (this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
 	switch (neighbor_type(corner))
 	{
+		case ONE_CORNER: return marcher_step_watch(mdecide_one_corner(corner));
 		case ONE_EDGE: return marcher_step_watch(mdecide_one_edge(corner));
 		case TWO_EDGE_BENT: return marcher_step_watch(mdecide_two_edge_bent(corner));
 		case TWO_EDGE_STRAIGHT: return marcher_step_watch(mdecide_two_edge_straight(corner));
@@ -251,7 +337,8 @@ function marcher_decision()
 		case THREE_MARCH: return marcher_step_watch(mdecide_three_march(corner));
 		case THREE_STAND: return marcher_step_watch(mdecide_three_stand(corner));
 		case THREE_RECOVER: return marcher_step_watch(mdecide_three_recover(corner));
-		case THREE_HANG: return marcher_step_watch(mdecide_three_hand(corner));
+		case THREE_QUEEN_STAND: return marcher_step_watch(mdecide_three_queen_stand(corner));
+		case THREE_MARCHER_HANG: return marcher_step_watch(mdecide_three_marcher_hang(corner));
 		case FOUR_Z: return marcher_step_watch(mdecide_four_z(corner));
 		case FOUR_STAIRS: return marcher_step_watch(mdecide_four_stairs(corner));
 		default: return sanitize(saboteur(), FREE_ORDER);
