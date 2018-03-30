@@ -63,6 +63,7 @@ function early_queen()
 //Don't step on food or enemies. Instead, signal. 
 function queen_step_watch(candidate)
 {
+	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return {cell:4, color:UP_PANIC};
 	if (is_enemy(candidate.cell)) return {cell:4, color:UP_PANIC};
 	if (is_ally(candidate.cell)) return {cell:4};
 	return candidate;
@@ -89,43 +90,9 @@ function qdecide_edge_corner_skewed(corner)
 function qdecide_three_march(corner)
 {
 	//Propogate signals
-
-	var counts = [0,0,0,0,0,0,0,0,0]
-	counts[view[4].color]++;
-	counts[view[corner].color]++;
-	counts[view[CCW[corner][1]].color]++;
-	counts[view[CCW[corner][3]].color]++;
-
-	//Try to trim away all but two colors, the primary and secondary color
-	var primary = null;
-	var secondary = null;
-	var singular_colors = [];
-	var pair_colors = [];
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 1) singular_colors.push(i);
-		else if (counts[i] === 2) pair_colors.push(i);
-	}
-
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 4) //Too easy
-		{
-			primary = i;
-			secondary = UP_PANIC;
-		}
-		else if (counts[i] === 3) //Also too easy
-		{
-			primary = i;
-			secondary = singular_colors[0];
-		}
-	}
-
-	if (primary === null)
-	{
-		primary = multisig_precedence( (pair_colors.length === 0) ? singular_colors : pair_colors);
-		secondary = based_precedence( primary, (pair_colors.length < 2) ? singular_colors : pair_colors);
-	}
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
 	//Now with those found
 
@@ -140,6 +107,18 @@ function qdecide_three_march(corner)
 
 function qdecide_three_recover(corner)
 {
+	//If the signal is a food signal or a gatherer signal, don't move
+	
+	//Propogate signals
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
+
+	if (primary === DOWN_FOOD || secondary === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	if (primary === DOWN_GATHERER || secondary === DOWN_GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	
 	//With probability QUEEN_SPAWN_PROB, spawn a worker. 
 	if (random_choice(QUEEN_SPAWN_PROB))
 	{
@@ -154,43 +133,9 @@ function qdecide_three_recover(corner)
 function qdecide_three_queen_stand(corner)
 {
 	//Propogate signals
-
-	var counts = [0,0,0,0,0,0,0,0,0]
-	counts[view[4].color]++;
-	counts[view[corner].color]++;
-	counts[view[CCW[corner][1]].color]++;
-	counts[view[CCW[corner][3]].color]++;
-
-	//Try to trim away all but two colors, the primary and secondary color
-	var primary = null;
-	var secondary = null;
-	var singular_colors = [];
-	var pair_colors = [];
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 1) singular_colors.push(i);
-		else if (counts[i] === 2) pair_colors.push(i);
-	}
-
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 4) //Too easy
-		{
-			primary = i;
-			secondary = 7;
-		}
-		else if (counts[i] === 3) //Also too easy
-		{
-			primary = i;
-			secondary = singular_colors[0];
-		}
-	}
-
-	if (primary === null)
-	{
-		primary = multisig_precedence( (pair_colors.length === 0) ? singular_colors : pair_colors);
-		secondary = based_precedence( primary, (pair_colors.length < 2) ? singular_colors : pair_colors);
-	}
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
 	//Now with those found
 

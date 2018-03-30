@@ -47,17 +47,14 @@ function mdecide_edge_corner_left(corner)
 
 	//Marching, or recovering? 
 	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
-	var num_realigning_neighbors = 0;
-	var num_ready_neighbors = 0;
-	if (view[4].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[corner].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][1]].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[4].color === UP_READY) num_ready_neighbors++;
-	if (view[corner].color === UP_READY) num_ready_neighbors++;
-	if (view[CCW[corner][1]].color === UP_READY) num_ready_neighbors++;
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
-	if (num_realigning_neighbors > 1) return {cell:4, color:UP_REALIGN_END};
-	if (num_ready_neighbors > 1) return {cell:4, color:UP_READY};
+	if (primary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
+	if (primary === UP_READY) return {cell:4, color:UP_READY};
+	if (secondary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
+	if (secondary === UP_READY) return {cell:4, color:UP_READY};
 
 	if (view[corner].ant.type === GATHERER && view[CCW[corner][1]].ant.type === QUEEN)
 		return {cell:4};
@@ -71,23 +68,19 @@ function mdecide_edge_corner_right(corner)
 {
 	//Special logic do early-game correctly
 	if (view[corner].ant.type === GATHERER && view[CCW[corner][7]].ant.type === QUEEN)
-		if (view[CCW[corner][4]].ant.type !== this_ant().type)
+		if (is_ally(CCW[corner][4]) && view[CCW[corner][4]].ant.type !== this_ant().type)
 			return {cell:CCW[corner][5]};
 
 	//Marching, or recovering? 
 	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
-	var num_realigning_neighbors = 0;
-	var num_ready_neighbors = 0;
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
-	if (view[4].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[corner].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][7]].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[4].color === UP_READY) num_ready_neighbors++;
-	if (view[corner].color === UP_READY) num_ready_neighbors++;
-	if (view[CCW[corner][7]].color === UP_READY) num_ready_neighbors++;
-
-	if (num_realigning_neighbors > 1) return {cell:4, color:UP_REALIGN_END};
-	if (num_ready_neighbors > 1) return {cell:4, color:UP_READY};
+	if (primary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
+	if (primary === UP_READY) return {cell:4, color:UP_READY};
+	if (secondary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
+	if (secondary === UP_READY) return {cell:4, color:UP_READY};
 
 	//If none of the signals fit, go the color
 	return {cell:4, color:DOWN_MARCH};
@@ -130,68 +123,38 @@ function mdecide_three_stand(corner)
 function mdecide_three_queen_stand(corner)
 {
 	//Propogate signals
-
-	var counts = [0,0,0,0,0,0,0,0,0]
-	counts[view[4].color]++;
-	counts[view[corner].color]++;
-	counts[view[CCW[corner][1]].color]++;
-	counts[view[CCW[corner][3]].color]++;
-
-	//Try to trim away all but two colors, the primary and secondary color
-	var primary = null;
-	var secondary = null;
-	var singular_colors = [];
-	var pair_colors = [];
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 1) singular_colors.push(i);
-		else if (counts[i] === 2) pair_colors.push(i);
-	}
-
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 4) //Too easy
-		{
-			primary = i;
-			secondary = 7;
-		}
-		else if (counts[i] === 3) //Also too easy
-		{
-			primary = i;
-			secondary = singular_colors[0];
-		}
-	}
-
-	if (primary === null)
-	{
-		primary = multisig_precedence( (pair_colors.length === 0) ? singular_colors : pair_colors);
-		secondary = based_precedence( primary, (pair_colors.length < 2) ? singular_colors : pair_colors);
-	}
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
 	//Now with those found
 	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
 	{
-		if (view[CCW[corner][5]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (view[CCW[corner][7]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (view[CCW[corner][1]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (view[CCW[corner][2]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (view[CCW[corner][3]].food === 1) return {cell:4, color:DOWN_FOOD};
 		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
 	}
 	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
 	{
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (view[CCW[corner][1]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (view[CCW[corner][2]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (view[CCW[corner][3]].food === 1) return {cell:4, color:DOWN_FOOD};
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 	}
 	if ((primary === UP_REALIGN || secondary === UP_REALIGN))
 	{
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (view[CCW[corner][2]].food === 1) return {cell:4, color:UP_REALIGN};
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
 	}
 
 	return {cell:4, color:PRECEDENCES[primary][secondary]};
+	//Otherwise just keep going
+	//return {cell:CCW[corner][6]};
 }
 
 function mdecide_three_recover(corner)
@@ -232,51 +195,10 @@ function mdecide_four_z(corner)
 
 function mdecide_four_stairs(corner)
 {
-	//This pattern, though always still, is most complex, since most signalling happens along this pattern
-	//First, get the color counts in ourself and the surrounding neighbors, since we'll need it all we can get. 
-	var counts = [0,0,0,0,0,0,0,0,0]
-	counts[view[4].color]++;
-	counts[view[corner].color]++;
-	counts[view[CCW[corner][1]].color]++;
-	counts[view[CCW[corner][3]].color]++;
-	counts[view[CCW[corner][4]].color]++;
-
-	//Try to trim away all but two colors, the primary and secondary color
-	var primary = null;
-	var secondary = null;
-	var singular_colors = [];
-	var pair_colors = [];
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 1) singular_colors.push(i);
-		else if (counts[i] === 2) pair_colors.push(i);
-	}
-
-	for (var i = 1; i <= 8; i++)
-	{
-		if (counts[i] === 5) //Too easy
-		{
-			primary = i;
-			secondary = UP_PANIC;
-		}
-		else if (counts[i] === 4) //Also too easy
-		{
-			primary = i;
-			secondary = singular_colors[0];
-		}
-		else if (counts[i] === 3)
-		{
-			primary = i;
-			if (singular_colors.length === 2) secondary = based_precedence(primary, singular_colors);
-			else secondary = pair_colors[0];
-		}
-	}
-
-	if (primary === null)
-	{
-		primary = multisig_precedence( (pair_colors.length === 0) ? singular_colors : pair_colors);
-		secondary = based_precedence( primary, (pair_colors.length < 2) ? singular_colors : pair_colors);
-	}
+	//Propogate signals
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
 
 	//Now with those found
 	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))

@@ -22,7 +22,11 @@ function gdecide_two_edge_bent(corner)
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
-	if (view[corner].color === DOWN_FOOD && view[CCW[corner][1]].color === DOWN_FOOD)
+
+	var sigs = working_signals();
+	var primary = sigs[0];
+	var secondary = sigs[1];
+	if (primary === DOWN_FOOD || secondary == DOWN_FOOD)
 	{
 		return {cell:CCW[corner][7]};
 	}
@@ -60,7 +64,7 @@ function early_gatherer()
 	//If a food cell is adjacent to the queen, get it
 	if (this_ant().food === 0)
 		for (try_cell of random_permutation(SCAN_MOVES))
-			if (view[try_cell].food > 0 && NEIGHBORS[try_cell].includes(queen_cell)) return {cell:try_cell};
+			if (view[try_cell].food > 0 && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
 	return {cell:CCW[queen_cell][1]};
 	
 }

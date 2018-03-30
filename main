@@ -121,12 +121,17 @@ function display_decision(candidate)
 
 
 
+
+
 function debug_view(decision)
 {
 	var corner = view_corner();
-	debug(ant_char(CCW[corner][0]) + ant_char(CCW[corner][7]) + ant_char(CCW[corner][6]) + "Type: " + display_type(this_ant().type));
-	debug(ant_char(CCW[corner][1]) + ant_char(            4 ) + ant_char(CCW[corner][5]) + "Formation: " + neighbor_type(corner));
-	debug(ant_char(CCW[corner][2]) + ant_char(CCW[corner][3]) + ant_char(CCW[corner][4]) + display_decision(decision));
+	var sigs = working_signals();
+	debug("Type: " + display_type(this_ant().type));
+	debug(ant_char(CCW[corner][0]) + ant_char(CCW[corner][7]) + ant_char(CCW[corner][6]) + "Formation: " + neighbor_type(corner));
+	debug(ant_char(CCW[corner][1]) + ant_char(            4 ) + ant_char(CCW[corner][5]) + "Primary: " + display_color(sigs[0]));
+	debug(ant_char(CCW[corner][2]) + ant_char(CCW[corner][3]) + ant_char(CCW[corner][4]) + "Secondary: " + display_color(sigs[1]));
+	debug(display_decision(decision));
 	debug(this_ant().type === QUEEN ? "============" : "------");
 }
 
