@@ -27,7 +27,7 @@ function gdecide_edge_corner_left(corner)
 	}
 	//return {cell:CCW[corner][2]};
 	//If none of the signals fit, go the color
-	return {cell:4, color:PRECEDENCES[view[corner].color][view[CCW[corner][1]].color]};
+	return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][1]].color]};
 	
 }
 
@@ -37,7 +37,7 @@ function gdecide_edge_corner_right(corner)
 		return {cell:CCW[corner][6]};
 	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
-	return {cell:4, color:PRECEDENCES[view[corner].color][view[CCW[corner][1]].color]};
+	return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][7]].color]};
 	
 }
 

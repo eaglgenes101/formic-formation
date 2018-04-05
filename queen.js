@@ -93,7 +93,7 @@ function qdecide_edge_corner_skewed(corner)
 
 function qdecide_three_march(corner)
 {
-	var upstream = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var upstream = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
 
 	//Now with those found
 
@@ -103,7 +103,7 @@ function qdecide_three_march(corner)
 		return {cell: 4, color:UP_READY};
 	}
 	
-	return {cell:4, color:PRECEDENCES[view[CCW[corner][3]].color][upstream]};
+	return {cell:4, color:PUTPRECS[view[CCW[corner][3]].color][upstream]};
 }
 
 function qdecide_three_recover(corner)
@@ -111,7 +111,7 @@ function qdecide_three_recover(corner)
 	//The gatherer jumped the gun here
 	//If the signal is a food signal or a gatherer signal, don't move
 
-	var upstream = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var upstream = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
 
 	if (upstream === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
@@ -134,7 +134,7 @@ function qdecide_three_recover(corner)
 
 function qdecide_three_queen_stand(corner)
 {
-	var upstream = PRECEDENCES[view[corner].color][view[CCW[corner][7]].color];
+	var upstream = GETPRECS[view[corner].color][view[CCW[corner][7]].color];
 
 	//Now with those found
 

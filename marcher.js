@@ -18,7 +18,7 @@ function linewatch(corner)
 		return {cell:4, color:DOWN_FOOD};
 	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
-	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][1]))
+	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
 		return {cell:4, color:UP_REALIGN};
 	return null;
 }
@@ -39,13 +39,13 @@ function linewatch2(corner)
 		return {cell:4, color:DOWN_FOOD};
 	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
-	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][1]))
+	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
 		return {cell:4, color:UP_REALIGN};
 	if (view[CCW[corner][2]].food === 1)
 		return {cell:4, color:DOWN_FOOD};
 	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
-	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]))
+	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type !== QUEEN)
 		return {cell:4, color:UP_REALIGN};
 	return null;
 }
@@ -75,7 +75,7 @@ function mdecide_two_edge_bent(corner)
 {
 	//In recovery, do the moving step
 	if ([DOWN_STALLED, UP_READY].includes(view[CCW[corner][1]].color) && [DOWN_STALLED, UP_READY].includes(view[4].color))
-		return {cell:4, color:PRECEDENCES[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
+		return {cell:4, color:PUTPRECS[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
 	return {cell:CCW[corner][2]}; 
 }
 
@@ -93,7 +93,7 @@ function mdecide_edge_corner_left(corner)
 	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][3]};
 
-	var down_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
 
 	//Marching, or recovering? 
 	if (down_sig === UP_REALIGN)
@@ -131,8 +131,8 @@ function mdecide_edge_corner_right(corner)
 		if (is_ally(CCW[corner][4]) && view[CCW[corner][4]].ant.type !== this_ant().type)
 			return {cell:CCW[corner][5]};
 
-	var down_sig1 = PRECEDENCES[view[corner].color][view[CCW[corner][7]].color];
-	var down_sig2 = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig1 = GETPRECS[view[corner].color][view[CCW[corner][7]].color];
+	var down_sig2 = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = (down_sig2 === DOWN_MARCH) ? down_sig1 : down_sig2;
 
 	//Marching, or recovering? 
@@ -172,14 +172,14 @@ function mdecide_three_march(corner)
 	if (view[corner].color === UP_REALIGN_END && view[CCW[corner][3]].color !== DOWN_MARCH) 
 		return {cell:4, color:UP_REALIGN};
 
-	var down_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
 	var up_sig = view[CCW[corner][3]].color;
 
 	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig))
 	{
 		var provisional = linewatch(CCW[corner][4]);
 		if (provisional !== null) return provisional;
-		return {cell:4, color:PRECEDENCES[down_sig][up_sig]};
+		return {cell:4, color:PUTPRECS[down_sig][up_sig]};
 	}
 
 	//If none matches our current situation, return
@@ -222,7 +222,7 @@ function mdecide_three_queen_stand(corner)
 		var provisional = linewatch(corner);
 		if (provisional !== null) return provisional;
 
-		var down_sig = PRECEDENCES[view[CCW[corner][0]].color][view[CCW[corner][7]].color];
+		var down_sig = GETPRECS[view[corner].color][view[CCW[corner][7]].color];
 	
 		return {cell:4, color:down_sig};
 	}
@@ -250,7 +250,7 @@ function mdecide_three_marcher_hang(corner)
 	//We know that upstream is in the direction of cell 4, so
 	//transmit signals on behalf of the two ants at cells 3 and 4
 	if (view[corner].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
-	return {cell:4, color:PRECEDENCES[view[CCW[corner][3]].color][view[CCW[corner][4]].color]};
+	return {cell:4, color:PUTPRECS[view[CCW[corner][3]].color][view[CCW[corner][4]].color]};
 }
 
 function mdecide_four_z(corner)
@@ -259,10 +259,10 @@ function mdecide_four_z(corner)
 	//But this is usually a normal-march thing, so check both sides for indicators
 	var provisional = linewatch2(CCW[corner][4]);
 	if (provisional !== null) return provisional;
-	var up_sig = PRECEDENCES[view[corner].color][view[CCW[corner][7]].color];
-	var down_sig = PRECEDENCES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
+	var up_sig = GETPRECS[view[corner].color][view[CCW[corner][7]].color];
+	var down_sig = GETPRECS[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
-	return {cell:4, color:PRECEDENCES[up_sig][down_sig]};
+	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 }
 
 function mdecide_four_stairs(corner)
@@ -291,10 +291,10 @@ function mdecide_four_stairs(corner)
 	}
 	
 
-	var up_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
-	var down_sig = PRECEDENCES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
+	var up_sig = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig = GETPRECS[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
-	return {cell:4, color:PRECEDENCES[up_sig][down_sig]};
+	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 	
 }
 
