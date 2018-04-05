@@ -68,6 +68,7 @@ function display_color(c)
 {
 	switch (c)
 	{
+		case 0: return "an undefined color";
 		case 1: return "white (Down March)";
 		case 2: return "yellow (Down Food)";
 		case 3: return "magenta (Down Stalled)";
@@ -97,6 +98,30 @@ function display_direction(d)
 	}
 }
 
+function display_formation(corner)
+{
+	switch (neighbor_type(corner))
+	{
+		case ONE_EDGE: return ONE_EDGE + " (one edge)";
+		case ONE_CORNER: return ONE_CORNER + " (one corner)";
+		case TWO_EDGE_BENT: return TWO_EDGE_BENT + " (two edge bent)";
+		case TWO_EDGE_STRAIGHT: return TWO_EDGE_STRAIGHT + " (two edge straight)";
+		case EDGE_CORNER_LEFT: return EDGE_CORNER_LEFT + " (edge corner left)";
+		case EDGE_CORNER_RIGHT: return EDGE_CORNER_RIGHT + " (edge corner right)";
+		case EDGE_CORNER_SKEWED: return EDGE_CORNER_SKEWED + " (edge corner skewed)";
+		case THREE_MARCH: return THREE_MARCH + " (three march)";
+		case THREE_STAND: return THREE_STAND + " (three stand)";
+		case THREE_RECOVER: return THREE_RECOVER + " (three recover)";
+		case THREE_QUEEN_STAND: return THREE_QUEEN_STAND + " (three queen stand)";
+		case THREE_GATHERER_WALK: return THREE_GATHERER_WALK + " (three gatherer walk)";
+		case THREE_MARCHER_HANG: return THREE_MARCHER_HANG + " (three marcher hang)";
+		case FOUR_Z: return FOUR_Z + " (four z)";
+		case FOUR_STAIRS: return FOUR_STAIRS + " (four stairs)";
+		case FOUR_BENT: return FOUR_BENT + " (four bent)";
+		default: return "unknown pattern";
+	}
+}
+
 function display_decision(candidate)
 {
 	var corner = view_corner();
@@ -119,18 +144,16 @@ function display_decision(candidate)
 		return "Moving " + display_direction(cell_moving);
 }
 
-
-
-
-
-function debug_view(decision)
+function debug_view()
 {
 	var corner = view_corner();
-	var sigs = working_signals();
-	debug("Type: " + display_type(this_ant().type));
-	debug(ant_char(CCW[corner][0]) + ant_char(CCW[corner][7]) + ant_char(CCW[corner][6]) + "Formation: " + neighbor_type(corner));
-	debug(ant_char(CCW[corner][1]) + ant_char(            4 ) + ant_char(CCW[corner][5]) + "Primary: " + display_color(sigs[0]));
-	debug(ant_char(CCW[corner][2]) + ant_char(CCW[corner][3]) + ant_char(CCW[corner][4]) + "Secondary: " + display_color(sigs[1]));
+	debug(ant_char(CCW[corner][0]) + ant_char(CCW[corner][7]) + ant_char(CCW[corner][6]) + "Type: " + display_type(this_ant().type));
+	debug(ant_char(CCW[corner][1]) + ant_char(            4 ) + ant_char(CCW[corner][5]) + "Formation: " + display_formation(corner));
+	debug(ant_char(CCW[corner][2]) + ant_char(CCW[corner][3]) + ant_char(CCW[corner][4]));
+}
+
+function debug_decision(decision)
+{
 	debug(display_decision(decision));
 	debug(this_ant().type === QUEEN ? "============" : "------");
 }

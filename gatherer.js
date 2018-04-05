@@ -8,8 +8,7 @@ The gatherer is the right hand (wo)man to the queen. She guides her during the e
 function gatherer_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
-	if (view[candidate.cell].food !== 0 && this_ant().food > 0) return {cell:4, color:UP_PANIC};
-	if (is_harvestable(candidate.cell)) return {cell:4, color:DOWN_FOOD};
+	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return {cell:4, color:UP_PANIC};
 	if (view[candidate.cell].ant !== null) return {cell:4, color:UP_PANIC};
 	return candidate;
 }
@@ -22,11 +21,7 @@ function gdecide_two_edge_bent(corner)
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
-
-	var sigs = working_signals();
-	var primary = sigs[0];
-	var secondary = sigs[1];
-	if (primary === DOWN_FOOD || secondary == DOWN_FOOD)
+	if (view[corner].color === DOWN_FOOD && view[CCW[corner][1]].color === DOWN_FOOD)
 	{
 		return {cell:CCW[corner][7]};
 	}
@@ -44,6 +39,13 @@ function gdecide_edge_corner_right(corner)
 		return {cell:CCW[corner][1]};
 	return {cell:4, color:PRECEDENCES[view[corner].color][view[CCW[corner][1]].color]};
 	
+}
+
+function gdecide_three_gatherer_walk(corner)
+{
+	if (view[CCW[corner][7]].color == DOWN_FOOD)
+		return {cell: CCW[corner][6]};
+	return {cell:CCW[corner][2]};
 }
 
 function early_gatherer()
@@ -105,6 +107,7 @@ function gatherer_formation()
 		case EDGE_CORNER_LEFT: return gatherer_step_watch(gdecide_edge_corner_left(corner));
 		case EDGE_CORNER_RIGHT: return gatherer_step_watch(gdecide_edge_corner_right(corner));
 		case TWO_EDGE_BENT: return gatherer_step_watch(gdecide_two_edge_bent(corner));
+		case THREE_GATHERER_WALK: return gatherer_step_watch(gdecide_three_gatherer_walk(corner));
 		default: return sanitize(early_gatherer(), LEFT_ORDER);
 	}
 }

@@ -1,4 +1,5 @@
 
+debug_view();
 var decision = main_decide();
-debug_view(decision);
+debug_decision(decision);
 return decision;

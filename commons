@@ -32,13 +32,13 @@ const NEARS = [		[0,1,3],		[1,0,2,4],		[2,5,1],
 			[3,6,0,7],		[1,3,5,7,4],		[5,2,8,4],
 			[6,3,7],		[7,8,6,4],		[8,7,5]			];
 const PRECEDENCES = [	[1,1,2,3,4,5,6,7,8],
-			[1,1,2,3,1,5,6,1,1],
-			[2,2,2,2,4,2,2,2,2],
-			[3,3,2,3,4,3,3,3,3],
-			[4,1,4,4,4,4,4,7,4],
+			[1,1,2,1,4,5,6,1,1],
+			[2,2,2,3,4,2,2,2,2],
+			[3,1,3,3,3,3,3,7,3],
+			[4,4,4,3,4,4,4,7,4],
 			[5,5,2,3,4,5,5,5,5],
 			[6,6,2,3,4,5,6,6,6],
-			[7,1,2,3,7,5,6,7,7],
+			[7,1,2,7,7,5,6,7,7],
 			[8,1,2,3,4,5,6,7,8]	];
 
 //Downstream signal colors (travel instantaneously)
@@ -60,8 +60,9 @@ const FINAL_SEED = 2338395782;
 //Tuneables
 const SABOTEUR_RECOLOR_PROB = 0.8;
 const SABOTEUR_OBSTRUCT_PROB = 0.8;
-const QUEEN_SPAWN_PROB = 0.8;
-const SIGNAL_DIFFERENCE_THRESHOLD = 2;
+const QUEEN_SPAWN_PROB_MIN = 0.8;
+const QUEEN_SPAWN_PROB_DECAY = 0.01;
+const SIGNAL_DIFFERENCE_THRESHOLD = 3;
 
 /*
 Functions shared by all ant types
@@ -222,7 +223,7 @@ function saboteur()
 			if (random_choice(SABOTEUR_OBSTRUCT_PROB)) return {cell:try_cell};
 		}
 
-	var c = this_ant().type+1
+	var c = UP_PANIC;
 	for (try_cell of random_subset(SCAN_MOVES, 7))
 		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
 		{
@@ -268,51 +269,4 @@ function saboteur()
 		return {cell:1};
 	}
 }
-
-function multisig_precedence(candidates)
-{
-	if (candidates.length === 0)
-		return 0;
-	if (candidates.length === 1)
-		return candidates[0];
-	var wins = new Array(candidates.length);
-	for (var i = 0; i < candidates.length; i++)
-	{
-		for (var j = 0; j < i; j++)
-		{
-			if (signal_beats(candidates[i], candidates[j])) wins[i]++;
-			else wins[j]++;
-		}
-	}
-	var max_count = Math.max( ...wins);
-	var has_max_count = [];
-	for (var i = 0; i < candidates.length; i++)
-		if (wins[i] === max_count) has_max_count.push(i);
-	if (has_max_count.length === 1) return has_max_count[0];
-	else if (has_max_count.length === candidates.length) return candidates[0];
-	else return multisig_precedence(has_max_count);
-	
-}
-
-function based_precedence(base, candidates)
-{
-	var allowed = [];
-	for (var i = 0; i < candidates.length; i++)
-	{
-		if (candidates[i] !== base && signal_beats(candidates[i], base)) allowed.push(candidates[i]);
-	}
-	if (allowed.length === 0) 
-	{
-		for (var i = 0; i < candidates.length; i++)
-		{
-			if (candidates[i] !== base) allowed.push(candidates[i]);
-		}
-	}
-	return multisig_precedence(allowed);
-	
-}
-
-
-
-
 

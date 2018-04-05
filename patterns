@@ -74,8 +74,6 @@ function view_corner()
 	else return CORNERS[3];
 }
 
-
-
 //Formation position constants
 /****
   aB*
@@ -113,9 +111,9 @@ function view_corner()
 /*ba*
   aB*
   ****/const THREE_GATHERER_WALK = 34;
-/*ba*
+/*b**
   *B*
-  **b*/const THREE_MARCHER_HANG = 35;
+  *ab*/const THREE_MARCHER_HANG = 35;
 /*ba*
   *B*
   *ab*/const FOUR_Z = 40;
@@ -159,7 +157,7 @@ function neighbor_type(top_left)
 	}
 	else if (corners.length === 2 && edges.length === 1)
 	{
-		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][1])) return THREE_MARCHER_HANG;
+		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][3])) return THREE_MARCHER_HANG;
 	}
 	else if (corners.length === 2 && edges.length === 2)
 	{
@@ -172,71 +170,6 @@ function neighbor_type(top_left)
 		return null;
 	}
 	else return null;
-}
-
-
-function working_signals()
-{
-	var counts = [0,0,0,0,0,0,0,0,0]
-	for (var i = 0; i < 9; i++)
-	{
-		if (is_ally(i) && (is_like(i) || is_other(i)))
-		{
-			if (i === 4)
-				counts[view[i].color]++;
-			else if (CORNERS.includes(i)) //Favor downstream signals from corners
-			{
-				if (view[i].color <= 4) counts[view[i].color] += 3;
-				else counts[view[i].color]++;
-			}
-			else //Favor upstream signals from edges
-			{
-				if (view[i].color >= 5) counts[view[i].color] += 3;
-				else counts[view[i].color]++;
-			}
-		}
-		else
-		{
-			counts[view[i].color]++;
-		}
-	}
-
-	//Try to trim away all but two colors, the primary and secondary color
-	var primary = 0;
-	var secondary = 0;
-	for (;;)
-	{
-		var count_num = Math.max(...counts);
-		if (count_num <= 0) break;
-		var has_count = [];
-		for (var j = 1; j <= 8; j++)
-			if (counts[j] > 0 && counts[j] >= count_num - SIGNAL_DIFFERENCE_THRESHOLD) has_count.push(j);
-
-		if (primary === 0)
-		{
-			if (has_count.length === 1)
-				primary = has_count[0];
-			else if (has_count.length > 1)
-			{
-				primary = multisig_precedence(has_count);
-				secondary = based_precedence(primary, has_count);
-			}
-		}
-		else if (secondary === 0)
-		{
-			if (has_count.length === 1)
-				secondary = has_count[0];
-			else if (has_count.length > 1)
-			{
-				secondary = based_precedence(primary, has_count);
-			}
-		}
-		else break;
-		
-		for (var j = 1; j <= 8; j++)
-			if (counts[j] >= count_num) counts[j] = 0;
-	}
-	return [primary, secondary];
 }
 
 

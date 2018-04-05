@@ -6,6 +6,50 @@ Marchers work by pattern-matching, choosing their movement based on the patterns
 
 */
 
+//Common line-watching function for signalling and stalled ants
+function linewatch(corner)
+{
+	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_GATHERER};
+	if (view[CCW[corner][6]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][1]))
+		return {cell:4, color:UP_REALIGN};
+	return null;
+}
+
+function linewatch2(corner)
+{
+	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_GATHERER};
+	if (view[CCW[corner][6]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][1]))
+		return {cell:4, color:UP_REALIGN};
+	if (view[CCW[corner][2]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]))
+		return {cell:4, color:UP_REALIGN};
+	return null;
+}
+
 function mdecide_one_corner(corner)
 {
 	if (view[corner].ant.type === QUEEN)
@@ -15,20 +59,24 @@ function mdecide_one_corner(corner)
 
 function mdecide_one_edge(corner)
 {
-	//This is only meaningful if the edge neighbor is a queen
-	if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === QUEEN)
+	//This occurs when we march forward as the end, but the next corner neighbor is obstructed
+	//Find this condition
+	if (view[CCW[corner][1]].color === DOWN_MARCH)
 	{
-		if (view[CCW[corner][1]].ant.food > 0) return {cell:CCW[corner][3]};
-		else return {cell:CCW[corner][2]};
+		if (view[CCW[corner][2]].food === 1)
+			return {cell:corner};
 	}
-	else //Break away
-		return sanitize(saboteur(), FREE_ORDER);
+
+	//Break away
+	return sanitize(saboteur(), FREE_ORDER);
 }
 
 function mdecide_two_edge_bent(corner)
 {
-	//TODO: Validate that we're in recovery, or one of the neighbors is a queen
-	return {cell: CCW[corner][2]}; 
+	//In recovery, do the moving step
+	if ([DOWN_STALLED, UP_READY].includes(view[CCW[corner][1]].color) && [DOWN_STALLED, UP_READY].includes(view[4].color))
+		return {cell:4, color:PRECEDENCES[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
+	return {cell:CCW[corner][2]}; 
 }
 
 function mdecide_two_edge_straight(corner)
@@ -45,19 +93,31 @@ function mdecide_edge_corner_left(corner)
 	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][3]};
 
+	var down_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+
 	//Marching, or recovering? 
-	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
-	var sigs = working_signals();
-	var primary = sigs[0];
-	var secondary = sigs[1];
+	if (down_sig === UP_REALIGN)
+		return {cell:4, color:UP_REALIGN_END};
 
-	if (primary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
-	if (primary === UP_READY) return {cell:4, color:UP_READY};
-	if (secondary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
-	if (secondary === UP_READY) return {cell:4, color:UP_READY};
+	if (down_sig === UP_READY)
+		return {cell:4, color:DOWN_MARCH};
 
-	if (view[corner].ant.type === GATHERER && view[CCW[corner][1]].ant.type === QUEEN)
-		return {cell:4};
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
+	{
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null) 
+		{
+			if (provisional.color === UP_REALIGN)
+				return {cell:4, color:UP_REALIGN_END};
+			return provisional;
+		}
+		if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
+		{
+			//No gatherer in sight? send down DOWN_STALLED
+			return {cell:4, color:DOWN_STALLED};
+		}
+		return {cell:4, color:down_sig};
+	}
 
 	//If none of the signals fit, go by the march
 	return {cell:CCW[corner][2]};
@@ -71,34 +131,58 @@ function mdecide_edge_corner_right(corner)
 		if (is_ally(CCW[corner][4]) && view[CCW[corner][4]].ant.type !== this_ant().type)
 			return {cell:CCW[corner][5]};
 
-	//Marching, or recovering? 
-	//Guess by sampling ourselves and our two neighbors for UP_REALIGN
-	var sigs = working_signals();
-	var primary = sigs[0];
-	var secondary = sigs[1];
+	var down_sig1 = PRECEDENCES[view[corner].color][view[CCW[corner][7]].color];
+	var down_sig2 = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig = (down_sig2 === DOWN_MARCH) ? down_sig1 : down_sig2;
 
-	if (primary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
-	if (primary === UP_READY) return {cell:4, color:UP_READY};
-	if (secondary === UP_REALIGN) return {cell:4, color:UP_REALIGN_END};
-	if (secondary === UP_READY) return {cell:4, color:UP_READY};
+	//Marching, or recovering? 
+	if (down_sig === UP_REALIGN)
+		return {cell:4, color:UP_REALIGN_END};
+
+	if (down_sig === UP_READY)
+		return {cell:4, color:DOWN_MARCH};
+
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
+	{
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null) 
+		{
+			if (provisional.color === UP_REALIGN)
+				return {cell:4, color:UP_REALIGN_END};
+			return provisional;
+		}
+		if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
+		{
+			//No gatherer in sight? send down DOWN_STALLED
+			return {cell:4, color:DOWN_STALLED};
+		}
+		return {cell:4, color:down_sig};
+	}
 
 	//If none of the signals fit, go the color
-	return {cell:4, color:DOWN_MARCH};
+	return {cell:4, color:down_sig};
 	
 }
 
 function mdecide_three_march(corner)
 {
-	//If we need to stay still, there will be UP_REALIGN_END at the hanging edge
-	//First, read up on the colors
-	var corner_color = view[corner].color //Needed?
-	var attached_edge_color = view[CCW[corner][1]].color //Needed?
-	var hanging_edge_color = view[CCW[corner][3]].color
+	//If we need to stay still, there will be UP_REALIGN_END near the top
 
 	//Then decide
-	if (hanging_edge_color === UP_REALIGN_END) return {cell:4, color:UP_REALIGN};
+	if (view[corner].color === UP_REALIGN_END && view[CCW[corner][3]].color !== DOWN_MARCH) 
+		return {cell:4, color:UP_REALIGN};
 
-	//If neither matches our current situation, return
+	var down_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var up_sig = view[CCW[corner][3]].color;
+
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig))
+	{
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null) return provisional;
+		return {cell:4, color:PRECEDENCES[down_sig][up_sig]};
+	}
+
+	//If none matches our current situation, return
 	return {cell:CCW[corner][2]};
 	
 }
@@ -107,13 +191,18 @@ function mdecide_three_stand(corner)
 {
 	//We stay still here. But which signal do we send?
 	//If we're surrounded by UP_REALIGN, then send that
-	var num_realigning_neighbors = 0;
-	if (view[4].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[corner].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][3]].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][7]].color === UP_REALIGN) num_realigning_neighbors++;
-
-	if (num_realigning_neighbors > 1) return {cell:4, color:UP_REALIGN_END};
+	var num_realigning = 0;
+	var num_marching = 0;
+	if ([UP_REALIGN, UP_REALIGN_END].includes(view[4].color)) num_realigning++;
+	if ([UP_REALIGN, UP_REALIGN_END].includes(view[corner].color)) num_realigning++;
+	if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][3]].color)) num_realigning++;
+	if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][7]].color)) num_realigning++;
+	if ([DOWN_MARCH].includes(view[4].color)) num_marching++;
+	if ([DOWN_MARCH].includes(view[corner].color)) num_marching++;
+	if ([DOWN_MARCH].includes(view[CCW[corner][3]].color)) num_marching++;
+	if ([DOWN_MARCH].includes(view[CCW[corner][7]].color)) num_marching++;
+	
+	if (num_realigning > 0 && num_realigning >= num_marching) return {cell:4, color:UP_REALIGN};
 	
 	//Else send the all clear signal
 	return {cell:4, color:DOWN_MARCH};
@@ -122,109 +211,90 @@ function mdecide_three_stand(corner)
 
 function mdecide_three_queen_stand(corner)
 {
-	//Propogate signals
-	var sigs = working_signals();
-	var primary = sigs[0];
-	var secondary = sigs[1];
+	//This is FOUR_STAIRS, but the gatherer jumped the gun here, 
+	//or the corner is stalled 
+	// ****
+	// bA**
+	// *Bqg
+	// ****
+	if (view[CCW[corner][5]].ant.type === QUEEN)
+	{
+		var provisional = linewatch(corner);
+		if (provisional !== null) return provisional;
 
-	//Now with those found
-	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
-	{
-		if (view[CCW[corner][1]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (view[CCW[corner][2]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (view[CCW[corner][3]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
+		var down_sig = PRECEDENCES[view[CCW[corner][0]].color][view[CCW[corner][7]].color];
+	
+		return {cell:4, color:down_sig};
 	}
-	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
+	else
 	{
-		if (view[CCW[corner][1]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (view[CCW[corner][2]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (view[CCW[corner][3]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null) return provisional;
+		//We are near the corner, and it's stalled
+		return {cell:4, color:view[CCW[corner][5]].color};
 	}
-	if ((primary === UP_REALIGN || secondary === UP_REALIGN))
-	{
-		if (view[CCW[corner][2]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-	}
-
-	return {cell:4, color:PRECEDENCES[primary][secondary]};
-	//Otherwise just keep going
-	//return {cell:CCW[corner][6]};
 }
 
 function mdecide_three_recover(corner)
 {
 	//This should only happen in the middle of recovery
-	return {cell:4, color:UP_REALIGN};
+	return {cell:4, color:UP_REALIGN_END};
 }
 
 function mdecide_three_marcher_hang(corner)
 {
-	return {cell:4};
+	//This is FOUR_STAIRS, but the queen is going out to spawn a worker
+	// ba**
+	// *B*g
+	// **q*
+	//We know that upstream is in the direction of cell 4, so
+	//transmit signals on behalf of the two ants at cells 3 and 4
+	if (view[corner].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
+	return {cell:4, color:PRECEDENCES[view[CCW[corner][3]].color][view[CCW[corner][4]].color]};
 }
 
 function mdecide_four_z(corner)
 {
-	//Read all four colors, then choose the correct one
-	var num_realigning_neighbors = 0;
-	var num_stalled_neighbors = 0;
+	//Under certain conditions, this can appear during recovery
+	//But this is usually a normal-march thing, so check both sides for indicators
+	var provisional = linewatch2(CCW[corner][4]);
+	if (provisional !== null) return provisional;
+	var up_sig = PRECEDENCES[view[corner].color][view[CCW[corner][7]].color];
+	var down_sig = PRECEDENCES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
-	if (view[4].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[corner].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][3]].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][4]].color === UP_REALIGN) num_realigning_neighbors++;
-	if (view[CCW[corner][7]].color === UP_REALIGN) num_realigning_neighbors++;
-
-	if (view[4].color === DOWN_STALLED) num_stalled_neighbors++;
-	if (view[corner].color === DOWN_STALLED) num_stalled_neighbors++;
-	if (view[CCW[corner][3]].color === DOWN_STALLED) num_stalled_neighbors++;
-	if (view[CCW[corner][4]].color === DOWN_STALLED) num_stalled_neighbors++;
-	if (view[CCW[corner][7]].color === DOWN_STALLED) num_stalled_neighbors++;
-
-	//Now, determine which to send
-	if (num_realigning_neighbors > 1 && num_realigning_neighbors > num_stalled_neighbors) return {cell:4, color:UP_REALIGN};
-	if (num_stalled_neighbors > 1) return {cell:4, color:DOWN_STALLED};
-	return {cell:4, color:DOWN_MARCH};
-	
+	return {cell:4, color:PRECEDENCES[up_sig][down_sig]};
 }
 
 function mdecide_four_stairs(corner)
 {
-	//Propogate signals
-	var sigs = working_signals();
-	var primary = sigs[0];
-	var secondary = sigs[1];
+	//This is a heavyweight. We are stalled, and therefore we become a transmission channel of sorts for 
+	//all sorts of signals. The signals needs to be transmitted correctly for the whole gameplan to work out. 
+	//No movement, though, so that doesn't need to be considered. 
+	
+	//Here, we have no idea if we're on the front or back of the formation. 
+	// b**  ba*
+	// aB*  *Ba
+	// *ab  **b
 
-	//Now with those found
-	if ((primary === DOWN_MARCH || secondary === DOWN_MARCH))
+	var provisional = linewatch2(corner);
+	if (provisional !== null) return provisional;
+
+	if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][7]].color))
 	{
-		if (view[CCW[corner][5]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (view[CCW[corner][7]].food === 1) return {cell:4, color:DOWN_FOOD};
-		if (is_enemy(CCW[corner][6])) return {cell:4, color:UP_PANIC};
+		if ([DOWN_FOOD, DOWN_STALLED, DOWN_GATHERER].includes(view[CCW[corner][4]]))
+			return {cell:4, color:DOWN_STALLED};
 	}
-	if ((primary === DOWN_FOOD || secondary === DOWN_FOOD))
+	if (view[CCW[corner][5]].color === DOWN_STALLED)
 	{
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-	}
-	if ((primary === UP_REALIGN || secondary === UP_REALIGN))
-	{
-		if (view[CCW[corner][6]].food === 1) return {cell:4, color:UP_REALIGN};
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
-		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER) return {cell:4, color:DOWN_GATHERER};
+		if ([DOWN_FOOD, DOWN_STALLED, DOWN_GATHERER].includes(view[CCW[corner][3]]))
+			return {cell:4, color:DOWN_STALLED};
 	}
 	
-	return {cell:4, color:PRECEDENCES[primary][secondary]};
-	
+
+	var up_sig = PRECEDENCES[view[corner].color][view[CCW[corner][1]].color];
+	var down_sig = PRECEDENCES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
+
+	return {cell:4, color:PRECEDENCES[up_sig][down_sig]};
 	
 }
 
@@ -232,13 +302,7 @@ function mdecide_four_stairs(corner)
 function marcher_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
-	if (view[candidate.cell].food !== 0) 
-	{
-		var sees_queen = false;
-		for (try_cell of EDGES)
-			if (is_ally(try_cell) && view[try_cell].ant.type === QUEEN) sees_queen = true;
-		if (!sees_queen) return {cell:4, color:DOWN_FOOD};
-	}
+	if (view[candidate.cell].food !== 0) return {cell:4, color:DOWN_FOOD};
 	if (is_harvestable(candidate.cell)) return {cell:4, color:DOWN_FOOD};
 	if (view[candidate.cell].ant !== null) return {cell:4, color:UP_PANIC};
 	return candidate;
