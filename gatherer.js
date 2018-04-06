@@ -21,13 +21,20 @@ function gdecide_two_edge_bent(corner)
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
+	/*
 	if (view[corner].color === DOWN_FOOD && view[CCW[corner][1]].color === DOWN_FOOD)
 	{
 		return {cell:CCW[corner][7]};
 	}
+	if (view[corner].color === DOWN_STALLED && view[CCW[corner][1]].color === DOWN_STALLED)
+	{
+		return {cell:4, color:UP_READY};
+	}
 	//return {cell:CCW[corner][2]};
 	//If none of the signals fit, go the color
 	return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][1]].color]};
+	*/
+	return {cell:4};
 	
 }
 
@@ -35,16 +42,22 @@ function gdecide_edge_corner_right(corner)
 {
 	if ([DOWN_MARCH, DOWN_FOOD].includes(view[corner].color) && [DOWN_MARCH, DOWN_FOOD].includes(view[CCW[corner][7]].color))
 		return {cell:CCW[corner][6]};
+	/*
+	if (view[corner].color === DOWN_STALLED && view[CCW[corner][7]].color === DOWN_STALLED)
+	{
+		return {cell:4, color:UP_READY};
+	}*/
 	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
-	return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][7]].color]};
+	/*return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][7]].color]};*/
+	return {cell:4};
 	
 }
 
 function gdecide_three_gatherer_walk(corner)
 {
-	if (view[CCW[corner][7]].color == DOWN_FOOD)
-		return {cell: CCW[corner][6]};
+	/*if (view[CCW[corner][7]].color == DOWN_FOOD)
+		return {cell: CCW[corner][6]};*/
 	return {cell:CCW[corner][2]};
 }
 
@@ -80,6 +93,7 @@ function gatherer_retrieve()
 	var corner = view_corner();
 	switch(neighbor_type(corner))
 	{
+		case EDGE_CORNER_LEFT: return gatherer_step_watch({cell:CCW[corner][2]});
 		case THREE_GATHERER_WALK: return gatherer_step_watch({cell:CCW[corner][6]});
 		case FOUR_BENT: return gatherer_step_watch({cell:4});
 		default: return sanitize(early_gatherer(), FREE_ORDER);

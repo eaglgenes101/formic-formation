@@ -31,12 +31,54 @@ const NEIGHBORS = [	[0,1,3,4],		[1,0,2,3,5,4],		[2,5,1,4],
 const NEARS = [		[0,1,3],		[1,0,2,4],		[2,5,1],
 			[3,6,0,7],		[1,3,5,7,4],		[5,2,8,4],
 			[6,3,7],		[7,8,6,4],		[8,7,5]			];
+//Downstream signal colors (travel instantaneously)
+const DOWN_MARCH = 1; //We're all ready! Let's go!
+const DOWN_FOOD = 2; //We found food!
+const DOWN_STALLED = 3; //There's no obstruction, but we're waiting for a ready signal
+const DOWN_GATHERER = 4; //Gatherer: "I'm still here!"
+
+//Upstream signal colors (travel at lightspeed)
+const UP_REALIGN = 5; //Realign 
+const UP_REALIGN_END = 6; //Realign end
+const UP_READY = 7; //Ready to move as soon as the end is aligned
+const UP_PANIC = 8; //Everyone! Scatter! 
+
+//Pair reads from upstream (corner, side)
+const PAIRUPS = [	[0,1,2,3,4,5,6,7,8],
+			[1,1,0,0,0,0,0,0,0],
+			[2,0,2,0,4,2,2,0,0],
+			[3,0,0,3,0,0,0,0,0],
+			[4,0,4,0,4,0,0,0,0],
+			[5,0,2,0,0,5,5,0,0],
+			[6,0,2,0,0,5,5,0,0],
+			[7,0,0,0,0,0,0,7,0],
+			[8,0,0,0,0,0,0,0,8]	];
+//Pair reads from downstream (corner, side)
+const PAIRDOWNS = [	[0,1,2,3,4,5,6,7,8],
+			[1,1,0,0,0,0,0,0,0],
+			[2,0,2,0,0,5,5,0,0],
+			[3,0,0,3,4,0,0,3,0],
+			[4,0,0,4,4,0,0,0,0],
+			[5,0,5,0,0,5,5,0,0],
+			[6,0,5,0,0,5,5,0,0],
+			[7,0,0,3,0,0,0,7,0],
+			[8,0,0,0,0,0,0,0,8]	];
+//Pair reads from either direction (corner, side)
+const PAIRSIDES = [	[0,1,2,3,4,5,6,7,8],
+			[1,1,0,0,0,0,0,0,0],
+			[2,0,2,0,0,5,5,0,0],
+			[3,0,0,3,0,0,0,0,0],
+			[4,0,0,0,4,0,0,0,0],
+			[5,0,5,0,0,5,5,0,0],
+			[6,0,5,0,0,5,5,0,0],
+			[7,0,0,0,0,0,0,7,0],
+			[8,0,0,0,0,0,0,0,8]	];
 const GETPRECS = [	[1,1,2,3,4,5,6,7,8],
 			[1,1,1,1,4,5,6,1,1],
 			[2,1,2,3,4,2,2,2,2],
 			[3,1,3,3,3,3,3,7,3],
-			[4,4,4,3,4,4,4,7,4],
-			[5,5,2,3,4,5,5,5,5],
+			[4,4,4,3,4,5,4,7,4],
+			[5,5,2,3,5,5,5,5,5],
 			[6,6,2,3,4,5,6,6,6],
 			[7,1,2,7,7,5,6,7,7],
 			[8,1,2,3,4,5,6,7,8]	];
@@ -50,17 +92,6 @@ const PUTPRECS = [	[1,1,2,3,4,5,6,7,8],
 			[7,1,2,7,7,5,6,7,7],
 			[8,1,2,3,4,5,6,7,8]	];
 
-//Downstream signal colors (travel instantaneously)
-const DOWN_MARCH = 1; //We're all ready! Let's go!
-const DOWN_FOOD = 2; //We found food!
-const DOWN_STALLED = 3; //There's no obstruction, but we're waiting for a ready signal
-const DOWN_GATHERER = 4; //Gatherer: "I'm still here!"
-
-//Upstream signal colors (travel at lightspeed)
-const UP_REALIGN = 5; //Realign 
-const UP_REALIGN_END = 6; //Realign end
-const UP_READY = 7; //Ready to move as soon as the end is aligned
-const UP_PANIC = 8; //Everyone! Scatter! 
 
 //Random seeds
 const INIT_SEED = 3734978372;
@@ -271,5 +302,58 @@ function saboteur()
 
 		return {cell:1};
 	}
+}
+
+//Common line-watching function for signalling and stalled ants
+function linewatch(corner)
+{
+	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][1]))
+			return {cell:4, color:DOWN_GATHERER};
+	/*if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][3]))
+			return {cell:4, color:DOWN_STALLED};*/
+	if (view[CCW[corner][6]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	/*if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
+		return {cell:4, color:UP_REALIGN};*/
+	return null;
+}
+
+function linewatch2(corner)
+{
+	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][1]))
+			return {cell:4, color:DOWN_GATHERER};
+	/*if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][3]))
+			return {cell:4, color:DOWN_STALLED};*/
+	if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
+	if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_GATHERER};
+	/*if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER)
+		if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_STALLED};*/
+	if (view[CCW[corner][6]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	/*if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
+		return {cell:4, color:UP_REALIGN};*/
+	if (view[CCW[corner][2]].food === 1)
+		return {cell:4, color:DOWN_FOOD};
+	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+	/*if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type !== QUEEN)
+		return {cell:4, color:UP_REALIGN};*/
+	return null;
 }
 

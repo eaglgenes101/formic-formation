@@ -93,30 +93,33 @@ function qdecide_edge_corner_skewed(corner)
 
 function qdecide_three_march(corner)
 {
-	var upstream = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
+	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 
 	//Now with those found
 
 	//Reply to stalled with ready
-	if (upstream === DOWN_STALLED)
+	/*
+	if (upstream === DOWN_STALLED && view[CCW[corner][3]].color === UP_READY)
 	{
 		return {cell: 4, color:UP_READY};
 	}
 	
 	return {cell:4, color:PUTPRECS[view[CCW[corner][3]].color][upstream]};
+	*/
+	return {cell:4};
 }
 
 function qdecide_three_recover(corner)
 {
 	//The gatherer jumped the gun here
 	//If the signal is a food signal or a gatherer signal, don't move
-
-	var upstream = GETPRECS[view[corner].color][view[CCW[corner][1]].color];
+	/*
+	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 
 	if (upstream === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
 	if (upstream === DOWN_GATHERER)
-		return {cell:4, color:DOWN_GATHERER};
+		return {cell:4, color:DOWN_GATHERER};*/
 	
 	//With probability, spawn a worker. 
 	//Probability of spawning a worker is dependent on the queen's food stores. 
@@ -129,22 +132,27 @@ function qdecide_three_recover(corner)
 		if (random_choice(actual_prob))
 			return {cell:CCW[corner][3]};
 	}
+
+	var provisional = linewatch(corner)
+	if (provisional !== null) return provisional;
 	return {cell:4};
 }
 
 function qdecide_three_queen_stand(corner)
 {
-	var upstream = GETPRECS[view[corner].color][view[CCW[corner][7]].color];
+	/*
+	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 
 	//Now with those found
 
 	//Reply to stalled with ready
-	if (upstream === DOWN_STALLED)
+	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY)
 	{
 		return {cell: 4, color:UP_READY};
 	}
 	
-	return {cell:4, color:upstream};
+	return {cell:4, color:upstream};*/
+	return {cell:4};
 }
 
 function qdecide_three_gatherer_walk(corner)
@@ -164,25 +172,29 @@ function queen_wait()
 		break;
 		case EDGE_CORNER_LEFT:
 		{
-			if (view[corner].color === DOWN_GATHERER)
+			/*if (view[corner].color === DOWN_GATHERER)
 			{
 				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][1]].color))
 					return {cell:4, color: DOWN_GATHERER};
 				if (view[corner].ant.type === GATHERER)
 					return {cell:4, color:DOWN_GATHERER};
-			}
+				if (true)
+					return {cell:4, color:DOWN_GATHERER};
+			}*/
 			if (this_ant().food > 1) return {cell:CCW[corner][3], type:GATHERER};
 		}
 		break;
 		case EDGE_CORNER_RIGHT:
 		{
-			if (view[corner].color === DOWN_GATHERER)
+			/*if (view[corner].color === DOWN_GATHERER)
 			{
 				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][7]].color))
 					return {cell:4, color: DOWN_GATHERER};
 				if (view[corner].ant.type === GATHERER)
 					return {cell:4, color:DOWN_GATHERER};
-			}
+				if (true)
+					return {cell:4, color:DOWN_GATHERER};
+			}*/
 			if (this_ant().food > 1) return {cell:CCW[corner][5], type:GATHERER};
 		}
 		break;
