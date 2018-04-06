@@ -55,8 +55,8 @@ function gdecide_edge_corner_right(corner)
 
 function gdecide_three_gatherer_walk(corner)
 {
-	/*if (view[CCW[corner][7]].color == DOWN_FOOD)
-		return {cell: CCW[corner][6]};*/
+	if (view[CCW[corner][7]].color == DOWN_FOOD)
+		return {cell: CCW[corner][6]};
 	return {cell:CCW[corner][2]};
 }
 

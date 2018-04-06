@@ -113,11 +113,12 @@ function qdecide_three_recover(corner)
 {
 	//The gatherer jumped the gun here
 	//If the signal is a food signal or a gatherer signal, don't move
-	/*
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 
 	if (upstream === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
+
+	/*
 	if (upstream === DOWN_GATHERER)
 		return {cell:4, color:DOWN_GATHERER};*/
 	
@@ -147,11 +148,10 @@ function qdecide_three_queen_stand(corner)
 	//Now with those found
 
 	//Reply to stalled with ready
-	/*
-	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY)
+	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY && view[4].color === DOWN_STALLED)
 	{
 		return {cell: 4, color:UP_READY};
-	}*/
+	}
 	return {cell:4, color:upstream};
 	//return {cell:4};
 }
@@ -174,6 +174,9 @@ function queen_wait()
 		break;
 		case EDGE_CORNER_LEFT:
 		{
+			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
+			if (up_sig === DOWN_GATHERER)
+				return {cell:4, color:DOWN_GATHERER};
 			/*if (view[corner].color === DOWN_GATHERER)
 			{
 				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][1]].color))
@@ -192,6 +195,9 @@ function queen_wait()
 		break;
 		case EDGE_CORNER_RIGHT:
 		{
+			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
+			if (up_sig === DOWN_GATHERER)
+				return {cell:4, color:DOWN_GATHERER};
 			/*if (view[corner].color === DOWN_GATHERER)
 			{
 				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][7]].color))
