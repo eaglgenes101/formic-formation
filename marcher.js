@@ -166,7 +166,7 @@ function mdecide_three_march(corner)
 	var up_sig = view[CCW[corner][3]].color;
 	//If we need to stay still, there will be UP_REALIGN_END near the top
 	
-	var provisional = linewatch(CCW[corner][4]);
+	var provisional = linewatch2(corner);
 	if (provisional !== null)
 		return provisional;
 
@@ -308,9 +308,9 @@ function mdecide_four_z(corner)
 {
 	//Under certain conditions, this can appear during recovery
 	//But this is usually a normal-march thing, so check both sides for indicators
-	/*
 	var provisional = linewatch2(CCW[corner][4]);
 	if (provisional !== null) return provisional;
+	/*
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
