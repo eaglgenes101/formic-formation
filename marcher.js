@@ -17,7 +17,7 @@ function mdecide_one_edge(corner)
 {
 	//This occurs when we march forward as the end, but the next corner neighbor is obstructed
 	//Find this condition
-	if (view[CCW[corner][1]].color === DOWN_MARCH)
+	if (view[CCW[corner][1]].color === UP_REALIGN)
 	{
 		if (view[CCW[corner][2]].food === 1)
 			return {cell:corner};
@@ -30,8 +30,10 @@ function mdecide_one_edge(corner)
 function mdecide_two_edge_bent(corner)
 {
 	//In recovery, do the moving step
-	/*if ([DOWN_STALLED, UP_READY].includes(view[CCW[corner][1]].color) && [DOWN_STALLED, UP_READY].includes(view[4].color))
-		return {cell:4, color:PUTPRECS[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};*/
+	if ([DOWN_STALLED].includes(view[CCW[corner][1]].color))
+		if ([DOWN_STALLED, UP_READY, DOWN_GATHERER].includes(view[CCW[corner][3]].color))
+			if ([DOWN_STALLED, UP_READY].includes(view[4].color))
+				return {cell:4, color:PUTPRECS[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
 	return {cell:CCW[corner][2]}; 
 }
 
@@ -50,9 +52,26 @@ function mdecide_edge_corner_left(corner)
 		return {cell:CCW[corner][3]};
 
 	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
-	//Marching, or recovering? 
-	if (down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
+
+	var provisional = linewatch(CCW[corner][4]);
+	if (provisional !== null) 
+	{
+		if (provisional.color === UP_REALIGN)
+			return {cell:4, color:UP_REALIGN_END};
+		return provisional;
+	}
+
+	if (down_sig === UP_REALIGN && [DOWN_MARCH, UP_REALIGN_END].includes(view[4].color))
+	{
 		return {cell:4, color:UP_REALIGN_END};
+	}
+	if ([DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED, UP_REALIGN_END].includes(view[4].color))
+	{
+		return {cell:4, color:DOWN_STALLED};
+	}
+	//Marching, or recovering? 
+	//if (down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
+	//	return {cell:4, color:UP_REALIGN_END};
 	/*
 	if (down_sig === UP_READY)
 		return {cell:4, color:DOWN_MARCH};
@@ -90,9 +109,17 @@ function mdecide_edge_corner_right(corner)
 	var down_sig2 = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = (down_sig2 === 0) ? down_sig1 : down_sig2;
 	
+
+	var provisional = linewatch(CCW[corner][4]);
+	if (provisional !== null) 
+	{
+		if (provisional.color === UP_REALIGN)
+			return {cell:4, color:UP_REALIGN_END};
+		return provisional;
+	}
 	//Marching, or recovering? 
-	if (down_sig1 === UP_REALIGN && view[4].color === DOWN_MARCH)
-		return {cell:4, color:UP_REALIGN_END};
+	//if (down_sig1 === UP_REALIGN && view[4].color === DOWN_MARCH)
+	//	return {cell:4, color:UP_REALIGN_END};
 	/*
 	if (down_sig === UP_READY)
 		return {cell:4, color:DOWN_MARCH};
@@ -122,10 +149,14 @@ function mdecide_edge_corner_right(corner)
 
 function mdecide_three_march(corner)
 {
+	//If we are in UP_REALIGN and UP_REALIGN_END is at CCW[corner][3], we are most likely already
+	//aligned. 
+
+	var down_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
+	var up_sig = view[CCW[corner][3]].color;
 	//If we need to stay still, there will be UP_REALIGN_END near the top
 
-	/*var down_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
-	var up_sig = view[CCW[corner][3]].color;
+	/*
 
 	//Then decide
 	if (down_sig === UP_REALIGN_END && up_sig !== DOWN_MARCH) 
@@ -161,6 +192,11 @@ function mdecide_three_march(corner)
 
 function mdecide_three_stand(corner)
 {
+	var provisional = linewatch2(corner);
+	if (provisional !== null) 
+	{
+		return provisional;
+	}
 	/*//We stay still here. But which signal do we send?
 	//If we're surrounded by UP_REALIGN, then send that
 	var provisional = linewatch2(corner);
@@ -184,20 +220,22 @@ function mdecide_three_queen_stand(corner)
 	// ****
 	if (view[CCW[corner][5]].ant.type === QUEEN)
 	{
-		/*var provisional = linewatch(corner);
+		var provisional = linewatch(corner);
 		if (provisional !== null) return provisional;
-
 		var down_sig = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 	
-		return {cell:4, color:down_sig};*/
-		return {cell:4};
+		return {cell:4, color:down_sig};
+		//return {cell:4};
 	}
 	else
 	{
+		var down_sig = view[CCW[corner][5]].color;
 		var up_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
 		if (up_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
 			return {cell:4, color:UP_REALIGN};
-		
+
+		if (down_sig === UP_REALIGN_END && [DOWN_FOOD, DOWN_GATHERER].includes(up_sig) && view[4].color === UP_REALIGN)
+			return {cell:4, color:DOWN_STALLED};
 		/*var provisional = linewatch(CCW[corner][4]);
 		if (provisional !== null) return provisional;
 
@@ -269,13 +307,12 @@ function mdecide_four_stairs(corner)
 		if ([DOWN_FOOD, DOWN_STALLED, DOWN_GATHERER].includes(view[CCW[corner][3]]))
 			return {cell:4, color:DOWN_STALLED};
 	}
-	
+	*/
 
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
-	return {cell:4, color:PUTPRECS[up_sig][down_sig]};*/
-	return {cell:4};
+	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 	
 }
 

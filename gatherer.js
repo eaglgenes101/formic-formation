@@ -21,7 +21,6 @@ function gdecide_two_edge_bent(corner)
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
-	/*
 	if (view[corner].color === DOWN_FOOD && view[CCW[corner][1]].color === DOWN_FOOD)
 	{
 		return {cell:CCW[corner][7]};
@@ -30,6 +29,7 @@ function gdecide_edge_corner_left(corner)
 	{
 		return {cell:4, color:UP_READY};
 	}
+	/*
 	//return {cell:CCW[corner][2]};
 	//If none of the signals fit, go the color
 	return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][1]].color]};
@@ -42,11 +42,10 @@ function gdecide_edge_corner_right(corner)
 {
 	if ([DOWN_MARCH, DOWN_FOOD].includes(view[corner].color) && [DOWN_MARCH, DOWN_FOOD].includes(view[CCW[corner][7]].color))
 		return {cell:CCW[corner][6]};
-	/*
 	if (view[corner].color === DOWN_STALLED && view[CCW[corner][7]].color === DOWN_STALLED)
 	{
 		return {cell:4, color:UP_READY};
-	}*/
+	}
 	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
 	/*return {cell:4, color:PUTPRECS[view[corner].color][view[CCW[corner][7]].color]};*/

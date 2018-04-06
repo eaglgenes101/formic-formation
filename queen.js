@@ -124,7 +124,8 @@ function qdecide_three_recover(corner)
 	//With probability, spawn a worker. 
 	//Probability of spawning a worker is dependent on the queen's food stores. 
 	//The more food, the less eager the spawning. 
-	if (this_ant().food > 0 && [DOWN_STALLED, UP_READY].includes(upstream))
+	/*if (this_ant().food > 0 && [DOWN_STALLED, UP_READY].includes(upstream))*/
+	if (this_ant().food > 0)
 	{
 		var one_minus_prob = 1-QUEEN_SPAWN_PROB_MIN
 		var food_coefficient = QUEEN_SPAWN_PROB_DECAY/one_minus_prob
@@ -140,24 +141,25 @@ function qdecide_three_recover(corner)
 
 function qdecide_three_queen_stand(corner)
 {
-	/*
+	
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 
 	//Now with those found
 
 	//Reply to stalled with ready
+	/*
 	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY)
 	{
 		return {cell: 4, color:UP_READY};
-	}
-	
-	return {cell:4, color:upstream};*/
-	return {cell:4};
+	}*/
+	return {cell:4, color:upstream};
+	//return {cell:4};
 }
 
 function qdecide_three_gatherer_walk(corner)
 {
-	return {cell:4};
+	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
+	return {cell:4, color:upstream};
 }
 
 function queen_wait()
@@ -181,6 +183,10 @@ function queen_wait()
 				if (true)
 					return {cell:4, color:DOWN_GATHERER};
 			}*/
+
+			var provisional = linewatch(corner);
+			if (provisional !== null)
+				return {cell:4, color:DOWN_GATHERER};
 			if (this_ant().food > 1) return {cell:CCW[corner][3], type:GATHERER};
 		}
 		break;
@@ -195,6 +201,9 @@ function queen_wait()
 				if (true)
 					return {cell:4, color:DOWN_GATHERER};
 			}*/
+			var provisional = linewatch(corner);
+			if (provisional !== null)
+				return {cell:4, color:DOWN_GATHERER};
 			if (this_ant().food > 1) return {cell:CCW[corner][5], type:GATHERER};
 		}
 		break;
