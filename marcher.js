@@ -113,9 +113,7 @@ function mdecide_edge_corner_right(corner)
 		if (is_ally(CCW[corner][4]) && view[CCW[corner][4]].ant.type !== this_ant().type)
 			return {cell:CCW[corner][5]};
 
-	var down_sig1 = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
-	var down_sig2 = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
-	var down_sig = (down_sig2 === 0) ? down_sig1 : down_sig2;
+	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
 	
 	var provisional = linewatch(CCW[corner][4]);
 	if (provisional !== null) 
@@ -124,15 +122,16 @@ function mdecide_edge_corner_right(corner)
 			return {cell:4, color:UP_REALIGN_END};
 		return provisional;
 	}
-
-	if ([DOWN_FOOD, DOWN_GATHERER].includes(down_sig1) && [UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
+	if ([DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && [UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
 	{
 		return {cell:4, color:DOWN_STALLED};
 	}
-	if ([UP_READY].includes(down_sig1) && [DOWN_STALLED].includes(view[4].color))
+	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
 	{
 		return {cell:4, color:DOWN_MARCH};
 	}
+	if (down_sig === UP_REALIGN && view[4].color === UP_REALIGN_END)
+		return {cell:CCW[corner][6]};
 	//Marching, or recovering? 
 	//if (down_sig1 === UP_REALIGN && view[4].color === DOWN_MARCH)
 	//	return {cell:4, color:UP_REALIGN_END};
@@ -158,7 +157,7 @@ function mdecide_edge_corner_right(corner)
 	}*/
 
 	//If none of the signals fit, go the color
-	return {cell:4, color:down_sig1};
+	return {cell:4, color:down_sig};
 	//return {cell:4};
 	
 }
@@ -178,6 +177,10 @@ function mdecide_three_march(corner)
 
 	if (up_sig === UP_REALIGN_END && [DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_REALIGN && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
+		if (view[corner].color === UP_REALIGN_END)
+			return {cell:4, color:UP_REALIGN};
 	
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
 		return {cell:4, color:DOWN_STALLED};
@@ -193,6 +196,9 @@ function mdecide_three_march(corner)
 		if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
 			return {cell:4, color:DOWN_STALLED};
 	}
+
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_MARCH)
+		return {cell:4, color:DOWN_STALLED};
 
 	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
 		return {cell:4, color:DOWN_MARCH};
@@ -243,13 +249,18 @@ function mdecide_three_stand(corner)
 	{
 		return provisional;
 	}
+	
 	/*//We stay still here. But which signal do we send?
 	//If we're surrounded by UP_REALIGN, then send that
 	var provisional = linewatch2(corner);
-	if (provisional !== null) return provisional;
+	if (provisional !== null) return provisional;*/
 	
-	var down_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
-	if (down_sig === UP_REALIGN) return {cell:4, color:UP_REALIGN};*/
+	var up_sig = view[CCW[corner][3]].color
+	var down_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
+	if (up_sig === UP_REALIGN && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
+		return {cell:4, color:UP_REALIGN};
+	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+		return {cell:4, color:UP_REALIGN};
 	
 	//Else send the all clear signal
 	return {cell:4, color:DOWN_MARCH};
@@ -284,6 +295,8 @@ function mdecide_three_queen_stand(corner)
 			return {cell:4, color:UP_REALIGN};
 
 		if (up_sig === UP_REALIGN_END && [DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && view[4].color === UP_REALIGN)
+			return {cell:4, color:DOWN_STALLED};
+		if (up_sig === UP_REALIGN_END && down_sig === DOWN_STALLED && view[4].color === UP_REALIGN_END)
 			return {cell:4, color:DOWN_STALLED};
 		if (up_sig === DOWN_STALLED && [UP_READY].includes(down_sig) && view[4].color === DOWN_STALLED)
 			return {cell:4, color:UP_READY};
@@ -367,9 +380,16 @@ function mdecide_four_stairs(corner)
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 	
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(up_sig) || [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(up_sig))
 		if (view[4].color === UP_REALIGN)
 			return {cell:4, color:DOWN_STALLED};
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
+	{
+		if (view[4].color === UP_REALIGN)
+			return {cell:4, color:DOWN_STALLED};
+		if ([UP_REALIGN].includes(up_sig))
+			return {cell:4, color:DOWN_STALLED};
+	}
 
 	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 	
