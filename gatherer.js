@@ -29,6 +29,10 @@ function gdecide_edge_corner_left(corner)
 	{
 		return {cell:4, color:UP_READY};
 	}
+	if (view[corner].color === DOWN_MARCH && view[CCW[corner][1]].color === DOWN_MARCH)
+	{
+		return {cell:4, color:DOWN_MARCH};
+	}
 	/*
 	//return {cell:CCW[corner][2]};
 	//If none of the signals fit, go the color

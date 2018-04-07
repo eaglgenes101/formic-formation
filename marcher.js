@@ -73,6 +73,10 @@ function mdecide_edge_corner_left(corner)
 	{
 		return {cell:4, color:DOWN_MARCH};
 	}
+	if (down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
+	{
+		return {cell:4, color:DOWN_STALLED};
+	}
 	//Marching, or recovering? 
 	//if (down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
 	//	return {cell:4, color:UP_REALIGN_END};
@@ -113,7 +117,6 @@ function mdecide_edge_corner_right(corner)
 	var down_sig2 = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = (down_sig2 === 0) ? down_sig1 : down_sig2;
 	
-
 	var provisional = linewatch(CCW[corner][4]);
 	if (provisional !== null) 
 	{
@@ -173,7 +176,7 @@ function mdecide_three_march(corner)
 	if (up_sig === UP_REALIGN_END && down_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
 
-	if (up_sig === UP_REALIGN_END && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
+	if (up_sig === UP_REALIGN_END && [DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
 	
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
@@ -185,8 +188,20 @@ function mdecide_three_march(corner)
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 		return {cell:4, color:DOWN_STALLED};
 
+	if (view[CCW[corner][3]].ant.type === QUEEN)
+	{
+		if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_STALLED};
+	}
+
 	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
 		return {cell:4, color:DOWN_MARCH};
+
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_FOOD && view[4].color === DOWN_FOOD)
+		return {cell:4, color:DOWN_FOOD};
+
+	if ([DOWN_FOOD, DOWN_GATHERER].includes(up_sig) && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
+		return {cell:4, color:DOWN_GATHERER};
 	/*
 
 	//Then decide
@@ -260,6 +275,9 @@ function mdecide_three_queen_stand(corner)
 	}
 	else
 	{
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null) return provisional;
+
 		var up_sig = view[CCW[corner][5]].color;
 		var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
 		if (down_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
@@ -271,6 +289,8 @@ function mdecide_three_queen_stand(corner)
 			return {cell:4, color:UP_READY};
 		if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
 			return {cell:4, color:DOWN_MARCH};
+		if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
+			return {cell:4, color:DOWN_STALLED};
 		/*var provisional = linewatch(CCW[corner][4]);
 		if (provisional !== null) return provisional;
 
@@ -346,6 +366,10 @@ function mdecide_four_stairs(corner)
 
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
+	
+	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(up_sig) || [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
+		if (view[4].color === UP_REALIGN)
+			return {cell:4, color:DOWN_STALLED};
 
 	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 	

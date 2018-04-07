@@ -94,6 +94,14 @@ function qdecide_edge_corner_skewed(corner)
 function qdecide_three_march(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
+	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === DOWN_MARCH && view[4].color === DOWN_GATHERER)
+	{
+		return {cell: 4, color:DOWN_STALLED};
+	}
+	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY && view[4].color === DOWN_STALLED)
+	{
+		return {cell: 4, color:UP_READY};
+	}
 
 	//Now with those found
 
