@@ -9,7 +9,17 @@ If the queen loses the formation but has a gatherer or has food, she spawns a ga
 //Opening-phase queen (when the gatherer is not visible and the queen has no food)
 function opening_queen()
 {
-	if (this_ant().food > 0) return {cell:0, type:GATHERER};
+	//First, determine that there is exactly one gatherer and no marchers 
+
+	if (this_ant().food > 0) 
+	{
+		var num_allies = 0;
+		for (try_cell of SCAN_MOVES)
+		{
+			if (is_ally(try_cell)) num_allies++;
+		}
+		if (num_allies === 0) return {cell:0, type:GATHERER};
+	}
 
 	//If one of the adjacent spaces has food, gather it
 	for (try_cell of random_permutation(SCAN_MOVES))
@@ -42,12 +52,17 @@ function early_queen()
 {
 	//Find the gatherer, revolve counterclockwise around her
 	var gatherer_cell = null;
+	var ally_count = 0;
 	for (try_cell of random_permutation(SCAN_MOVES))
 	{
-		if (is_ally(try_cell) && view[try_cell].ant.type === GATHERER)
+		if (is_ally(try_cell))
 		{
-			gatherer_cell = try_cell;
-			break;
+			ally_count++;
+			if (view[try_cell].ant.type === GATHERER)
+			{
+				gatherer_cell = try_cell;
+				break;
+			}
 		}
 	}
 
@@ -56,9 +71,40 @@ function early_queen()
 	//To prevent gliding spins, color our own cell white if it's yellow
 	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
 
-	//Once the gatherer is orthogonal to us, spawn a marcher
-	if (EDGES.includes(gatherer_cell) && this_ant().food > 2) 
-		return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].food > 0) 
+		{
+			if (view[gatherer_cell].color === DOWN_FOOD && NEARS[try_cell].includes(gatherer_cell)) return {cell:try_cell};
+			else return {cell:gatherer_cell, color: DOWN_MARCH};
+		}
+	for (try_cell of random_permutation(EDGES))
+		if (view[try_cell].food > 0) 
+		{
+			if (CCW[gatherer_cell][6] === try_cell) return {cell:CCW[gatherer_cell][6], color:DOWN_FOOD};
+			else return {cell:4, color: DOWN_MARCH};
+		}
+
+	//Once the gatherer is orthogonal to us, spawn a marcher with reasonable probability
+	if (EDGES.includes(gatherer_cell) && this_ant().food > 2 && ally_count === 1) 
+	{
+		if (view[CCW[gatherer_cell][2]].color === DOWN_FOOD)
+		{
+			var num_down_food = 0;
+			for (var i = 0; i < 9; i++)
+				if (view[i].color === DOWN_FOOD) num_down_food++;
+			if (num_down_food === 1)
+			{
+				var food_factor = QUEEN_FORM_PROB_MAX-QUEEN_FORM_PROB_MIN
+				var food_coefficient = QUEEN_FORM_PROB_DECAY/food_factor
+				var actual_prob = food_factor/(food_coefficient*(this_ant().food-3)+1) + QUEEN_FORM_PROB_MIN;
+	
+				if (random_choice(actual_prob))
+					return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
+				else
+					return {cell:CCW[gatherer_cell][2], color:DOWN_MARCH};
+			}
+		}
+	}
 
 	return {cell:CCW[gatherer_cell][7]};
 }
@@ -251,25 +297,31 @@ function queen_decision()
 {
 	marcher_count = 0;
 	gatherer_count = 0;
+	excess_gatherers = 0;
 	for (try_cell of SCAN_MOVES)
 	{
 		if (is_ally(try_cell))
 		{
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
 				marcher_count++;
-			if (view[try_cell].ant.type === GATHERER && (EDGES.includes(try_cell) || is_gatherer_marcher(try_cell)))
-				gatherer_count++;
+			if (view[try_cell].ant.type === GATHERER)
+			{
+				if (EDGES.includes(try_cell) || is_gatherer_marcher(try_cell))
+					gatherer_count++;
+				else
+					excess_gatherers++;
+			}
 		}
 	}
-	if (marcher_count > 0 && gatherer_count > 0)
+	if (marcher_count > 0 && gatherer_count === 1 && excess_gatherers === 0)
 	{
 		return queen_step_watch(queen_march());
 	}
-	else if (marcher_count > 0)
+	else if (marcher_count > 0 && gatherer_count === 0 && excess_gatherers === 0)
 	{
 		return queen_step_watch(queen_wait());
 	}
-	else if (gatherer_count > 0)
+	else if (gatherer_count === 1 && excess_gatherers === 0)
 	{
 		return sanitize(early_queen(), RIGHT_ORDER);
 	}

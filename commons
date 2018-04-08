@@ -94,7 +94,9 @@ const SABOTEUR_RECOLOR_PROB = 0.8;
 const SABOTEUR_OBSTRUCT_PROB = 0.8;
 const QUEEN_SPAWN_PROB_MIN = 0.8;
 const QUEEN_SPAWN_PROB_DECAY = 0.01;
-const SIGNAL_DIFFERENCE_THRESHOLD = 3;
+const QUEEN_FORM_PROB_MAX = 0.5;
+const QUEEN_FORM_PROB_MIN = 0.15;
+const QUEEN_FORM_PROB_DECAY = 0.01;
 
 /*
 Functions shared by all ant types
@@ -234,7 +236,9 @@ function saboteur()
 {
 	//Actively avoid other allied workers
 	for (try_cell of random_permutation(SCAN_MOVES))
-		if (is_ally(try_cell)) return {cell:CCW[try_cell][4]};
+	{
+		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
+	}
 
 	//Obstruct enemy workers
 	for (try_cell of random_permutation(SCAN_MOVES))
@@ -352,3 +356,10 @@ function linewatch2(corner)
 	return null;
 }
 
+function turn_color(color, corner)
+{
+}
+
+function turn_color2(color, corner)
+{
+}

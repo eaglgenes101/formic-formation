@@ -29,6 +29,13 @@ function mdecide_one_edge(corner)
 
 function mdecide_two_edge_bent(corner)
 {
+	//Eject in scenarios where we would otherwise deadlock
+	
+	if (view[CCW[corner][1]].ant.type === GATHERER && view[CCW[corner][3]].ant.type === QUEEN)	
+		return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[corner][1]].ant.type === QUEEN && view[CCW[corner][3]].ant.type === GATHERER)	
+		return sanitize(saboteur(), FREE_ORDER);
+	
 	//In recovery, do the moving step
 	if ([DOWN_STALLED].includes(view[CCW[corner][1]].color))
 		if ([DOWN_STALLED, UP_READY, DOWN_GATHERER].includes(view[CCW[corner][3]].color))
@@ -39,7 +46,6 @@ function mdecide_two_edge_bent(corner)
 
 function mdecide_two_edge_straight(corner)
 {
-	//TODO: Validate that we're in recovery
 	//Propogate UP_REALIGN
 	//(Remember, we don't know if it's CCW[corner][1] or CCW[corner][5] that's upstream)
 	return {cell:4, color:UP_REALIGN};
@@ -47,6 +53,12 @@ function mdecide_two_edge_straight(corner)
 
 function mdecide_edge_corner_left(corner)
 {
+	//Eject in scenarios where we would otherwise deadlock
+	if (view[CCW[corner][1]].ant.type === GATHERER && view[corner].ant.type === QUEEN)	
+		return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[corner][1]].ant.type === QUEEN && view[corner].ant.type === GATHERER)	
+		return sanitize(saboteur(), FREE_ORDER);
+
 	//Special logic for arranging corners correctly
 	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][3]};
@@ -108,6 +120,14 @@ function mdecide_edge_corner_left(corner)
 
 function mdecide_edge_corner_right(corner)
 {
+	//Eject in scenarios where we would otherwise deadlock
+	/*
+	if (view[CCW[corner][7]].ant.type === GATHERER && view[corner].ant.type === QUEEN)	
+		return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[corner][7]].ant.type === QUEEN && view[corner].ant.type === GATHERER)	
+		return sanitize(saboteur(), FREE_ORDER);
+	*/
+
 	//Special logic do early-game correctly
 	if (view[corner].ant.type === GATHERER && view[CCW[corner][7]].ant.type === QUEEN)
 		if (is_ally(CCW[corner][4]) && view[CCW[corner][4]].ant.type !== this_ant().type)
@@ -408,6 +428,19 @@ function marcher_step_watch(candidate)
 
 function marcher_decision()
 {
+	var gatherer_count = 0;
+	for (try_cell of SCAN_MOVES)
+	{
+		if (is_ally(try_cell))
+		{
+			if (view[try_cell].ant.type === GATHERER)
+				gatherer_count++;
+		}
+	}
+	if (gatherer_count > 1)
+	{
+		return sanitize(saboteur(), FREE_ORDER);
+	}
 	var corner = view_corner();
 	if (this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
 	switch (neighbor_type(corner))

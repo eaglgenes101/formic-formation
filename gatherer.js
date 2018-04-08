@@ -76,13 +76,27 @@ function early_gatherer()
 			queen_cell = try_cell;
 			break;
 		}
-		if (view[try_cell].food > 0) return {cell:4};
+		if (EDGES.includes(try_cell) && view[try_cell].food > 0) return {cell:4, color:DOWN_FOOD};
 	}
 	if (queen_cell === null) return {cell:4};
-	//If a food cell is adjacent to the queen, get it
+
 	if (this_ant().food === 0)
-		for (try_cell of random_permutation(SCAN_MOVES))
-			if (view[try_cell].food > 0 && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
+	{
+		for (try_cell of random_permutation(CORNERS))
+			if (view[try_cell].food > 0) 
+			{
+				if (view[4].color === DOWN_FOOD && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
+				else return {cell:4, color: DOWN_FOOD};
+			}
+		for (try_cell of random_permutation(EDGES))
+			if (view[try_cell].food > 0) 
+			{
+				if (CCW[queen_cell][2] === try_cell) return {cell:4, color:DOWN_FOOD};
+				else return {cell:4, color: DOWN_MARCH};
+			}
+	}
+
+	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
 	if (view[queen_cell].color === DOWN_FOOD)
 		return {cell:CCW[queen_cell][7]};
 	return {cell:CCW[queen_cell][1]};
@@ -132,18 +146,23 @@ function gatherer_formation()
 function gatherer_decision()
 {
 	var marcher_count = 0;
+	var gatherer_count = 0;
 	var queen_pos = null;
 	for (try_cell of SCAN_MOVES)
 	{
 		if (is_ally(try_cell))
 		{
 			if (view[try_cell].ant.type === MARCHER_A || view[try_cell].ant.type === MARCHER_B)
-			{
 				marcher_count++;
-			}
+			if (view[try_cell].ant.type === GATHERER)
+				gatherer_count++;
 			if (view[try_cell].ant.type === QUEEN)
 				queen_pos = try_cell;
 		}
+	}
+	if (gatherer_count > 0)
+	{
+		return sanitize(saboteur(), FREE_ORDER);
 	}
 	if (this_ant().food > 0 && marcher_count > 0)
 	{
