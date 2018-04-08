@@ -64,6 +64,11 @@ function gdecide_three_gatherer_walk(corner)
 	return {cell:CCW[corner][2]};
 }
 
+function gdecide_four_bent(corner)
+{
+	return {cell:CCW[corner][4]};
+}
+
 function early_gatherer()
 {
 	//Revolve clockwise around the queen
@@ -139,6 +144,7 @@ function gatherer_formation()
 		case EDGE_CORNER_RIGHT: return gatherer_step_watch(gdecide_edge_corner_right(corner));
 		case TWO_EDGE_BENT: return gatherer_step_watch(gdecide_two_edge_bent(corner));
 		case THREE_GATHERER_WALK: return gatherer_step_watch(gdecide_three_gatherer_walk(corner));
+		case FOUR_BENT: return gatherer_step_watch(gdecide_four_bent(corner));
 		default: return sanitize(early_gatherer(), LEFT_ORDER);
 	}
 }

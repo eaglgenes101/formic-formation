@@ -89,10 +89,14 @@ function early_queen()
 	{
 		if (view[CCW[gatherer_cell][2]].color === DOWN_FOOD)
 		{
+			var num_clear_cells = 0;
 			var num_down_food = 0;
-			for (var i = 0; i < 9; i++)
-				if (view[i].color === DOWN_FOOD) num_down_food++;
-			if (num_down_food === 1)
+			for (var try_cell = 0; try_cell < 9; try_cell++)
+			{
+				if (view[try_cell].color === DOWN_FOOD) num_down_food++;
+				if (view[try_cell].color === DOWN_MARCH) num_clear_cells++;
+			}
+			if (num_down_food < 3 && num_clear_cells === 9 - num_down_food)
 			{
 				var food_factor = QUEEN_FORM_PROB_MAX-QUEEN_FORM_PROB_MIN
 				var food_coefficient = QUEEN_FORM_PROB_DECAY/food_factor

@@ -41,6 +41,15 @@ function mdecide_two_edge_bent(corner)
 		if ([DOWN_STALLED, UP_READY, DOWN_GATHERER].includes(view[CCW[corner][3]].color))
 			if ([DOWN_STALLED, UP_READY].includes(view[4].color))
 				return {cell:4, color:PUTPRECS[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
+
+	//Special case: when the queen is visible at CCW[corner][1], we may need to do signal transmission
+	if (view[CCW[corner][1]].ant.type === QUEEN)
+	{
+		var provisional = linewatch(CCW[corner][4]);
+		if (provisional !== null)
+			return provisional;
+	}
+	
 	return {cell:CCW[corner][2]}; 
 }
 
