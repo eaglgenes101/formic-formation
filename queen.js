@@ -188,7 +188,7 @@ function qdecide_three_recover(corner)
 	//Probability of spawning a worker is dependent on the queen's food stores. 
 	//The more food, the less eager the spawning. 
 	/*if (this_ant().food > 0 && [DOWN_STALLED, UP_READY].includes(upstream))*/
-	if (this_ant().food > 0)
+	if (this_ant().food > 0 && [DOWN_STALLED, UP_READY].includes(upstream))
 	{
 		var one_minus_prob = 1-QUEEN_SPAWN_PROB_MIN
 		var food_coefficient = QUEEN_SPAWN_PROB_DECAY/one_minus_prob

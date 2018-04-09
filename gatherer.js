@@ -116,7 +116,13 @@ function gatherer_retrieve()
 	switch(neighbor_type(corner))
 	{
 		case EDGE_CORNER_LEFT: return gatherer_step_watch({cell:CCW[corner][2]});
-		case THREE_GATHERER_WALK: return gatherer_step_watch({cell:CCW[corner][6]});
+		case THREE_GATHERER_WALK: 
+		{
+			//Walk forward only if given the DOWN_FOOD signal
+			if (view[CCW[corner][7]].color === DOWN_FOOD)
+				return gatherer_step_watch({cell:CCW[corner][6]});
+			return gatherer_step_watch({cell:CCW[corner][2]});
+		}
 		case FOUR_BENT: return gatherer_step_watch({cell:4});
 		default: return sanitize(early_gatherer(), FREE_ORDER);
 	}

@@ -48,6 +48,9 @@ function mdecide_two_edge_bent(corner)
 		var provisional = linewatch(CCW[corner][4]);
 		if (provisional !== null)
 			return provisional;
+		if (view[CCW[corner][3]].color === UP_REALIGN && view[CCW[corner][1]].color === DOWN_GATHERER)
+			if (view[4].color === DOWN_GATHERER)
+				return {cell:4, color:DOWN_GATHERER};
 	}
 	
 	return {cell:CCW[corner][2]}; 
@@ -92,6 +95,8 @@ function mdecide_edge_corner_left(corner)
 	}
 	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
 	{
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
 		return {cell:4, color:DOWN_MARCH};
 	}
 	if (down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
@@ -157,6 +162,10 @@ function mdecide_edge_corner_right(corner)
 	}
 	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
 	{
+		if (view[4].color === DOWN_MARCH && view[CCW[corner][1]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][1], color:DOWN_MARCH};
+		if (view[4].color === DOWN_MARCH && view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
 		return {cell:4, color:DOWN_MARCH};
 	}
 	if (down_sig === UP_REALIGN && view[4].color === UP_REALIGN_END)
@@ -186,6 +195,16 @@ function mdecide_edge_corner_right(corner)
 	}*/
 
 	//If none of the signals fit, go the color
+
+	//If on DOWN_MARCH, clear out potentially confusing signals
+	if (down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
+	{
+		if (view[CCW[corner][1]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][1], color:DOWN_MARCH};
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+	}
+
 	return {cell:4, color:down_sig};
 	//return {cell:4};
 	
@@ -209,9 +228,31 @@ function mdecide_three_march(corner)
 
 	if (up_sig === UP_REALIGN && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
 		if (view[corner].color === UP_REALIGN_END)
+		{
+			if (view[CCW[corner][7]].color === DOWN_MARCH)	
+				return {cell:4, color:UP_REALIGN};
+			return {cell:CCW[corner][2]};
+		}
+
+	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED && [UP_REALIGN].includes(view[4].color))
+		return {cell:4, color:UP_REALIGN};
+
+	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_REALIGN && down_sig === UP_READY && view[4].color === DOWN_STALLED)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
+		if (view[corner].color === UP_REALIGN_END)
+		{
 			return {cell:4, color:UP_REALIGN};
+		}
 	
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
 
 	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
@@ -220,14 +261,12 @@ function mdecide_three_march(corner)
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 		return {cell:4, color:DOWN_STALLED};
 
-	if (view[CCW[corner][3]].ant.type === QUEEN)
-	{
-		if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
-			return {cell:4, color:DOWN_STALLED};
-	}
-
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_MARCH)
+	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [DOWN_STALLED].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
+		if (view[CCW[corner][3]].ant.type === QUEEN)
+			return {cell:4, color:DOWN_STALLED};
 
 	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
 		return {cell:4, color:DOWN_MARCH};
@@ -237,6 +276,14 @@ function mdecide_three_march(corner)
 
 	if ([DOWN_FOOD, DOWN_GATHERER].includes(up_sig) && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 		return {cell:4, color:DOWN_GATHERER};
+
+	if (view[CCW[corner][1]].ant.type === QUEEN)
+	{
+		if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
+		{
+			return {cell:4, color:DOWN_GATHERER};
+		}
+	}
 	/*
 
 	//Then decide
@@ -286,10 +333,40 @@ function mdecide_three_stand(corner)
 	
 	var up_sig = view[CCW[corner][3]].color
 	var down_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
-	if (up_sig === UP_REALIGN && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
+
+	if (up_sig === UP_REALIGN && [DOWN_MARCH, DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_MARCH)
 		return {cell:4, color:UP_REALIGN};
-	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+
+	if (up_sig === UP_REALIGN && [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_REALIGN, UP_READY].includes(down_sig))
+		if (view[4].color === UP_REALIGN)
+			return {cell:4, color:UP_REALIGN};
+
+	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
 		return {cell:4, color:UP_REALIGN};
+
+	//If stalled, proactively clear out potentially confusing signals
+	if ([DOWN_STALLED].includes(up_sig) && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
+	{
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+		if (view[CCW[corner][4]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][4], color:DOWN_MARCH};
+		if (view[CCW[corner][5]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][5], color:DOWN_MARCH};
+		if (view[CCW[corner][6]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][6], color:DOWN_MARCH};
+		if (view[CCW[corner][7]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][7], color:DOWN_MARCH};
+	}
+
+	if (view[4].color === DOWN_MARCH)
+	{
+		if (view[CCW[corner][1]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][1], color:DOWN_MARCH};
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+	}
+	
 	
 	//Else send the all clear signal
 	return {cell:4, color:DOWN_MARCH};
@@ -333,6 +410,21 @@ function mdecide_three_queen_stand(corner)
 			return {cell:4, color:DOWN_MARCH};
 		if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 			return {cell:4, color:DOWN_STALLED};
+
+		//If stalled, proactively clear out potentially confusing signals
+		if ([DOWN_STALLED].includes(up_sig) && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
+		{
+			if (view[CCW[corner][1]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][1], color:DOWN_MARCH};
+			if (view[CCW[corner][2]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][2], color:DOWN_MARCH};
+			if (view[CCW[corner][3]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][3], color:DOWN_MARCH};
+			if (view[CCW[corner][4]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][4], color:DOWN_MARCH};
+			if (view[CCW[corner][6]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][6], color:DOWN_MARCH};
+		}
 		/*var provisional = linewatch(CCW[corner][4]);
 		if (provisional !== null) return provisional;
 
@@ -372,12 +464,24 @@ function mdecide_four_z(corner)
 	//But this is usually a normal-march thing, so check both sides for indicators
 	var provisional = linewatch2(CCW[corner][4]);
 	if (provisional !== null) return provisional;
-	/*
+
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
+	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED)
+		return {cell:4, color:UP_REALIGN};
+	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN)
+		return {cell:4, color:UP_REALIGN};
 
-	return {cell:4, color:PUTPRECS[up_sig][down_sig]};*/
-	return {cell:4};
+	//If we're already on DOWN_MARCH, clear out potentially confusing colors
+	if (view[CCW[corner][1]].color !== DOWN_MARCH)
+		return {cell:CCW[corner][1], color:DOWN_MARCH};
+	if (view[CCW[corner][2]].color !== DOWN_MARCH)
+		return {cell:CCW[corner][2], color:DOWN_MARCH};
+	if (view[CCW[corner][5]].color !== DOWN_MARCH)
+		return {cell:CCW[corner][5], color:DOWN_MARCH};
+	if (view[CCW[corner][6]].color !== DOWN_MARCH)
+		return {cell:CCW[corner][6], color:DOWN_MARCH};
+	return {cell:4, color:DOWN_MARCH};
 }
 
 function mdecide_four_stairs(corner)
@@ -393,32 +497,52 @@ function mdecide_four_stairs(corner)
 
 	var provisional = linewatch2(corner);
 	if (provisional !== null) return provisional;
-	/*
-	if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][7]].color))
-	{
-		if ([DOWN_FOOD, DOWN_STALLED, DOWN_GATHERER].includes(view[CCW[corner][4]]))
-			return {cell:4, color:DOWN_STALLED};
-	}
-	if (view[CCW[corner][5]].color === DOWN_STALLED)
-	{
-		if ([DOWN_FOOD, DOWN_STALLED, DOWN_GATHERER].includes(view[CCW[corner][3]]))
-			return {cell:4, color:DOWN_STALLED};
-	}
-	*/
 
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 	
 	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(up_sig))
+	{
 		if (view[4].color === UP_REALIGN)
 			return {cell:4, color:DOWN_STALLED};
+		if (view[4].color === DOWN_STALLED && down_sig === UP_READY)
+		{
+			if (view[CCW[corner][5]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][5], color:DOWN_MARCH};
+			if (view[CCW[corner][6]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][6], color:DOWN_MARCH};
+			if (view[CCW[corner][7]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][7], color:DOWN_MARCH};
+		}
+	}
 	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
 	{
 		if (view[4].color === UP_REALIGN)
 			return {cell:4, color:DOWN_STALLED};
-		if ([UP_REALIGN].includes(up_sig))
-			return {cell:4, color:DOWN_STALLED};
+		//if ([UP_REALIGN].includes(up_sig))
+		//	return {cell:4, color:DOWN_STALLED};
+		if (view[4].color === DOWN_STALLED && up_sig === UP_READY)
+		{
+			if (view[CCW[corner][2]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][2], color:DOWN_MARCH};
+		}
 	}
+	//If stalled, proactively clear out potentially confusing signals
+	if ([DOWN_STALLED].includes(up_sig) && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
+	{
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+		if (view[CCW[corner][5]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][5], color:DOWN_MARCH};
+		if (view[CCW[corner][6]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][6], color:DOWN_MARCH};
+		if (view[CCW[corner][7]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][7], color:DOWN_MARCH};
+	}
+	if ([UP_REALIGN].includes(up_sig) && [UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+	if ([UP_READY].includes(up_sig) && [UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
 
 	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
 	
