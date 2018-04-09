@@ -40,7 +40,9 @@ function mdecide_two_edge_bent(corner)
 	if ([DOWN_STALLED].includes(view[CCW[corner][1]].color))
 		if ([DOWN_STALLED, UP_READY, DOWN_GATHERER].includes(view[CCW[corner][3]].color))
 			if ([DOWN_STALLED, UP_READY].includes(view[4].color))
-				return {cell:4, color:PUTPRECS[view[CCW[corner][1]].color][view[CCW[corner][3]].color]};
+			{
+				return {cell:4, color:DOWN_STALLED};
+			}
 
 	//Special case: when the queen is visible at CCW[corner][1], we may need to do signal transmission
 	if (view[CCW[corner][1]].ant.type === QUEEN)
@@ -103,29 +105,6 @@ function mdecide_edge_corner_left(corner)
 	{
 		return {cell:4, color:DOWN_STALLED};
 	}
-	//Marching, or recovering? 
-	//if (down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
-	//	return {cell:4, color:UP_REALIGN_END};
-	/*
-	if (down_sig === UP_READY)
-		return {cell:4, color:DOWN_MARCH};
-
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
-	{
-		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) 
-		{
-			if (provisional.color === UP_REALIGN)
-				return {cell:4, color:UP_REALIGN_END};
-			return provisional;
-		}
-		if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
-		{
-			//No gatherer in sight? send down DOWN_STALLED
-			return {cell:4, color:DOWN_STALLED};
-		}
-		return {cell:4, color:down_sig};
-	}*/
 
 	//If none of the signals fit, go by the march
 	return {cell:CCW[corner][2]};
@@ -134,13 +113,6 @@ function mdecide_edge_corner_left(corner)
 
 function mdecide_edge_corner_right(corner)
 {
-	//Eject in scenarios where we would otherwise deadlock
-	/*
-	if (view[CCW[corner][7]].ant.type === GATHERER && view[corner].ant.type === QUEEN)	
-		return sanitize(saboteur(), FREE_ORDER);
-	if (view[CCW[corner][7]].ant.type === QUEEN && view[corner].ant.type === GATHERER)	
-		return sanitize(saboteur(), FREE_ORDER);
-	*/
 
 	//Special logic do early-game correctly
 	if (view[corner].ant.type === GATHERER && view[CCW[corner][7]].ant.type === QUEEN)
@@ -168,31 +140,15 @@ function mdecide_edge_corner_right(corner)
 			return {cell:CCW[corner][2], color:DOWN_MARCH};
 		return {cell:4, color:DOWN_MARCH};
 	}
+	if (down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
+	{
+		if (view[CCW[corner][1]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][1], color:DOWN_MARCH};
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+	}
 	if (down_sig === UP_REALIGN && view[4].color === UP_REALIGN_END)
 		return {cell:CCW[corner][6]};
-	//Marching, or recovering? 
-	//if (down_sig1 === UP_REALIGN && view[4].color === DOWN_MARCH)
-	//	return {cell:4, color:UP_REALIGN_END};
-	/*
-	if (down_sig === UP_READY)
-		return {cell:4, color:DOWN_MARCH};
-
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
-	{
-		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) 
-		{
-			if (provisional.color === UP_REALIGN)
-				return {cell:4, color:UP_REALIGN_END};
-			return provisional;
-		}
-		if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
-		{
-			//No gatherer in sight? send down DOWN_STALLED
-			return {cell:4, color:DOWN_STALLED};
-		}
-		return {cell:4, color:down_sig};
-	}*/
 
 	//If none of the signals fit, go the color
 
@@ -248,70 +204,32 @@ function mdecide_three_march(corner)
 
 	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
 		if (view[corner].color === UP_REALIGN_END)
-		{
 			return {cell:4, color:UP_REALIGN};
-		}
-	
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
-		return {cell:4, color:DOWN_STALLED};
 
+	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
+		return {cell:4, color:DOWN_MARCH};
+	
 	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
 		return {cell:4, color:UP_READY};
+
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
 
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 		return {cell:4, color:DOWN_STALLED};
 
-	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [DOWN_STALLED].includes(view[4].color))
+	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
 		return {cell:4, color:DOWN_STALLED};
 
 	if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
 		if (view[CCW[corner][3]].ant.type === QUEEN)
 			return {cell:4, color:DOWN_STALLED};
 
-	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
-		return {cell:4, color:DOWN_MARCH};
-
 	if (up_sig === DOWN_FOOD && down_sig === DOWN_FOOD && view[4].color === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
 
 	if ([DOWN_FOOD, DOWN_GATHERER].includes(up_sig) && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 		return {cell:4, color:DOWN_GATHERER};
-
-	if (view[CCW[corner][1]].ant.type === QUEEN)
-	{
-		if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
-		{
-			return {cell:4, color:DOWN_GATHERER};
-		}
-	}
-	/*
-
-	//Then decide
-	if (down_sig === UP_REALIGN_END && up_sig !== DOWN_MARCH) 
-		return {cell:4, color:UP_REALIGN};
-
-	if (up_sig === UP_REALIGN_END && down_sig === UP_REALIGN) 
-		return {cell:4, color:UP_REALIGN};
-
-
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
-	{
-		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) return provisional;
-		return {cell:4, color:PUTPRECS[down_sig][up_sig]};
-	}
-	if ([UP_READY].includes(down_sig) && [DOWN_MARCH].includes(up_sig))
-	{
-		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) return provisional;
-		return {cell:4, color:DOWN_MARCH};
-	}
-	if ([UP_REALIGN, DOWN_FOOD].includes(down_sig) && [DOWN_FOOD].includes(view[4].color))
-	{
-		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) return provisional;
-		return {cell:4, color:PUTPRECS[down_sig][up_sig]};
-	}*/
 
 	//If none matches our current situation, return
 	return {cell:CCW[corner][2]};
@@ -325,11 +243,6 @@ function mdecide_three_stand(corner)
 	{
 		return provisional;
 	}
-	
-	/*//We stay still here. But which signal do we send?
-	//If we're surrounded by UP_REALIGN, then send that
-	var provisional = linewatch2(corner);
-	if (provisional !== null) return provisional;*/
 	
 	var up_sig = view[CCW[corner][3]].color
 	var down_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
@@ -406,10 +319,10 @@ function mdecide_three_queen_stand(corner)
 			return {cell:4, color:DOWN_STALLED};
 		if (up_sig === DOWN_STALLED && [UP_READY].includes(down_sig) && view[4].color === DOWN_STALLED)
 			return {cell:4, color:UP_READY};
-		if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
-			return {cell:4, color:DOWN_MARCH};
 		if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 			return {cell:4, color:DOWN_STALLED};
+		if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
+			return {cell:4, color:DOWN_MARCH};
 
 		//If stalled, proactively clear out potentially confusing signals
 		if ([DOWN_STALLED].includes(up_sig) && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
@@ -425,15 +338,6 @@ function mdecide_three_queen_stand(corner)
 			if (view[CCW[corner][6]].color !== DOWN_MARCH)
 				return {cell:CCW[corner][6], color:DOWN_MARCH};
 		}
-		/*var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null) return provisional;
-
-		var up_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
-
-		if (up_sig === UP_READY && view[CCW[corner][5]].color === DOWN_MARCH)
-			return {cell:4, color:DOWN_MARCH};
-		//We are near the corner, and it's stalled
-		return {cell:4, color:up_sig};*/
 		return {cell:4};
 	}
 }
@@ -446,15 +350,6 @@ function mdecide_three_recover(corner)
 
 function mdecide_three_marcher_hang(corner)
 {
-	//This is FOUR_STAIRS, but the queen is going out to spawn a worker
-	// ba**
-	// *B*g
-	// **q*
-	//We know that upstream is in the direction of cell 4, so
-	//transmit signals on behalf of the two ants at cells 3 and 4
-	/*
-	if (view[corner].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
-	return {cell:4, color:PUTPRECS[view[CCW[corner][3]].color][view[CCW[corner][4]].color]};*/
 	return {cell:4};
 }
 
@@ -500,35 +395,35 @@ function mdecide_four_stairs(corner)
 
 	var up_sig = PAIRSIDES[view[corner].color][view[CCW[corner][1]].color];
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
-	
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(up_sig))
-	{
-		if (view[4].color === UP_REALIGN)
-			return {cell:4, color:DOWN_STALLED};
-		if (view[4].color === DOWN_STALLED && down_sig === UP_READY)
-		{
-			if (view[CCW[corner][5]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][5], color:DOWN_MARCH};
-			if (view[CCW[corner][6]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][6], color:DOWN_MARCH};
-			if (view[CCW[corner][7]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][7], color:DOWN_MARCH};
-		}
+
+
+	if (up_sig === DOWN_MARCH && down_sig === UP_READY && view[4].color === UP_READY)
+		return {cell:4, color:DOWN_MARCH};
+
+	if (up_sig === DOWN_MARCH && down_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
+		return {cell:4, color:DOWN_FOOD};
+
+	if (up_sig === DOWN_MARCH && [DOWN_GATHERER, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
+		return {cell:4, color:DOWN_FOOD};
+
+	if (up_sig === DOWN_FOOD && [UP_REALIGN, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_FOOD && down_sig === UP_READY && view[4].color === DOWN_STALLED)
+	{	
+		if (view[CCW[corner][5]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][5], color:DOWN_MARCH};
+		if (view[CCW[corner][6]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][6], color:DOWN_MARCH};
+		if (view[CCW[corner][7]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][7], color:DOWN_MARCH};
 	}
-	if ([DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED].includes(down_sig))
-	{
-		if (view[4].color === UP_REALIGN)
-			return {cell:4, color:DOWN_STALLED};
-		//if ([UP_REALIGN].includes(up_sig))
-		//	return {cell:4, color:DOWN_STALLED};
-		if (view[4].color === DOWN_STALLED && up_sig === UP_READY)
-		{
-			if (view[CCW[corner][2]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][2], color:DOWN_MARCH};
-		}
-	}
+
 	//If stalled, proactively clear out potentially confusing signals
-	if ([DOWN_STALLED].includes(up_sig) && [DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_STALLED)
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
 	{
 		if (view[CCW[corner][2]].color !== DOWN_MARCH)
 			return {cell:CCW[corner][2], color:DOWN_MARCH};
@@ -539,12 +434,68 @@ function mdecide_four_stairs(corner)
 		if (view[CCW[corner][7]].color !== DOWN_MARCH)
 			return {cell:CCW[corner][7], color:DOWN_MARCH};
 	}
-	if ([UP_REALIGN].includes(up_sig) && [UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
+
+	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
+	{	
+		if (view[CCW[corner][5]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][5], color:DOWN_MARCH};
+		if (view[CCW[corner][6]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][6], color:DOWN_MARCH};
+		if (view[CCW[corner][7]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][7], color:DOWN_MARCH};
+		return {cell:4, color:UP_READY};
+	}
+
+	//If stalled, proactively clear out potentially confusing signals
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_MARCH)
 		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [UP_REALIGN, DOWN_MARCH].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && [DOWN_STALLED, DOWN_GATHERER].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_STALLED && [DOWN_FOOD, DOWN_MARCH].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_GATHERER && down_sig === UP_READY && view[4].color === DOWN_STALLED)
+	{	
+		if (view[CCW[corner][5]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][5], color:DOWN_MARCH};
+		if (view[CCW[corner][6]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][6], color:DOWN_MARCH};
+		if (view[CCW[corner][7]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][7], color:DOWN_MARCH};
+	}
+
+	if (up_sig === DOWN_GATHERER && [DOWN_MARCH, UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_GATHERER].includes(view[4].color))
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_REALIGN && [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_REALIGN && [DOWN_STALLED, UP_REALIGN].includes(down_sig) && view[4].color === DOWN_MARCH)
+		return {cell:4, color:DOWN_STALLED};
+
+	if (up_sig === UP_READY && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
+		return {cell:4, color:UP_READY};
+
+	if (up_sig === UP_READY && [DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && view[4].color === DOWN_STALLED)
+		if (view[CCW[corner][2]].color !== DOWN_MARCH)
+			return {cell:CCW[corner][2], color:DOWN_MARCH};
+	
+	if (up_sig === UP_READY && down_sig === DOWN_MARCH && view[4].color === UP_READY)
+		return {cell:4, color:DOWN_MARCH};
+
 	if ([UP_READY].includes(up_sig) && [UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
 		return {cell:4, color:DOWN_STALLED};
 
-	return {cell:4, color:PUTPRECS[up_sig][down_sig]};
+
+	return {cell:4};
 	
 }
 

@@ -158,16 +158,6 @@ function qdecide_three_march(corner)
 	}
 
 	//Now with those found
-
-	//Reply to stalled with ready
-	/*
-	if (upstream === DOWN_STALLED && view[CCW[corner][3]].color === UP_READY)
-	{
-		return {cell: 4, color:UP_READY};
-	}
-	
-	return {cell:4, color:PUTPRECS[view[CCW[corner][3]].color][upstream]};
-	*/
 	return {cell:4};
 }
 
