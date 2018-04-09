@@ -156,6 +156,11 @@ function qdecide_three_march(corner)
 	{
 		return {cell:4, color:DOWN_MARCH};
 	}
+	if (upstream === UP_READY && view[CCW[corner][3]].color === UP_REALIGN && view[4].color === UP_READY)
+	{
+		if (view[CCW[corner][1]].color === DOWN_MARCH)
+			return {cell:4, color:DOWN_MARCH};
+	}
 
 	//Now with those found
 	return {cell:4};
