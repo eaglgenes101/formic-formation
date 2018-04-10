@@ -8,6 +8,7 @@ The gatherer is the right hand (wo)man to the queen. She guides her during the e
 function gatherer_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
+	if (candidate.hasOwnProperty("color")) return candidate;
 	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return turn_color2(UP_PANIC, 0);
 	if (view[candidate.cell].ant !== null) return turn_color2(UP_PANIC, 0); 
 	return candidate;
