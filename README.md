@@ -93,6 +93,7 @@ Release notes:
 
 1.0: First version put up for submission, initial release
 
+1.0.1: Performed logical reductions, made compatible with more controllers
 
 
 
