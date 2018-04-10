@@ -87,16 +87,17 @@ function early_gatherer()
 			if (view[try_cell].food > 0) 
 			{
 				if (view[4].color === DOWN_FOOD && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
-				else return {cell:4, color: DOWN_FOOD};
+				else if (view[try_cell].color !== DOWN_FOOD) return {cell:try_cell, color:DOWN_FOOD};
+				//else return {cell:4, color: DOWN_FOOD};
 			}
 		for (try_cell of random_permutation(EDGES))
 			if (view[try_cell].food > 0) 
 			{
 				if (CCW[queen_cell][2] === try_cell) return {cell:4, color:DOWN_FOOD};
-				else return {cell:4, color: DOWN_MARCH};
+				else if (view[try_cell].color !== DOWN_FOOD) return {cell:try_cell, color:DOWN_FOOD};
+				//else return {cell:4, color: DOWN_MARCH};
 			}
 	}
-
 	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
 	return {cell:CCW[queen_cell][1]};
 	

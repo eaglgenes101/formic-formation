@@ -68,26 +68,34 @@ function early_queen()
 
 	if (gatherer_cell === null || CORNERS.includes(gatherer_cell)) return {cell:4};
 
-	//To prevent gliding spins, color our own cell white if it's yellow
-	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
-
 	for (try_cell of random_permutation(CORNERS))
 		if (view[try_cell].food > 0) 
 		{
-			if (view[gatherer_cell].color === DOWN_FOOD && NEARS[try_cell].includes(gatherer_cell)) return {cell:try_cell};
-			else return {cell:gatherer_cell, color: DOWN_MARCH};
+			if (view[try_cell].color === DOWN_FOOD && NEARS[try_cell].includes(gatherer_cell)) return {cell:try_cell};
+			else if (view[try_cell].color !== DOWN_FOOD) return {cell:try_cell, color:DOWN_FOOD};
 		}
 	for (try_cell of random_permutation(EDGES))
 		if (view[try_cell].food > 0) 
 		{
-			if (CCW[gatherer_cell][6] === try_cell) return {cell:CCW[gatherer_cell][6], color:DOWN_FOOD};
+			if (view[try_cell].color !== DOWN_FOOD) return {cell:try_cell, color:DOWN_FOOD};
 			else return {cell:4, color: DOWN_MARCH};
 		}
+
+	//To prevent gliding spins, color our own cell white if it's yellow
+	if (view[4].color === DOWN_FOOD) 
+	{
+		if (view[CCW[gatherer_cell][2]].color === DOWN_FOOD && view[CCW[gatherer_cell][2]].food === 0)
+			return {cell:CCW[gatherer_cell][2], color:DOWN_MARCH};
+		return {cell:4, color:DOWN_MARCH};
+	}
+
+	if (view[CCW[gatherer_cell][6]].color === DOWN_FOOD && view[CCW[gatherer_cell][6]].food === 0)
+		return {cell:CCW[gatherer_cell][6], color:DOWN_MARCH};
 
 	//Once the gatherer is orthogonal to us, spawn a marcher with reasonable probability
 	if (EDGES.includes(gatherer_cell) && this_ant().food > 2 && ally_count === 1) 
 	{
-		if (view[CCW[gatherer_cell][2]].color === DOWN_FOOD)
+		if (view[4].color === DOWN_MARCH && view[gatherer_cell].color === DOWN_FOOD)
 		{
 			var num_clear_cells = 0;
 			var num_down_food = 0;

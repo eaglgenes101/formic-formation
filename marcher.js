@@ -411,11 +411,10 @@ function mdecide_four_z(corner)
 	if (up_sig === DOWN_FOOD && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
 		return turn_color2(UP_REALIGN, CCW[corner][4]);
 
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && view[4].color === UP_REALIGN)
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
 		return turn_color2(UP_REALIGN, CCW[corner][4]);
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
 		return turn_color2(UP_REALIGN, CCW[corner][4]);
-
 
 	if (up_sig === DOWN_FOOD && down_sig === DOWN_STALLED && view[4].color === UP_REALIGN)
 		return turn_color2(UP_REALIGN, CCW[corner][4]);
@@ -458,26 +457,21 @@ function mdecide_four_stairs(corner)
 	if (up_sig === DOWN_FOOD && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
 		return turn_color2(DOWN_FOOD, corner);
 
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && view[4].color === UP_REALIGN)
+		return turn_color2(DOWN_FOOD, corner);
+
 	if (up_sig === DOWN_FOOD && [UP_REALIGN, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_STALLED, corner);
 
 	if (up_sig === DOWN_FOOD && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-	{	
 		return turn_color2(DOWN_STALLED, corner);
-	}
 
-	//If stalled, proactively clear out potentially confusing signals
 	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
-	{
 		return turn_color2(DOWN_STALLED, corner);
-	}
 
 	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-	{	
 		return turn_color2(UP_READY, corner);
-	}
 
-	//If stalled, proactively clear out potentially confusing signals
 	if (up_sig === DOWN_STALLED && [DOWN_MARCH, DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_MARCH)
 		return turn_color2(DOWN_STALLED, corner);
 
@@ -490,10 +484,11 @@ function mdecide_four_stairs(corner)
 	if (up_sig === DOWN_STALLED && [DOWN_FOOD, DOWN_MARCH].includes(down_sig) && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_STALLED, corner);
 
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+		return turn_color2(DOWN_FOOD, corner);
+
 	if (up_sig === DOWN_GATHERER && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-	{	
 		return turn_color2(DOWN_STALLED, corner);
-	}
 
 	if (up_sig === DOWN_GATHERER && [DOWN_MARCH, UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_STALLED, corner);
@@ -522,7 +517,6 @@ function mdecide_four_stairs(corner)
 	if ([UP_READY].includes(up_sig) && [UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_STALLED, corner);
 
-
 	return turn_color2(view[4].color, corner);
 	
 }
@@ -534,7 +528,7 @@ function marcher_step_watch(candidate)
 	if (candidate.hasOwnProperty("color") && candidate.color === 0)
 		return turn_color2(view[4].color, 0);
 	if (view[candidate.cell].food !== 0)
-		return turn_color2(DOWN_COLOR, 0);
+		return turn_color2(DOWN_FOOD, 0);
 	if (is_harvestable(candidate.cell))
 		return turn_color2(DOWN_FOOD, 0);
 	if (view[candidate.cell].ant !== null)
