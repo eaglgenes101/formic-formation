@@ -221,9 +221,14 @@ function mdecide_three_march(corner)
 			return {cell:CCW[corner][2]};
 		}
 
+	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
+		return turn_color(DOWN_FOOD, corner);
 
 	if (up_sig === UP_REALIGN && down_sig === UP_READY && [DOWN_STALLED].includes(view[4].color))
 		return turn_color(DOWN_MARCH, corner); 
+
+	if (up_sig === UP_REALIGN && down_sig === UP_READY && view[4].color === DOWN_STALLED)
+		return turn_color(UP_READY, corner); 
 
 	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
 		return turn_color(DOWN_STALLED, corner); 
@@ -231,8 +236,8 @@ function mdecide_three_march(corner)
 	if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
 		return turn_color(DOWN_STALLED, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color(UP_READY, corner); 
+	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && view[4].color === DOWN_FOOD)
+		return turn_color(DOWN_FOOD, corner);
 
 	if (up_sig === UP_REALIGN && down_sig === DOWN_MARCH && view[4].color === DOWN_STALLED)
 		return turn_color(DOWN_STALLED, corner);
@@ -288,13 +293,12 @@ function mdecide_three_stand(corner)
 	if (up_sig === UP_REALIGN && [DOWN_MARCH, DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_MARCH)
 		return turn_color2(UP_REALIGN, corner); 
 
-	if (up_sig === UP_REALIGN && [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_REALIGN, UP_READY].includes(down_sig))
+	if (up_sig === UP_REALIGN && [DOWN_MARCH, DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_REALIGN, UP_READY].includes(down_sig))
 		if (view[4].color === UP_REALIGN)
 			return turn_color2(UP_REALIGN, corner); 
 
 	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
 		return turn_color2(UP_REALIGN, corner); 
-
 
 	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && view[4].color === DOWN_STALLED)
 		return turn_color2(DOWN_STALLED, corner); 
@@ -401,6 +405,20 @@ function mdecide_four_z(corner)
 		return turn_color2(DOWN_MARCH, CCW[corner][4]); 
 	if (up_sig === UP_READY && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_MARCH, CCW[corner][4]); 
+
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+		return turn_color2(UP_REALIGN, CCW[corner][4]);
+
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && view[4].color === UP_REALIGN)
+		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+		return turn_color2(UP_REALIGN, CCW[corner][4]);
+
+
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_STALLED && view[4].color === UP_REALIGN)
+		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === DOWN_STALLED && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+		return turn_color2(UP_REALIGN, CCW[corner][4]);
 
 	return turn_color2(DOWN_MARCH, CCW[corner][4]); 
 }
