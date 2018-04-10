@@ -30,7 +30,7 @@ function opening_queen()
 		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][6]};
 
 	//If the color at the current cell is 1 (white), color it 8 (black)
-	if (view[4].color !== 8) return {cell: 4, color: 8};
+	if (view[4].color !== 8) return {cell:4, color: 8};
 
 	//If any of the ground is black, avoid it.
 	//Otherwise, just choose a direction that won't cause a run-in. 
@@ -116,17 +116,17 @@ function early_queen()
 //Don't step on food or enemies. Instead, signal. 
 function queen_step_watch(candidate)
 {
-	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return {cell:4, color:UP_PANIC};
+	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return turn_color2(UP_PANIC, 0); 
 	if (candidate.cell === 4) return candidate;
-	if (is_enemy(candidate.cell)) return {cell:4, color:UP_PANIC};
-	if (is_ally(candidate.cell)) return {cell:4};
+	if (is_enemy(candidate.cell)) return turn_color2(UP_PANIC, 0); 
+	if (is_ally(candidate.cell)) return turn_color2(view[4].color, 0); 
 	return candidate;
 }
 
 function qdecide_two_edge_straight(corner)
 {
 	//One of the two is the gatherer, right?
-	return {cell:4};
+	return turn_color2(view[4].color, corner); 
 }
 
 function qdecide_two_edge_bent(corner)
@@ -146,24 +146,24 @@ function qdecide_three_march(corner)
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 	if (upstream === DOWN_STALLED && view[CCW[corner][3]].color === DOWN_MARCH && view[4].color === DOWN_GATHERER)
 	{
-		return {cell: 4, color:DOWN_STALLED};
+		return turn_color(DOWN_STALLED, corner); 
 	}
 	if (upstream === DOWN_STALLED && view[CCW[corner][3]].color === UP_READY && view[4].color === DOWN_STALLED)
 	{
-		return {cell: 4, color:UP_READY};
+		return turn_color(UP_READY, corner); 
 	}
 	if (upstream === DOWN_MARCH && view[CCW[corner][3]].color === UP_READY && view[4].color === UP_READY)
 	{
-		return {cell:4, color:DOWN_MARCH};
+		return turn_color(DOWN_MARCH, corner); 
 	}
 	if (upstream === UP_READY && view[CCW[corner][3]].color === UP_REALIGN && view[4].color === UP_READY)
 	{
 		if (view[CCW[corner][1]].color === DOWN_MARCH)
-			return {cell:4, color:DOWN_MARCH};
+			return turn_color(DOWN_MARCH, corner); 
 	}
 
 	//Now with those found
-	return {cell:4};
+	return turn_color(view[4].color, corner); 
 }
 
 function qdecide_three_recover(corner)
@@ -173,11 +173,7 @@ function qdecide_three_recover(corner)
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 
 	if (upstream === DOWN_FOOD)
-		return {cell:4, color:DOWN_FOOD};
-
-	/*
-	if (upstream === DOWN_GATHERER)
-		return {cell:4, color:DOWN_GATHERER};*/
+		return turn_color(DOWN_FOOD, corner); 
 	
 	//With probability, spawn a worker. 
 	//Probability of spawning a worker is dependent on the queen's food stores. 
@@ -193,8 +189,8 @@ function qdecide_three_recover(corner)
 	}
 
 	var provisional = linewatch(corner)
-	if (provisional !== null) return provisional;
-	return {cell:4};
+	if (provisional !== null) return turn_color(provisional, corner);
+	return turn_color(view[4].color, corner);
 }
 
 function qdecide_three_queen_stand(corner)
@@ -207,16 +203,15 @@ function qdecide_three_queen_stand(corner)
 	//Reply to stalled with ready
 	if (upstream === DOWN_STALLED && view[CCW[corner][5]].color === UP_READY && view[4].color === DOWN_STALLED)
 	{
-		return {cell: 4, color:UP_READY};
+		return turn_color(UP_READY, corner); 
 	}
-	return {cell:4, color:upstream};
-	//return {cell:4};
+	return turn_color(upstream, corner); 
 }
 
 function qdecide_three_gatherer_walk(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
-	return {cell:4, color:upstream};
+	return turn_color(upstream, corner); 
 }
 
 function queen_wait()
@@ -233,20 +228,11 @@ function queen_wait()
 		{
 			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 			if (up_sig === DOWN_GATHERER)
-				return {cell:4, color:DOWN_GATHERER};
-			/*if (view[corner].color === DOWN_GATHERER)
-			{
-				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][1]].color))
-					return {cell:4, color: DOWN_GATHERER};
-				if (view[corner].ant.type === GATHERER)
-					return {cell:4, color:DOWN_GATHERER};
-				if (true)
-					return {cell:4, color:DOWN_GATHERER};
-			}*/
+				return turn_color(DOWN_GATHERER, corner); 
 
 			var provisional = linewatch(corner);
 			if (provisional !== null)
-				return {cell:4, color:DOWN_GATHERER};
+				return turn_color(provisional, corner); 
 			if (this_ant().food > 1) return {cell:CCW[corner][3], type:GATHERER};
 		}
 		break;
@@ -254,25 +240,17 @@ function queen_wait()
 		{
 			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 			if (up_sig === DOWN_GATHERER)
-				return {cell:4, color:DOWN_GATHERER};
-			/*if (view[corner].color === DOWN_GATHERER)
-			{
-				if ([DOWN_GATHERER, DOWN_STALLED].includes(view[CCW[corner][7]].color))
-					return {cell:4, color: DOWN_GATHERER};
-				if (view[corner].ant.type === GATHERER)
-					return {cell:4, color:DOWN_GATHERER};
-				if (true)
-					return {cell:4, color:DOWN_GATHERER};
-			}*/
+				return turn_color(DOWN_GATHERER, corner); 
 			var provisional = linewatch(corner);
 			if (provisional !== null)
-				return {cell:4, color:DOWN_GATHERER};
+				return turn_color(provisional, corner); 
 			if (this_ant().food > 1) return {cell:CCW[corner][5], type:GATHERER};
 		}
 		break;
 	}
 
-	if (view[4].color !== UP_PANIC) return {cell:4, color:UP_PANIC};
+	if (view[4].color !== UP_PANIC)
+		return turn_color2(UP_PANIC, corner); 
 	else return sanitize(opening_queen(), FREE_ORDER);
 }
 

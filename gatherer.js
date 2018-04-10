@@ -8,8 +8,8 @@ The gatherer is the right hand (wo)man to the queen. She guides her during the e
 function gatherer_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
-	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return {cell:4, color:UP_PANIC};
-	if (view[candidate.cell].ant !== null) return {cell:4, color:UP_PANIC};
+	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return turn_color2(UP_PANIC, 0);
+	if (view[candidate.cell].ant !== null) return turn_color2(UP_PANIC, 0); 
 	return candidate;
 }
 
@@ -27,13 +27,13 @@ function gdecide_edge_corner_left(corner)
 	}
 	if (view[corner].color === DOWN_STALLED && view[CCW[corner][1]].color === DOWN_STALLED)
 	{
-		return {cell:4, color:UP_READY};
+		return turn_color(UP_READY, corner); 
 	}
 	if (view[corner].color === DOWN_MARCH && view[CCW[corner][1]].color === DOWN_MARCH)
 	{
-		return {cell:4, color:DOWN_MARCH};
+		return turn_color(DOWN_MARCH, corner);
 	}
-	return {cell:4};
+	return turn_color(view[4].color, corner);
 	
 }
 
@@ -43,11 +43,11 @@ function gdecide_edge_corner_right(corner)
 		return {cell:CCW[corner][6]};
 	if (view[corner].color === DOWN_STALLED && view[CCW[corner][7]].color === DOWN_STALLED)
 	{
-		return {cell:4, color:UP_READY};
+		return turn_color(UP_READY, corner);
 	}
 	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
-	return {cell:4};
+	return turn_color(view[4].color, corner);
 	
 }
 
@@ -117,7 +117,7 @@ function gatherer_retrieve()
 				return gatherer_step_watch({cell:CCW[corner][6]});
 			return gatherer_step_watch({cell:CCW[corner][2]});
 		}
-		case FOUR_BENT: return gatherer_step_watch({cell:4});
+		case FOUR_BENT: return gatherer_step_watch(turn_color(view[4].color, corner));
 		default: return sanitize(early_gatherer(), FREE_ORDER);
 	}
 }
