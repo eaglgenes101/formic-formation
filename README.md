@@ -16,6 +16,7 @@ Overview:
 This submission aims to create a line of ants that can sweep the area. Colors are used as signals to help the queen coordinate the line, not as trailmarkers. 
 
 This submission uses three types of workers in addition to the queen:
+
 *    Type 1: Formation marcher, A phase
 *    Type 2: Formation marcher, B phase
 *    Type 3: Gatherer
@@ -79,6 +80,7 @@ Queen spawning is controlled by probability. As the game goes on and the queen h
 
 To-do:
 ------
+
 * Clean out logical cruft
 * Allow the queen to extend the line even if food is off-phase
 * Test and refine queen looting
@@ -88,6 +90,7 @@ To-do:
 
 Release notes:
 ------
+
 1.0: First version put up for submission, initial release
 
 
