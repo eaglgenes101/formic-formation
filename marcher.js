@@ -457,7 +457,7 @@ function mdecide_four_stairs(corner)
 	if (up_sig === DOWN_FOOD && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
 		return turn_color2(DOWN_FOOD, corner);
 
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && view[4].color === UP_REALIGN)
+	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
 		return turn_color2(DOWN_FOOD, corner);
 
 	if (up_sig === DOWN_FOOD && [UP_REALIGN, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
@@ -484,7 +484,7 @@ function mdecide_four_stairs(corner)
 	if (up_sig === DOWN_STALLED && [DOWN_FOOD, DOWN_MARCH].includes(down_sig) && view[4].color === UP_REALIGN)
 		return turn_color2(DOWN_STALLED, corner);
 
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
+	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && [DOWN_GATHERER, UP_REALIGN].includes(view[4].color))
 		return turn_color2(DOWN_FOOD, corner);
 
 	if (up_sig === DOWN_GATHERER && down_sig === UP_READY && view[4].color === DOWN_STALLED)

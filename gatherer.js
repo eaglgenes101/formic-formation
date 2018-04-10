@@ -93,7 +93,13 @@ function early_gatherer()
 		for (try_cell of random_permutation(EDGES))
 			if (view[try_cell].food > 0) 
 			{
-				if (CCW[queen_cell][2] === try_cell) return {cell:4, color:DOWN_FOOD};
+				if (CCW[queen_cell][2] === try_cell) 
+				{
+					if (view[4].color !== DOWN_FOOD) 
+						return {cell:4, color:DOWN_FOOD};
+					else
+						return {cell:CCW[queen_cell][1]};
+				}
 				else if (view[try_cell].color !== DOWN_FOOD) return {cell:try_cell, color:DOWN_FOOD};
 				//else return {cell:4, color: DOWN_MARCH};
 			}
