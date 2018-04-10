@@ -1,4 +1,4 @@
-"use strict";
+var marcher_count;var gatherer_count;var excess_gatherers;var try_cell;var lh_cell;var rh_cell;
 
 function debug(message)
 {

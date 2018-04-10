@@ -113,7 +113,7 @@ function early_queen()
 				if (random_choice(actual_prob))
 					return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
 				else
-					return {cell:CCW[gatherer_cell][2], color:DOWN_MARCH};
+					return {cell:gatherer_cell, color:DOWN_MARCH};
 			}
 		}
 	}
