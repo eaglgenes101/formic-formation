@@ -78,6 +78,8 @@ function early_gatherer()
 		if (EDGES.includes(try_cell) && view[try_cell].food > 0) return {cell:4, color:DOWN_FOOD};
 	}
 	if (queen_cell === null) return {cell:4};
+	if (view[queen_cell].color === DOWN_FOOD)
+		return {cell:CCW[queen_cell][7]};
 
 	if (this_ant().food === 0)
 	{
@@ -96,8 +98,6 @@ function early_gatherer()
 	}
 
 	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
-	if (view[queen_cell].color === DOWN_FOOD)
-		return {cell:CCW[queen_cell][7]};
 	return {cell:CCW[queen_cell][1]};
 	
 }

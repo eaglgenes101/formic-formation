@@ -21,6 +21,8 @@ function mdecide_one_edge(corner)
 	{
 		if (view[CCW[corner][2]].food === 1)
 			return {cell:corner};
+		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
+			return {cell:corner};
 	}
 
 	//Break away
