@@ -1,12 +1,12 @@
 Formic-Formation
 ======
 
-This is the Marching Formation submission for Formic Functions. 
+This is the Marching Formation submission for [Formic Functions](https://codegolf.stackexchange.com/questions/135102/formic-functions-ant-queen-of-the-hill-contest). 
 
 Building:
 ------
 
-On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "debug", an unminified submission can be found in "collected", and a minified submission can be found in "all". 
+On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "for\_debug", an unminified submission can be found in "collected", and a minified submission can be found in "for\_release". 
 
 You can also generate the file manually by running "cat noprint commons patterns *.js main releasefooter" or "cat print commons patterns *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
 
@@ -86,7 +86,9 @@ To-do:
 * See if enemy workers can be walked around
 * Investigate signal state reduction
 
-
+Release notes:
+------
+1.0: First version put up for submission, initial release
 
 
 
