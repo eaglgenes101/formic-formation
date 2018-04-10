@@ -104,8 +104,7 @@ function early_gatherer()
 
 function gatherer_retrieve()
 {
-	//TODO: Only walk food-colored perimeters
-	//TODO: Have some way to return empty-handed
+	if (view[4].color === UP_PANIC) return sanitize(saboteur(), FREE_ORDER);
 	var corner = view_corner();
 	switch(neighbor_type(corner))
 	{
@@ -124,6 +123,7 @@ function gatherer_retrieve()
 
 function gatherer_return()
 {
+	if (view[4].color === UP_PANIC) return sanitize(saboteur(), FREE_ORDER);
 	var corner = view_corner();
 	switch(neighbor_type(corner))
 	{
@@ -137,6 +137,7 @@ function gatherer_return()
 
 function gatherer_formation()
 {
+	if (view[4].color === UP_PANIC) return sanitize(saboteur(), FREE_ORDER);
 	var corner = view_corner();
 	switch (neighbor_type(corner))
 	{

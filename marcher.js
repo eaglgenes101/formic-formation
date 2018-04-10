@@ -60,7 +60,7 @@ function mdecide_two_edge_bent(corner)
 			return turn_color2(UP_REALIGN_END, corner); 
 
 	if (view[CCW[corner][1]].color === UP_REALIGN_END && view[CCW[corner][3]].color === DOWN_STALLED)
-		if ([UP_REALIGN_END].includes(view[4].color))
+		if ([UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
 			return turn_color2(UP_REALIGN_END, corner); 
 
 	if (view[CCW[corner][1]].color === UP_REALIGN_END && view[CCW[corner][3]].color === DOWN_MARCH)
@@ -536,7 +536,7 @@ function marcher_step_watch(candidate)
 	if (is_harvestable(candidate.cell))
 		return turn_color2(DOWN_FOOD, 0);
 	if (view[candidate.cell].ant !== null)
-		return turn_color2(UP_PANIC, corner);
+		return turn_color2(UP_PANIC, 0);
 	return candidate;
 }
 
@@ -556,6 +556,7 @@ function marcher_decision()
 		return sanitize(saboteur(), FREE_ORDER);
 	}
 	var corner = view_corner();
+	if (view[4].color === UP_PANIC) return sanitize(saboteur(), FREE_ORDER);
 	if (this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
 	switch (neighbor_type(corner))
 	{
