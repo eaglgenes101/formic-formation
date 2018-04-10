@@ -525,8 +525,7 @@ function mdecide_four_stairs(corner)
 function marcher_step_watch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
-	if (candidate.hasOwnProperty("color") && candidate.color === 0)
-		return turn_color2(view[4].color, 0);
+	if (candidate.hasOwnProperty("color")) return candidate;
 	if (view[candidate.cell].food !== 0)
 		return turn_color2(DOWN_FOOD, 0);
 	if (is_harvestable(candidate.cell))

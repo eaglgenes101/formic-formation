@@ -31,10 +31,8 @@ Ants are created in a full-width diagonal line as follows:
             BA
              BA
               QG
-               ..
-                .
 
-The first two ants created are a gatherer and a marcher, A or B with equal probability. After that, ants are created with probability after finding food, alternating between A and B. In the formation, the queen gatherer alternates between the two phases of marching, depending on the formation marcher last created. 
+The first four ants ants created are a gatherer and a marcher, A or B with equal probability, then one of each. After that, ants are created with probability after finding food, alternating between A and B. In the formation, the queen gatherer alternates between the two phases of marching, depending on the formation marcher last created. 
 
 Early phase
 ------
@@ -77,7 +75,7 @@ Queen looting is a work in progress. The workers will recognise enemy queens as 
 
 To prevent existing color signals from interfering with the line, workers will recolor surrounding areas white if they would send a color signal, but are already standing on the color signal they want to send. This surroundings-clearing is so powerful that a marching formation can bore through a colored nest at full speed without problems. 
 
-Queen spawning is controlled by probability. As the game goes on and the queen has less food on hand, she becomes less eager to spawn new lines and add workers to existing lines, down to a tuneable asymptotic limit probability. 
+Queen spawning is controlled by probability. As the game goes on and the queen has more food on hand, she becomes less eager to spawn new lines and add workers to existing lines, down to a tuneable asymptotic limit probability. 
 
 To-do:
 ------
@@ -86,7 +84,7 @@ To-do:
 * Test and refine queen looting
 * Make sabotaging workers prefer to move into areas that aren't already mixed up
 * See if enemy workers can be walked around
-
+* Investigate signal state reduction
 
 
 
