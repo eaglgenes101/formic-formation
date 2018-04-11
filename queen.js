@@ -9,7 +9,14 @@ If the queen loses the formation but has a gatherer or has food, she spawns a ga
 //Opening-phase queen (when the gatherer is not visible and the queen has no food)
 function opening_queen()
 {
-	//First, determine that there is exactly one gatherer and no marchers 
+
+	//If one of the adjacent spaces has food, gather it
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (view[try_cell].food === 1) return {cell:try_cell};
+
+	//Actively avoid other workers
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][4]};
 
 	if (this_ant().food > 0) 
 	{
@@ -18,16 +25,32 @@ function opening_queen()
 		{
 			if (is_ally(try_cell)) num_allies++;
 		}
-		if (num_allies === 0) return {cell:0, type:GATHERER};
+		if (num_allies === 0) 
+		{
+			//Check the area for clearings
+			var is_clear = true;
+			var num_black_corners = 0;
+			for (var try_cell = 0; try_cell < 9; try_cell++)
+			{
+				//We are looking for surroundings consisting of a single corner black cell
+				//and 8 white cells
+				if (CORNERS.includes(try_cell))
+				{
+					if (view[try_cell].color === 8)
+						num_black_corners++;
+					else if (view[try_cell].color !== 1)
+						is_clear = false;
+				}
+				else
+				{
+					if (view[try_cell].color !== 1)
+						is_clear = false;
+				}
+			}
+			if (num_black_corners === 1 && is_clear)
+				return {cell:0, type:GATHERER};
+		}
 	}
-
-	//If one of the adjacent spaces has food, gather it
-	for (try_cell of random_permutation(SCAN_MOVES))
-		if (view[try_cell].food === 1) return {cell:try_cell};
-
-	//Actively avoid other workers
-	for (try_cell of random_permutation(SCAN_MOVES))
-		if (view[try_cell].ant !== null) return {cell:CCW[try_cell][6]};
 
 	//If the color at the current cell is 1 (white), color it 8 (black)
 	if (view[4].color !== 8) return {cell:4, color: 8};
@@ -95,26 +118,28 @@ function early_queen()
 	//Once the gatherer is orthogonal to us, spawn a marcher with reasonable probability
 	if (EDGES.includes(gatherer_cell) && this_ant().food > 2 && ally_count === 1) 
 	{
-		if (view[4].color === DOWN_MARCH && view[gatherer_cell].color === DOWN_FOOD)
+		var num_clear_cells = 0;
+		var num_down_food = 0;
+		var is_valid = true;
+		for (var try_cell = 0; try_cell < 9; try_cell++)
 		{
-			var num_clear_cells = 0;
-			var num_down_food = 0;
-			for (var try_cell = 0; try_cell < 9; try_cell++)
+			if (view[try_cell].color === DOWN_FOOD) 
 			{
-				if (view[try_cell].color === DOWN_FOOD) num_down_food++;
-				if (view[try_cell].color === DOWN_MARCH) num_clear_cells++;
+				num_down_food++;
+				if (try_cell !== 4 && try_cell !== gatherer_cell) is_valid = false;
 			}
-			if (num_down_food < 3 && num_clear_cells === 9 - num_down_food)
-			{
-				var food_factor = QUEEN_FORM_PROB_MAX-QUEEN_FORM_PROB_MIN
-				var food_coefficient = QUEEN_FORM_PROB_DECAY/food_factor
-				var actual_prob = food_factor/(food_coefficient*(this_ant().food-3)+1) + QUEEN_FORM_PROB_MIN;
-	
-				if (random_choice(actual_prob))
-					return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
-				else
-					return {cell:gatherer_cell, color:DOWN_MARCH};
-			}
+			if (view[try_cell].color === DOWN_MARCH) num_clear_cells++;
+		}
+		if (is_valid && num_down_food === 1 && num_clear_cells === 8)
+		{
+			var food_factor = QUEEN_FORM_PROB_MAX-QUEEN_FORM_PROB_MIN
+			var food_coefficient = QUEEN_FORM_PROB_DECAY/food_factor
+			var actual_prob = food_factor/(food_coefficient*(this_ant().food-3)+1) + QUEEN_FORM_PROB_MIN;
+
+			if (random_choice(actual_prob))
+				return {cell:CCW[gatherer_cell][1], type:random_choice(.5)?MARCHER_A:MARCHER_B};
+			else
+				return {cell:gatherer_cell, color:DOWN_MARCH};
 		}
 	}
 
@@ -297,6 +322,11 @@ function queen_decision()
 				else
 					excess_gatherers++;
 			}
+		}
+		else if (is_enemy(try_cell))
+		{
+			//Just bail. Just fricking bail. The longer we wait here, the more we run into trouble
+			return sanitize(opening_queen(), FREE_ORDER);
 		}
 	}
 	if (marcher_count > 0 && gatherer_count === 1 && excess_gatherers === 0)

@@ -28,13 +28,13 @@ function gdecide_edge_corner_left(corner)
 	}
 	if (view[corner].color === DOWN_STALLED && view[CCW[corner][1]].color === DOWN_STALLED)
 	{
-		return turn_color(UP_READY, corner); 
+		return turn_color(UP_READY, CCW[corner][1]); 
 	}
 	if (view[corner].color === DOWN_MARCH && view[CCW[corner][1]].color === DOWN_MARCH)
 	{
-		return turn_color(DOWN_MARCH, corner);
+		return turn_color(DOWN_MARCH, CCW[corner][1]);
 	}
-	return turn_color(view[4].color, corner);
+	return turn_color(view[4].color, CCW[corner][1]);
 	
 }
 
@@ -44,11 +44,11 @@ function gdecide_edge_corner_right(corner)
 		return {cell:CCW[corner][6]};
 	if (view[corner].color === DOWN_STALLED && view[CCW[corner][7]].color === DOWN_STALLED)
 	{
-		return turn_color(UP_READY, corner);
+		return turn_color(UP_READY, CCW[corner][1]);
 	}
 	if (is_ally(corner) && view[corner].ant.type === QUEEN)
 		return {cell:CCW[corner][1]};
-	return turn_color(view[4].color, corner);
+	return turn_color(view[4].color, CCW[corner][1]);
 	
 }
 
@@ -71,14 +71,10 @@ function early_gatherer()
 	var food_count = 0;
 	for (try_cell of SCAN_MOVES)
 	{
-		if (is_ally(try_cell) && view[try_cell].ant.type === QUEEN)
-		{
-			queen_cell = try_cell;
-			break;
-		}
-		if (EDGES.includes(try_cell) && view[try_cell].food > 0) return {cell:4, color:DOWN_FOOD};
+		if (is_ally(try_cell) && view[try_cell].ant.type === QUEEN) queen_cell = try_cell;
+		else if (is_enemy(try_cell)) sanitize(saboteur(), FREE_ORDER);
 	}
-	if (queen_cell === null) return {cell:4};
+	if (queen_cell === null) return sanitize(saboteur(), FREE_ORDER);
 	if (view[queen_cell].color === DOWN_FOOD)
 		return {cell:CCW[queen_cell][7]};
 
@@ -105,7 +101,7 @@ function early_gatherer()
 				//else return {cell:4, color: DOWN_MARCH};
 			}
 	}
-	if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
+	//if (view[4].color === DOWN_FOOD) return {cell:4, color:DOWN_MARCH};
 	return {cell:CCW[queen_cell][1]};
 	
 }

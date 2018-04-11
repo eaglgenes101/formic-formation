@@ -101,41 +101,41 @@ function mdecide_edge_corner_left(corner)
 	if (provisional !== null) 
 	{
 		if (provisional === UP_REALIGN)
-			return turn_color(UP_REALIGN_END, CCW[corner][4]); 
-		return turn_color(provisional, CCW[corner][4]); 
+			return turn_color(UP_REALIGN_END, CCW[corner][3]); 
+		return turn_color(provisional, CCW[corner][3]); 
 	}
 
 	if (down_sig === UP_REALIGN && [UP_REALIGN_END].includes(view[4].color))
 	{
 		if (view[corner].color === DOWN_MARCH)
 			return {cell:CCW[corner][2]};
-		return turn_color(UP_REALIGN_END, CCW[corner][4]); 
+		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
 	}
 	if (down_sig === UP_REALIGN && [DOWN_MARCH].includes(view[4].color))
 	{
-		return turn_color(UP_REALIGN_END, CCW[corner][4]); 
+		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
 	}
 	if ([DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
 	{
-		return turn_color(DOWN_STALLED, CCW[corner][4]); 
+		return turn_color(DOWN_STALLED, CCW[corner][3]); 
 	}
 	if ([DOWN_STALLED].includes(down_sig) && [UP_REALIGN_END].includes(view[4].color))
 	{
-		return turn_color(UP_REALIGN_END, CCW[corner][4]); 
+		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
 	}
 	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
 	{
 		if (view[CCW[corner][2]].color !== DOWN_MARCH)
 			return {cell:CCW[corner][2], color:DOWN_MARCH};
-		return turn_color(DOWN_MARCH, CCW[corner][4]); 
+		return turn_color(DOWN_MARCH, CCW[corner][3]); 
 	}
 	if ([UP_READY].includes(down_sig) && [UP_REALIGN_END].includes(view[4].color))
 	{
-		return turn_color(DOWN_MARCH, CCW[corner][4]); 
+		return turn_color(DOWN_MARCH, CCW[corner][3]); 
 	}
 	if (down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
 	{
-		return turn_color(DOWN_STALLED, CCW[corner][4]); 
+		return turn_color(DOWN_STALLED, CCW[corner][3]); 
 	}
 
 	//If none of the signals fit, go by the march
@@ -157,20 +157,20 @@ function mdecide_edge_corner_right(corner)
 	if (provisional !== null) 
 	{
 		if (provisional === UP_REALIGN)
-			return turn_color(UP_REALIGN_END, CCW[corner][4]); 
-		return turn_color(provisional, CCW[corner][4]); 
+			return turn_color(UP_REALIGN_END, CCW[corner][3]); 
+		return turn_color(provisional, CCW[corner][3]); 
 	}
 	if ([DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && [UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
 	{
-		return turn_color(DOWN_STALLED, CCW[corner][4]); 
+		return turn_color(DOWN_STALLED, CCW[corner][3]); 
 	}
 	if (down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
 	{
-		return turn_color(DOWN_STALLED, CCW[corner][4]); 
+		return turn_color(DOWN_STALLED, CCW[corner][3]); 
 	}
 	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
 	{
-		return turn_color(DOWN_MARCH, CCW[corner][4]); 
+		return turn_color(DOWN_MARCH, CCW[corner][3]); 
 	}
 	if (down_sig === UP_REALIGN && view[4].color === UP_REALIGN_END)
 		return {cell:CCW[corner][6]};
@@ -178,10 +178,10 @@ function mdecide_edge_corner_right(corner)
 	//If none of the signals fit, go the color
 	if (down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
 	{
-		return turn_color(DOWN_MARCH, CCW[corner][4]); 
+		return turn_color(DOWN_MARCH, CCW[corner][3]); 
 	}
 
-	return turn_color(down_sig, CCW[corner][4]); 
+	return turn_color(down_sig, CCW[corner][3]); 
 	
 }
 

@@ -8,7 +8,7 @@ Building:
 
 On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "for\_debug", an unminified submission can be found in "collected", and a minified submission can be found in "for\_release". 
 
-You can also generate the file manually by running "cat noprint commons patterns *.js main releasefooter" or "cat print commons patterns *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
+You can also generate the file manually by running "cat noprint commons patterns saboteur *.js main releasefooter" or "cat print commons patterns saboteur *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
 
 Overview:
 ------
