@@ -4,7 +4,6 @@ function is_gatherer_marcher(cell)
 {
 	//First, check that the cell we called on is actually an unladen gatherer
 	if (!is_ally(cell) || view[cell].ant.food > 0 || view[cell].ant.type !== GATHERER) return false;
-
 	if (this_ant().type === QUEEN) return true;
 
 	lh_cell = CCW[cell][1];
@@ -65,12 +64,9 @@ function view_corner()
 				scores[i]++;
 		}
 	}
-	if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > scores[3])
-		return CORNERS[0];
-	else if (scores[1] > scores[2] && scores[1] > scores[3])
-		return CORNERS[1];
-	else if (scores[2] > scores[3])
-		return CORNERS[2];
+	if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > scores[3]) return CORNERS[0];
+	else if (scores[1] > scores[2] && scores[1] > scores[3]) return CORNERS[1];
+	else if (scores[2] > scores[3]) return CORNERS[2];
 	else return CORNERS[3];
 }
 
@@ -139,8 +135,7 @@ function neighbor_type(top_left)
 		if (is_ally(try_cell) && is_other(try_cell)) edges.push(try_cell);
 	if (corners.length === 1 && edges.length === 0) return ONE_CORNER;
 	if (corners.length === 0 && edges.length === 1) return ONE_EDGE;
-	if (corners.length === 0 && edges.length === 2)
-		return (edges[1] === CCW[edges[0]][4]) ? TWO_EDGE_STRAIGHT : TWO_EDGE_BENT;
+	if (corners.length === 0 && edges.length === 2) return (edges[1] === CCW[edges[0]][4]) ? TWO_EDGE_STRAIGHT : TWO_EDGE_BENT;
 	else if (corners.length === 1 && edges.length === 1)
 	{
 		if (edges[0] === CCW[top_left][1]) return EDGE_CORNER_LEFT;
@@ -173,9 +168,6 @@ function neighbor_type(top_left)
 			return FOUR_BENT;
 		return null;
 	}
-	else return null;
+	return null;
 }
-
-
-
 

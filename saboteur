@@ -1,27 +1,10 @@
-/*
-function sdecide_alone(facing)
-{
-}
+/*/
+ * 
+ * Saboteur routine for disrupting other nests
+ * 
+/*/
 
-function sdecide_discolor(facing)
-{
-}
-
-function sdecide_stride(facing)
-{
-}
-
-function sdecide_obstruct(facing)
-{
-}
-
-function sdecide_dogpile(facing)
-{
-}
-*/
-
-//Fallback function for workers
-function saboteur()
+function sdecide_alone()
 {
 	//Actively avoid other allied workers
 	for (try_cell of random_permutation(SCAN_MOVES))
@@ -29,6 +12,85 @@ function saboteur()
 		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
 	}
 
+	var c = UP_PANIC;
+	for (try_cell of random_subset(SCAN_MOVES, 7))
+		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
+		{
+			c = view[try_cell].color;
+			break;
+		}
+	if (view[4].color === 1) return {cell: 4, color: c};
+	//Try to move in straight lines
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) 
+			return {cell:try_cell};
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].color === 1)
+			if (view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
+				return {cell:try_cell};
+
+	return {cell:1};
+}
+
+function sdecide_erase()
+{
+	//Actively avoid other allied workers
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
+
+	for (try_cell of random_permutation(SCAN_MOVES))
+		if (view[try_cell].color !== 1) return {cell:try_cell, color:1};
+	if (view[4].color !== 1) return {cell:4, color:1};
+
+	return {cell:0};
+}
+
+function sdecide_discolor()
+{
+	//Recolor squares, with a pattern that is surprisingly good at breaking deadlocks
+	if (view[1].color !== view[6].color && view[6].color !== 1) return {cell:1, color:view[6].color};
+	if (view[2].color !== view[3].color) return {cell:3, color:view[2].color};
+	
+	for (try_cell of random_permutation(EDGES))
+		if (view[try_cell].color !== 1) 
+			if (view[CCW[try_cell][1]] !== 1 && view[CCW[try_cell][7]] !== 1) 
+				return {cell:try_cell};
+	for (try_cell of random_permutation(CORNERS))
+		if (view[try_cell].color !== 1) 
+			if (view[CCW[try_cell][1]] !== 1 || view[CCW[try_cell][7]] !== 1) 
+				return {cell:try_cell};
+
+	//Stick around allies
+	for (try_cell of random_permutation(SCAN_MOVES))
+	{
+		if (is_ally(try_cell)) 
+			return {cell:try_cell};
+	}
+
+	return {cell:0};
+}
+
+function sdecide_stride()
+{
+	
+	for (try_cell of random_permutation(CORNERS))
+	{
+		if (view[try_cell].color !== view[CCW[try_cell][1]].color)
+			if (view[try_cell].color !== view[CCW[try_cell][7]].color)
+				return {cell:try_cell};
+	}
+	for (try_cell of random_permutation(CORNERS))
+	{
+		if (view[try_cell].color !== view[CCW[try_cell][1]].color)
+			return {cell:try_cell};
+		if (view[try_cell].color !== view[CCW[try_cell][7]].color)
+			return {cell:try_cell};
+	}
+	return {cell:0};
+}
+
+function sdecide_obstruct()
+{
 	//Obstruct enemy workers
 	for (try_cell of random_permutation(SCAN_MOVES))
 		if (is_enemy(try_cell)) 
@@ -39,52 +101,63 @@ function saboteur()
 				if (rand_neighbors[0] !== rand_neighbors[1])
 					return {cell:rand_neighbors[0], color:view[rand_neighbors[1]].color};
 			}
-			if (random_choice(SABOTEUR_OBSTRUCT_PROB)) return {cell:try_cell};
+			if (random_choice(SABOTEUR_OBSTRUCT_PROB)) 
+			{
+				return {cell:try_cell};
+			}
+			for (ant_off in random_permutation([1,2,3,4,5,6,7]))
+			{
+				if (view[CCW[try_cell][ant_off]].ant !== null)
+				{
+					if ([1,3].includes(ant_off) && random_choice(.3))
+						return {cell: CCW[try_cell][2]};
+					if ([5,7].includes(ant_off) && random_choice(.3))
+						return {cell: CCW[try_cell][6]};
+					if (ant_off === 2 && random_choice(.3))
+						return {cell: CCW[try_cell][1]};
+					if (ant_off === 6 && random_choice(.3))
+						return {cell: CCW[try_cell][7]};
+					if (ant_off === 4 && random_choice(.3))
+						return {cell: CCW[try_cell][random_choice(.5)?2:6]};
+					if (random_choice(.3))
+						return {cell: 4};
+				}
+			}
 		}
+	return {cell:1};
+}
 
-	var c = UP_PANIC;
-	for (try_cell of random_subset(SCAN_MOVES, 7))
-		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
-		{
-			c = view[try_cell].color
-			break;
-		}
+//Fallback function for workers
+function saboteur()
+{
+	var num_enemies = 0;
 
-	//If there are more than 2 colored neighbors, settle in and scramble
-	//Otherwise, do straight-line motion
-	var colored_neighbors = 0;
-	for (try_cell of SCAN_MOVES) if (view[try_cell].color > 1) colored_neighbors++;
-	if (colored_neighbors > 2)
-	{
-		//Recolor squares, with a pattern that is surprisingly good at breaking deadlocks
-		//TODO: do so with a reduced probability if the pattern is already splotchy
-		if (view[1].color !== view[6].color && view[6].color !== 1) return {cell:1, color:view[6].color};
-		if (view[2].color !== view[3].color) return {cell:3, color:view[2].color};
-		
-		for (try_cell of random_permutation(EDGES))
-			if (view[try_cell].color !== 1) 
-				if (view[CCW[try_cell][1]] !== 1 && view[CCW[try_cell][7]] !== 1) 
-					return {cell:try_cell};
-		for (try_cell of random_permutation(EDGES))
-			if (view[try_cell].color !== 1) 
-				if (view[CCW[try_cell][1]] !== 1 || view[CCW[try_cell][7]] !== 1) 
-					return {cell:try_cell};
+	for (try_cell of SCAN_MOVES)
+		if (is_enemy(try_cell)) num_enemies++;
 
-		return {cell:1};
-	}
+	//Dispatch based on number of enemies present
+	if (num_enemies > 0) return sdecide_obstruct();
 	else
 	{
-		if (view[4].color === 1) return {cell: 4, color: c};
-
-		//Try to move in straight lines
-		for (try_cell of random_permutation(CORNERS))
-			if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) 
-				return {cell:try_cell};
-		for (try_cell of random_permutation(CORNERS))
-			if (view[try_cell].color === 1)
-				if (view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
-					return {cell:try_cell};
-
-		return {cell:1};
+		//Judge the diversity of colors around
+		var colored_neighbors = 0;
+		for (try_cell of SCAN_MOVES) 
+			if (view[try_cell].color > 1) colored_neighbors++;
+		if (colored_neighbors > 2)
+		{
+			var diversity = 45;
+			var counts = [0,0,0,0,0,0,0,0,0];
+			for (var i = 0; i < 9; i++) 
+			{
+				diversity -= 1 + counts[view[i].color];
+				counts[view[i].color]++;
+			}
+			if (diversity >= DISCOLOR_THRESHOLD) return sdecide_discolor();
+			else if (diversity >= ERASE_THRESHOLD) return sdecide_stride();
+			else return sdecide_erase();
+		}
+		else return sdecide_alone();
 	}
+
+
 }

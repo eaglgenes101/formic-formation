@@ -14,9 +14,6 @@ const RIGHT_ORDER = [	[1,3,6,7], 		[0,3], 			[5,1,0,3],
 const LEFT_ORDER = [	[3,1,2,5], 		[2,5], 			[1,5,8,7],
 			[0,1],     		[],       		[8,7],
 			[7,3,0,1], 		[6,3], 			[5,7,6,3]	];
-const NO_ALT = [	[],			[],			[],
-			[],			[],			[],
-			[],			[],			[]		];
 
 //Spacial information lookup tables
 const SCAN_MOVES = 	[0,1,2,3,  5,6,7,8];
@@ -87,6 +84,8 @@ const QUEEN_SPAWN_PROB_DECAY = 0.01;
 const QUEEN_FORM_PROB_MAX = 0.5;
 const QUEEN_FORM_PROB_MIN = 0.15;
 const QUEEN_FORM_PROB_DECAY = 0.01;
+const DISCOLOR_THRESHOLD = 25;
+const ERASE_THRESHOLD = 15;
 
 /*
 Functions shared by all ant types
@@ -193,8 +192,7 @@ function sanitize(prospective, trial_matrix)
 	if (prospective.hasOwnProperty("type"))
 	{
 		//Check the prospective cell first
-		if (view[prospective.cell].food === 0 && view[prospective.cell].ant === null)
-			return prospective;
+		if (view[prospective.cell].food === 0 && view[prospective.cell].ant === null) return prospective;
 		for (try_cell of random_permutation(trial_matrix[prospective.cell]))
 			if (view[try_cell].food === 0 && view[try_cell].ant === null)
 			{
@@ -205,13 +203,11 @@ function sanitize(prospective, trial_matrix)
 	}
 
 	//If we're just coloring spaces, it's fine
-	if (prospective.hasOwnProperty("color"))
-		return prospective;
+	if (prospective.hasOwnProperty("color")) return prospective;
 
 	//Check the prospective cell
 	if (view[prospective.cell].ant === null)
-		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prospective.cell].food === 0)
-			return prospective;
+		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prospective.cell].food === 0) return prospective;
 	for (try_cell of random_permutation(trial_matrix[prospective.cell]))
 		if (view[try_cell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[try_cell].food === 0))
 		{
@@ -224,84 +220,47 @@ function sanitize(prospective, trial_matrix)
 //Common line-watching function for signalling and stalled ants
 function linewatch(corner)
 {
-	for (try_cell in SCAN_MOVES)
-	{
-		if (is_enemy(try_cell) && !is_harvestable(try_cell))
-			return UP_PANIC;
-	}
 	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-	{
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER)
-			return DOWN_GATHERER;
-	}
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1]))
-			return DOWN_GATHERER;
+		if (is_ally(CCW[corner][1])) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH)
-			return DOWN_STALLED;
+		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
 	if (view[CCW[corner][6]].food === 1)
-	{
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER)
-			return DOWN_FOOD;
-	}
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_FOOD;
 	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
 		return DOWN_FOOD;
 	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH)
-			return UP_REALIGN;
+		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
 	return null;
 }
 
 function linewatch2(corner)
 {
-	for (try_cell in SCAN_MOVES)
-	{
-		if (is_enemy(try_cell) && !is_harvestable(try_cell))
-			return UP_PANIC;
-	}
 	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-	{
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER)
-			return DOWN_GATHERER;
-	}
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1]))
-			return DOWN_GATHERER;
+		if (is_ally(CCW[corner][1])) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH)
-			return DOWN_STALLED;
+		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
 	if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
-	{
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER)
-			return DOWN_GATHERER;
-	}
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_GATHERER)
-			return DOWN_GATHERER;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_GATHERER) return DOWN_GATHERER;
 	if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][7]) && view[4].color === DOWN_MARCH)
-			return DOWN_STALLED;
+		if (is_ally(CCW[corner][7]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
 	if (view[CCW[corner][6]].food === 1)
-	{
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER)
-			return DOWN_FOOD;
-	}
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_FOOD;
 	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
 		return DOWN_FOOD;
 	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH)
-			return UP_REALIGN;
+		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
 	if (view[CCW[corner][2]].food === 1)
-	{
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER)
-			return DOWN_FOOD;
-	}
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return DOWN_FOOD;
 	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_FOOD)
 		return {cell:4, color:DOWN_FOOD};
 	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH)
-			return UP_REALIGN;
+		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
 	return null;
 }
 
@@ -309,22 +268,9 @@ function turn_color(output, corner)
 {
 	if (view[4].color === output)
 	{
-		if (!is_ally(CCW[corner][7]) && view[CCW[corner][7]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][7], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][6]) && view[CCW[corner][6]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][6], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][5]) && view[CCW[corner][5]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][5], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][4]) && view[CCW[corner][4]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][4], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][3]) && view[CCW[corner][3]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][3], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][2]) && view[CCW[corner][2]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][2], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][1]) && view[CCW[corner][1]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][1], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][0]) && view[CCW[corner][0]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][0], color:DOWN_MARCH};
+		for (try_cell of [7,6,5,4,3,2,1,0])
+			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][try_cell], color:DOWN_MARCH};
 	}
 	return {cell:4, color:output};
 }
@@ -333,22 +279,9 @@ function turn_color2(output, corner)
 {
 	if (view[4].color === output)
 	{
-		if (!is_ally(CCW[corner][7]) && view[CCW[corner][7]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][7], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][3]) && view[CCW[corner][3]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][3], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][6]) && view[CCW[corner][6]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][6], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][2]) && view[CCW[corner][2]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][2], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][5]) && view[CCW[corner][5]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][5], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][1]) && view[CCW[corner][1]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][1], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][4]) && view[CCW[corner][4]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][4], color:DOWN_MARCH};
-		if (!is_ally(CCW[corner][0]) && view[CCW[corner][0]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][0], color:DOWN_MARCH};
+		for (try_cell of [7,3,6,2,5,1,4,0])
+			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== DOWN_MARCH)
+				return {cell:CCW[corner][try_cell], color:DOWN_MARCH};
 	}
 	return {cell:4, color:output};
 }

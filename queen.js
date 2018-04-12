@@ -1,7 +1,7 @@
 /*
 Queen: Everything revolves around her. She is the one to be fed, she births all the workers, and she forms the right side of the marching formation. 
 
-Strategy: For the opener (detected by the lack of surrounding workers), the queen moves in a straight line via color 3 (cyan), then once she has food, she spawns a gatherer. From there is the early phase, where the queen and the gatherer move at lightspeed. And then from there, the real march starts. If the queen is in formation but loses her gatherer, she spawns another one. 
+Strategy: For the opener (detected by the lack of surrounding workers), the queen moves in a straight line via color 7 (black), then once she has food, she spawns a gatherer. From there is the early phase, where the queen and the gatherer move at lightspeed. And then from there, the real march starts. If the queen is in formation but loses her gatherer, she spawns another one. 
 
 If the queen loses the formation but has a gatherer or has food, she spawns a gatherer if needed and reverts to early-phase. If she loses all food and the gatherer, she sends a panic, then reverts to the opener. 
 */
@@ -263,11 +263,21 @@ function queen_wait()
 			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 			if (up_sig === DOWN_GATHERER)
 				return turn_color(DOWN_GATHERER, corner); 
-
+			if (up_sig === UP_REALIGN)
+			{
+				if ([UP_REALIGN, UP_REALIGN_END].includes(view[corner].color))
+					if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][1]].color))
+						return sanitize(early_queen(), LEFT_ORDER);
+			}
 			var provisional = linewatch(corner);
 			if (provisional !== null)
 				return turn_color(provisional, corner); 
-			if (this_ant().food > 1) return {cell:CCW[corner][3], type:GATHERER};
+			if (this_ant().food > 1) 
+			{
+				if (view[CCW[corner][3]].color !== DOWN_MARCH)
+					return {cell:CCW[corner][3], color:DOWN_MARCH};
+				return {cell:CCW[corner][3], type:GATHERER};
+			}
 		}
 		break;
 		case EDGE_CORNER_RIGHT:
@@ -275,10 +285,21 @@ function queen_wait()
 			var up_sig = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 			if (up_sig === DOWN_GATHERER)
 				return turn_color(DOWN_GATHERER, corner); 
+			if (up_sig === UP_REALIGN)
+			{
+				if ([UP_REALIGN, UP_REALIGN_END].includes(view[corner].color))
+					if ([UP_REALIGN, UP_REALIGN_END].includes(view[CCW[corner][7]].color))
+						return sanitize(early_queen(), LEFT_ORDER);
+			}
 			var provisional = linewatch(corner);
 			if (provisional !== null)
 				return turn_color(provisional, corner); 
-			if (this_ant().food > 1) return {cell:CCW[corner][5], type:GATHERER};
+			if (this_ant().food > 1) 
+			{
+				if (view[CCW[corner][5]].color !== DOWN_MARCH)
+					return {cell:CCW[corner][5], color:DOWN_MARCH};
+				return {cell:CCW[corner][5], type:GATHERER};
+			}
 		}
 		break;
 	}
