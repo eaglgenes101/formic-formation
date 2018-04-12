@@ -177,6 +177,23 @@ function qdecide_three_march(corner)
 	return turn_color(view[4].color, corner); 
 }
 
+function qdecide_three_stand(corner)
+{
+	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
+	if (upstream === D_STALLED && view[CCW[corner][3]].color === D_MARCH && view[4].color === D_GATHERER)
+		return turn_color(D_STALLED, corner); 
+	if (upstream === D_STALLED && view[CCW[corner][3]].color === U_READY && view[4].color === D_STALLED)
+		return turn_color(U_READY, corner); 
+	if (upstream === D_MARCH && view[CCW[corner][3]].color === U_READY && view[4].color === U_READY)
+		return turn_color(D_MARCH, corner); 
+	if (upstream === U_READY && view[CCW[corner][3]].color === U_REALIGN && view[4].color === U_READY)
+		if (view[CCW[corner][1]].color === D_MARCH)
+			return turn_color(D_MARCH, corner); 
+
+	//Now with those found
+	return turn_color(view[4].color, corner); 
+}
+
 function qdecide_three_recover(corner)
 {
 	//The gatherer jumped the gun here
@@ -203,7 +220,6 @@ function qdecide_three_recover(corner)
 
 function qdecide_three_unstand(corner)
 {
-	
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 
 	//Reply to stalled with ready
@@ -288,6 +304,7 @@ function queen_march()
 		case TWO_EDGE_BENT: return queen_step_watch(qdecide_two_edge_bent(corner));
 		case EDGE_CORNER_SKEWED: return queen_step_watch(qdecide_edge_corner_skewed(corner));
 		case THREE_MARCH: return queen_step_watch(qdecide_three_march(corner));
+		case THREE_STAND: return queen_step_watch(qdecide_three_stand(corner));
 		case THREE_RECOVER: return queen_step_watch(qdecide_three_recover(corner));
 		case THREE_UNSTAND: return queen_step_watch(qdecide_three_unstand(corner));
 		case THREE_BLOCK: return queen_step_watch(qdecide_three_block(corner));
