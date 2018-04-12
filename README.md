@@ -3,14 +3,14 @@ Formic-Formation
 
 This is the Marching Formation submission for [Formic Functions](https://codegolf.stackexchange.com/questions/135102/formic-functions-ant-queen-of-the-hill-contest). 
 
-Building:
+Building
 ------
 
 On a Unix-like system, install babel-minify, then run make. An unminified debug version can be found in "for\_debug", an unminified submission can be found in "collected", and a minified submission can be found in "for\_release". 
 
 You can also generate the file manually by running "cat noprint commons patterns saboteur *.js main releasefooter" or "cat print commons patterns saboteur *.js main debugfooter" and redirecting stdout to a file of your choice, then optionally running an EcmaScript 6 compatible minifier on the result. 
 
-Overview:
+Overview
 ------
 
 This submission aims to create a line of ants that can sweep the area. Colors are used as signals to help the queen coordinate the line, not as trailmarkers. 
@@ -40,7 +40,7 @@ Early phase
 
 When the queen spawns, she performs a bog-standard half-lightspeed straight-line walk, trying to avoid retracing her path. Once this gets her a single piece of food, she spawns a gatherer. After gathering 3 pieces of food, for every additional piece of food, the queen has a moderate probability of spawning 3 workers in a hard-coded formation creation routine, and the line takes off. 
 
-General behavior:
+General behavior
 ------
 
 Ants march in lockstep, with phase A and phase B ants alternating between stopping and moving. The phase is recognised via matching the pattern of their neighboring allies, as the ants are unable to store state. Ants always move such that they remain adjacent to at least two other ants. 
@@ -78,22 +78,24 @@ To prevent existing color signals from interfering with the line, workers will r
 
 Queen spawning is controlled by probability. As the game goes on and the queen has more food on hand, she becomes less eager to spawn new lines and add workers to existing lines, down to a tuneable asymptotic limit probability. 
 
-To-do:
+To-do
 ------
 
 * Clean out logical cruft
 * Allow the queen to extend the line even if food is off-phase
 * Test and refine queen looting
-* Make sabotaging workers prefer to move into areas that aren't already mixed up
 * See if enemy workers can be walked around
 * Investigate signal state reduction
+* See if intentially shearing off the end worker helps
 
-Release notes:
+Release notes
 ------
 
 1.0: First version put up for submission, initial release
 
 1.0.1: Performed logical reductions, made compatible with more controllers
+
+1.1: Compacted a bunch of stuff, improved logic relating to error cases
 
 
 

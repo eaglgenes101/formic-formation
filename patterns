@@ -18,7 +18,6 @@ function is_gatherer_marcher(cell)
 function is_like(cell)
 {
 	if (CORNERS.includes(cell) && is_ally(cell))
-	{
 		switch(view[cell].ant.type)
 		{
 			case MARCHER_A: return view[cell].ant.food === 0 && this_ant().type !== MARCHER_B;
@@ -27,14 +26,12 @@ function is_like(cell)
 			case QUEEN: return true;
 			default: return false;
 		}
-	}
 	return false;
 }
 
 function is_other(cell)
 {
 	if (EDGES.includes(cell) && is_ally(cell))
-	{
 		switch(view[cell].ant.type)
 		{
 			case MARCHER_A: return view[cell].ant.food === 0 && this_ant().type !== MARCHER_A;
@@ -43,13 +40,10 @@ function is_other(cell)
 			case QUEEN: return true;
 			default: return false;
 		}
-	}
 	return false;
 }
 
-//Provides the top left corner of the corner. 
-//The canonical view tries to position a corner into the upper left, or if there are no corners,
-//tries to put an edge left. 
+//The canonical view tries to put a corner top left, or an edge left. 
 //Ambiguities are resolved by trying to maintain a counterclockwise ordering of neighbors starting from 0. 
 function view_corner()
 {
@@ -60,8 +54,7 @@ function view_corner()
 		{
 			scores[i] *= 2;
 			var try_cell = CCW[CORNERS[i]][j];
-			if (is_ally(try_cell) && (is_like(try_cell) || is_other(try_cell)))
-				scores[i]++;
+			if (is_ally(try_cell) && (is_like(try_cell) || is_other(try_cell))) scores[i]++;
 		}
 	}
 	if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > scores[3]) return CORNERS[0];
@@ -70,58 +63,58 @@ function view_corner()
 	else return CORNERS[3];
 }
 
-//Formation position constants
-/****
-  aB*
-  ****/const ONE_EDGE = 10;
-/*a**
-  *B*
-  ****/const ONE_CORNER = 11;
-/****
-  aB*
-  *a**/const TWO_EDGE_BENT = 20;
-/****
-  aBa
-  ****/const TWO_EDGE_STRAIGHT = 21;
-/*b**
-  aB*
-  ****/const EDGE_CORNER_LEFT = 22;
-/*ba*
-  *B*
-  ****/const EDGE_CORNER_RIGHT = 23;
-/*b**
-  *Ba
-  ****/const EDGE_CORNER_SKEWED = 24;
-/*b**
-  *Ba
-  ****/const EDGE_CORNER_SPAWN = 25;
-/*b**
-  aB*
-  *a**/const THREE_MARCH = 30;
-/*ba*
-  *B*
-  *a**/const THREE_STAND = 31;
-/*b**
-  aBa
-  ****/const THREE_RECOVER = 32;
-/*ba*
-  *Ba
-  ****/const THREE_QUEEN_STAND = 33;
-/*ba*
-  aB*
-  ****/const THREE_GATHERER_WALK = 34;
-/*b**
-  *B*
-  *ab*/const THREE_MARCHER_HANG = 35;
-/*ba*
-  *B*
-  *ab*/const FOUR_Z = 40;
-/*b**
-  aB*
-  *ab*/const FOUR_STAIRS = 41;
-/*b**
-  aB*
-  ba**/const FOUR_BENT = 42;
+/*Formation position constants
+***
+aB*
+****/const ONE_EDGE = 10;/*
+a**
+*B*
+****/const ONE_CORNER = 11;/*
+***
+aB*
+*a**/const TWO_EDGE_BENT = 20;/*
+***
+aBa
+****/const TWO_EDGE_STRAIGHT = 21;/*
+b**
+aB*
+****/const EDGE_CORNER_LEFT = 22;/*
+ba*
+*B*
+****/const EDGE_CORNER_RIGHT = 23;/*
+b**
+*Ba
+****/const EDGE_CORNER_SKEWED = 24;/*
+b**
+*Ba
+****/const EDGE_CORNER_SPAWN = 25;/*
+b**
+aB*
+*a**/const THREE_MARCH = 30;/*
+ba*
+*B*
+*a**/const THREE_STAND = 31;/*
+b**
+aBa
+****/const THREE_RECOVER = 32;/*
+ba*
+*Ba
+****/const THREE_UNSTAND = 33;/*
+ba*
+aB*
+****/const THREE_BLOCK = 34;/*
+b**
+*B*
+*ab*/const THREE_HANG = 35;/*
+ba*
+*B*
+*ab*/const FOUR_Z = 40;/*
+b**
+aB*
+*ab*/const FOUR_STAIRS = 41;/*
+b**
+aB*
+ba**/const FOUR_BENT = 42;
 
 //Provides the formation number as enumerated above, or null if none apply, given the canonical corner
 function neighbor_type(top_left)
@@ -149,14 +142,14 @@ function neighbor_type(top_left)
 		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][3])) return THREE_MARCH;
 		if (edges.includes(CCW[top_left][3]) && edges.includes(CCW[top_left][7])) return THREE_STAND;
 		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][5])) return THREE_RECOVER;
-		if (edges.includes(CCW[top_left][5]) && edges.includes(CCW[top_left][7])) return THREE_QUEEN_STAND;
-		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][7])) return THREE_GATHERER_WALK;
+		if (edges.includes(CCW[top_left][5]) && edges.includes(CCW[top_left][7])) return THREE_UNSTAND;
+		if (edges.includes(CCW[top_left][1]) && edges.includes(CCW[top_left][7])) return THREE_BLOCK;
 		//Detect cases where a gatherer is going a walk along the line
 		return null;
 	}
 	else if (corners.length === 2 && edges.length === 1)
 	{
-		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][3])) return THREE_MARCHER_HANG;
+		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][3])) return THREE_HANG;
 	}
 	else if (corners.length === 2 && edges.length === 2)
 	{

@@ -8,11 +8,9 @@ function sdecide_alone()
 {
 	//Actively avoid other allied workers
 	for (try_cell of random_permutation(SCAN_MOVES))
-	{
 		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
-	}
 
-	var c = UP_PANIC;
+	var c = U_PANIC;
 	for (try_cell of random_subset(SCAN_MOVES, 7))
 		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
 		{
@@ -62,10 +60,8 @@ function sdecide_discolor()
 
 	//Stick around allies
 	for (try_cell of random_permutation(SCAN_MOVES))
-	{
 		if (is_ally(try_cell)) 
 			return {cell:try_cell};
-	}
 
 	return {cell:0};
 }
@@ -76,15 +72,12 @@ function sdecide_stride()
 	for (try_cell of random_permutation(CORNERS))
 	{
 		if (view[try_cell].color !== view[CCW[try_cell][1]].color)
-			if (view[try_cell].color !== view[CCW[try_cell][7]].color)
-				return {cell:try_cell};
+			if (view[try_cell].color !== view[CCW[try_cell][7]].color) return {cell:try_cell};
 	}
 	for (try_cell of random_permutation(CORNERS))
 	{
-		if (view[try_cell].color !== view[CCW[try_cell][1]].color)
-			return {cell:try_cell};
-		if (view[try_cell].color !== view[CCW[try_cell][7]].color)
-			return {cell:try_cell};
+		if (view[try_cell].color !== view[CCW[try_cell][1]].color) return {cell:try_cell};
+		if (view[try_cell].color !== view[CCW[try_cell][7]].color) return {cell:try_cell};
 	}
 	return {cell:0};
 }
@@ -101,28 +94,17 @@ function sdecide_obstruct()
 				if (rand_neighbors[0] !== rand_neighbors[1])
 					return {cell:rand_neighbors[0], color:view[rand_neighbors[1]].color};
 			}
-			if (random_choice(SABOTEUR_OBSTRUCT_PROB)) 
-			{
-				return {cell:try_cell};
-			}
+			if (random_choice(SABOTEUR_OBSTRUCT_PROB)) return {cell:try_cell};
 			for (ant_off in random_permutation([1,2,3,4,5,6,7]))
-			{
 				if (view[CCW[try_cell][ant_off]].ant !== null)
 				{
-					if ([1,3].includes(ant_off) && random_choice(.3))
-						return {cell: CCW[try_cell][2]};
-					if ([5,7].includes(ant_off) && random_choice(.3))
-						return {cell: CCW[try_cell][6]};
-					if (ant_off === 2 && random_choice(.3))
-						return {cell: CCW[try_cell][1]};
-					if (ant_off === 6 && random_choice(.3))
-						return {cell: CCW[try_cell][7]};
-					if (ant_off === 4 && random_choice(.3))
-						return {cell: CCW[try_cell][random_choice(.5)?2:6]};
-					if (random_choice(.3))
-						return {cell: 4};
+					if ([1,3].includes(ant_off) && random_choice(.3)) return {cell: CCW[try_cell][2]};
+					if ([5,7].includes(ant_off) && random_choice(.3)) return {cell: CCW[try_cell][6]};
+					if (ant_off === 2 && random_choice(.3)) return {cell: CCW[try_cell][1]};
+					if (ant_off === 6 && random_choice(.3)) return {cell: CCW[try_cell][7]};
+					if (ant_off === 4 && random_choice(.3)) return {cell: CCW[try_cell][random_choice(.5)?2:6]};
+					if (random_choice(.3)) return {cell: 4};
 				}
-			}
 		}
 	return {cell:1};
 }
@@ -158,6 +140,4 @@ function saboteur()
 		}
 		else return sdecide_alone();
 	}
-
-
 }

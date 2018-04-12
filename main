@@ -2,15 +2,12 @@ function main_decide()
 {
 	switch (this_ant().type)
 	{
-		case QUEEN:
-			return queen_decision();
-		case GATHERER:
-			return gatherer_decision();
-		case MARCHER_A:
-		case MARCHER_B:
+		case QUEEN: return queen_decision();
+		case GATHERER: return gatherer_decision();
+		case MARCHER_A: 
+		case MARCHER_B: 
 			return marcher_decision();
-		default:
-			return sanitize(saboteur(), FREE_ORDER);
+		default: return sanitize(saboteur(), FREE_ORDER);
 	
 	}
 }

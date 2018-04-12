@@ -5,72 +5,81 @@ const GATHERER = 3;
 const QUEEN = 5;
 
 //Move attempt order lookup tables
-const FREE_ORDER = [	[1,3,6,2,5,7,8], 	[0,2,5,3,6,8,7], 	[5,1,0,8,7,3,6],
-			[6,0,1,7,8,2,5], 	[],                 	[2,8,7,1,0,6,3],
-			[3,7,8,0,1,5,2], 	[8,6,3,5,2,0,1], 	[7,5,2,6,3,1,0]	];
-const RIGHT_ORDER = [	[1,3,6,7], 		[0,3], 			[5,1,0,3],
-			[6,7],     		[],       		[2,1],
-			[3,7,8,5], 		[8,5], 			[7,5,2,1]	];
-const LEFT_ORDER = [	[3,1,2,5], 		[2,5], 			[1,5,8,7],
-			[0,1],     		[],       		[8,7],
-			[7,3,0,1], 		[6,3], 			[5,7,6,3]	];
+const FREE_ORDER = [
+[1,3,6,2,5,7,8],[0,2,5,3,6,8,7],[5,1,0,8,7,3,6],
+[6,0,1,7,8,2,5],[],             [2,8,7,1,0,6,3],
+[3,7,8,0,1,5,2],[8,6,3,5,2,0,1],[7,5,2,6,3,1,0]];
+const RIGHT_ORDER = [
+[1,3,6,7],[0,3],[5,1,0,3],
+[6,7],    [],   [2,1],
+[3,7,8,5],[8,5],[7,5,2,1]];
+const LEFT_ORDER = [
+[3,1,2,5],[2,5],[1,5,8,7],
+[0,1],    [],   [8,7],
+[7,3,0,1],[6,3],[5,7,6,3]];
 
 //Spacial information lookup tables
-const SCAN_MOVES = 	[0,1,2,3,  5,6,7,8];
-const CORNERS = 	[0,  2,      6,  8];
-const EDGES = 		[  1,  3,  5,  7  ];
-const CCW = [		[0,3,6,7,8,5,2,1],	[1,0,3,6,7,8,5,2],	[2,1,0,3,6,7,8,5],
-			[3,6,7,8,5,2,1,0],	[4],			[5,2,1,0,3,6,7,8],
-			[6,7,8,5,2,1,0,3],	[7,8,5,2,1,0,3,6],	[8,5,2,1,0,3,6,7]	];
-const NEIGHBORS = [	[0,1,3,4],		[1,0,2,3,5,4],		[2,5,1,4],
-			[3,6,0,7,1,4],		[1,3,5,7,8,6,2,0,4],	[5,2,8,1,7,4],
-			[6,3,7,4],		[7,8,6,5,3,4],		[8,7,5,4]		];
-const NEARS = [		[0,1,3],		[1,0,2,4],		[2,5,1],
-			[3,6,0,7],		[1,3,5,7,4],		[5,2,8,4],
-			[6,3,7],		[7,8,6,4],		[8,7,5]			];
+const SCAN_MOVES = [0,1,2,3,5,6,7,8];
+const CORNERS = [0,2,6,8];
+const EDGES = [1,3,5,7];
+const CCW = [
+[0,3,6,7,8,5,2,1],[1,0,3,6,7,8,5,2],[2,1,0,3,6,7,8,5],
+[3,6,7,8,5,2,1,0],[4,4,4,4,4,4,4,4],[5,2,1,0,3,6,7,8],
+[6,7,8,5,2,1,0,3],[7,8,5,2,1,0,3,6],[8,5,2,1,0,3,6,7]];
+const NEIGHBORS = [
+[0,1,3,4],	[1,0,2,3,5,4],		[2,5,1,4],
+[3,6,0,7,1,4],	[1,3,5,7,8,6,2,0,4],	[5,2,8,1,7,4],
+[6,3,7,4],	[7,8,6,5,3,4],		[8,7,5,4]];
+const NEARS = [
+[0,1,3],	[1,0,2,4],	[2,5,1],
+[3,6,0,7],	[1,3,5,7,4],	[5,2,8,4],
+[6,3,7],	[7,8,6,4],	[8,7,5]];
+
 //Downstream signal colors (travel instantaneously)
-const DOWN_MARCH = 1; //We're all ready! Let's go!
-const DOWN_FOOD = 2; //We found food!
-const DOWN_STALLED = 3; //There's no obstruction, but we're waiting for a ready signal
-const DOWN_GATHERER = 4; //Gatherer: "I'm still here!"
+const D_MARCH = 1; //We're all ready! Let's go!
+const D_FOOD = 2; //We found food!
+const D_STALLED = 3; //There's no obstruction, but we're waiting for a ready signal
+const D_GATHERER = 4; //Gatherer: "I'm still here!"
 
 //Upstream signal colors (travel at lightspeed)
-const UP_REALIGN = 5; //Realign 
-const UP_REALIGN_END = 6; //Realign end
-const UP_READY = 7; //Ready to move as soon as the end is aligned
-const UP_PANIC = 8; //Everyone! Scatter! 
+const U_REALIGN = 5; //Realign 
+const U_SENTINEL = 6; //Realign end
+const U_READY = 7; //Ready to move as soon as the end is aligned
+const U_PANIC = 8; //Everyone! Scatter! 
 
 //Pair reads from upstream (corner, side)
-const PAIRUPS = [	[0,1,2,3,4,5,6,7,8],
-			[1,1,0,0,0,1,1,0,1],
-			[2,0,2,0,4,2,2,0,2],
-			[3,0,0,3,4,3,3,0,3],
-			[4,0,4,4,4,4,0,0,4],
-			[5,1,2,3,4,5,5,0,5],
-			[6,1,2,3,0,5,5,0,6],
-			[7,0,0,0,0,0,0,7,7],
-			[8,1,2,3,4,5,6,7,8]	];
+const PAIRUPS = [
+[0,1,2,3,4,5,6,7,8],
+[1,1,0,0,0,1,1,0,1],
+[2,0,2,0,4,2,2,0,2],
+[3,0,0,3,4,3,3,0,3],
+[4,0,4,4,4,4,0,0,4],
+[5,1,2,3,4,5,5,0,5],
+[6,1,2,3,0,5,5,0,6],
+[7,0,0,0,0,0,0,7,7],
+[8,1,2,3,4,5,6,7,8]];
 //Pair reads from downstream (corner, side)
-const PAIRDOWNS = [	[0,1,2,3,4,5,6,7,8],
-			[1,1,0,3,4,5,5,0,1],
-			[2,0,2,3,4,5,5,0,2],
-			[3,3,3,3,3,3,3,3,3],
-			[4,4,4,3,4,0,0,0,4],
-			[5,5,5,3,0,5,5,0,5],
-			[6,5,5,3,0,5,5,0,6],
-			[7,0,0,3,0,0,0,7,7],
-			[8,1,2,3,4,5,6,7,8]	];
+const PAIRDOWNS = [
+[0,1,2,3,4,5,6,7,8],
+[1,1,0,3,4,5,5,0,1],
+[2,0,2,3,4,5,5,0,2],
+[3,3,3,3,3,3,3,3,3],
+[4,4,4,3,4,0,0,0,4],
+[5,5,5,3,0,5,5,0,5],
+[6,5,5,3,0,5,5,0,6],
+[7,0,0,3,0,0,0,7,7],
+[8,1,2,3,4,5,6,7,8]];
 //Pair reads from either direction (corner, side)
-const PAIRSIDES = [	[0,1,2,3,4,5,6,7,8],
-			[1,1,0,3,4,1,1,0,1],
-			[2,0,2,0,4,5,5,0,2],
-			[3,3,0,3,3,3,3,3,3],
-			[4,4,4,3,4,0,0,0,4],
-			[5,1,5,3,0,5,5,0,5],
-			[6,1,5,3,0,5,5,0,6],
-			[7,0,0,3,0,0,0,7,7],
-			[8,1,2,3,4,5,6,7,8]	];
-
+const PAIRSIDES = [
+[0,1,2,3,4,5,6,7,8],
+[1,1,0,3,4,1,1,0,1],
+[2,0,2,0,4,5,5,0,2],
+[3,3,0,3,3,3,3,3,3],
+[4,4,4,3,4,0,0,0,4],
+[5,1,5,3,0,5,5,0,5],
+[6,1,5,3,0,5,5,0,6],
+[7,0,0,3,0,0,0,7,7],
+[8,1,2,3,4,5,6,7,8]];
 
 //Random seeds
 const INIT_SEED = 3734978372;
@@ -136,7 +145,7 @@ function random_subset(array, num)
 	var return_array = array.slice();
 	for (var i = 0; i < num; i++)
 	{
-		var rand_index = i + ant_rand()%(array.length - i)
+		var rand_index = i + ant_rand()%(array.length - i);
 		var x_val = return_array[rand_index];
 		return_array[rand_index] = return_array[i];
 		return_array[i] = x_val;
@@ -221,67 +230,63 @@ function sanitize(prospective, trial_matrix)
 function linewatch(corner)
 {
 	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_GATHERER;
 	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1])) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][1])) return D_GATHERER;
 	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
+		if (is_ally(CCW[corner][3]) && view[4].color === D_MARCH) return D_STALLED;
 	if (view[CCW[corner][6]].food === 1)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_FOOD;
-	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
-		return DOWN_FOOD;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === D_FOOD)
+		return D_FOOD;
 	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
+		if (view[4].color === D_MARCH) return U_REALIGN;
 	return null;
 }
 
 function linewatch2(corner)
 {
 	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_GATHERER;
 	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1])) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][1])) return D_GATHERER;
 	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
+		if (is_ally(CCW[corner][3]) && view[4].color === D_MARCH) return D_STALLED;
 	if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return D_GATHERER;
 	if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_GATHERER) return DOWN_GATHERER;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === D_GATHERER) return D_GATHERER;
 	if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][7]) && view[4].color === DOWN_MARCH) return DOWN_STALLED;
+		if (is_ally(CCW[corner][7]) && view[4].color === D_MARCH) return D_STALLED;
 	if (view[CCW[corner][6]].food === 1)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return DOWN_FOOD;
-	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === DOWN_FOOD)
-		return DOWN_FOOD;
+		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === D_FOOD)
+		return D_FOOD;
 	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
+		if (view[4].color === D_MARCH) return U_REALIGN;
 	if (view[CCW[corner][2]].food === 1)
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return DOWN_FOOD;
-	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === DOWN_FOOD)
-		return {cell:4, color:DOWN_FOOD};
+		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === D_FOOD)
+		return {cell:4, color:D_FOOD};
 	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type !== QUEEN)
-		if (view[4].color === DOWN_MARCH) return UP_REALIGN;
+		if (view[4].color === D_MARCH) return U_REALIGN;
 	return null;
 }
 
 function turn_color(output, corner)
 {
 	if (view[4].color === output)
-	{
 		for (try_cell of [7,6,5,4,3,2,1,0])
-			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][try_cell], color:DOWN_MARCH};
-	}
+			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== D_MARCH)
+				return {cell:CCW[corner][try_cell], color:D_MARCH};
 	return {cell:4, color:output};
 }
 
 function turn_color2(output, corner)
 {
 	if (view[4].color === output)
-	{
 		for (try_cell of [7,3,6,2,5,1,4,0])
-			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== DOWN_MARCH)
-				return {cell:CCW[corner][try_cell], color:DOWN_MARCH};
-	}
+			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== D_MARCH)
+				return {cell:CCW[corner][try_cell], color:D_MARCH};
 	return {cell:4, color:output};
 }

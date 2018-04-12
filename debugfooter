@@ -11,7 +11,6 @@ function ant_char(cell)
 	else if (is_ally(cell))
 	{
 		if (cell === 4 || is_like(cell) || is_other(cell))
-		{
 			switch(view[cell].ant.type)
 			{
 				case QUEEN: return "Q ";
@@ -20,9 +19,7 @@ function ant_char(cell)
 				case GATHERER: return "G ";
 				default: return "? ";
 			}
-		}
 		else
-		{
 			switch(view[cell].ant.type)
 			{
 				case QUEEN: return "q ";
@@ -31,7 +28,6 @@ function ant_char(cell)
 				case GATHERER: return "g ";
 				default: return "? ";
 			}
-		}
 	}
 	else if (view[cell].food === 1) return "● ";
 	else return ". ";
@@ -97,9 +93,9 @@ function display_formation(corner)
 		case THREE_MARCH: return THREE_MARCH + " (three march)";
 		case THREE_STAND: return THREE_STAND + " (three stand)";
 		case THREE_RECOVER: return THREE_RECOVER + " (three recover)";
-		case THREE_QUEEN_STAND: return THREE_QUEEN_STAND + " (three queen stand)";
-		case THREE_GATHERER_WALK: return THREE_GATHERER_WALK + " (three gatherer walk)";
-		case THREE_MARCHER_HANG: return THREE_MARCHER_HANG + " (three marcher hang)";
+		case THREE_UNSTAND: return THREE_UNSTAND + " (three unstand)";
+		case THREE_BLOCK: return THREE_BLOCK + " (three block)";
+		case THREE_HANG: return THREE_HANG + " (three hang)";
 		case FOUR_Z: return FOUR_Z + " (four z)";
 		case FOUR_STAIRS: return FOUR_STAIRS + " (four stairs)";
 		case FOUR_BENT: return FOUR_BENT + " (four bent)";

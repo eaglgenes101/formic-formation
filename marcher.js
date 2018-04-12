@@ -1,10 +1,4 @@
-/*
- * Marcher phase A and Marcher phase B are two sides of a coin. They operate almost identically, 
- * differing only in recognising their own kind as lockstepping buddies and the other kind as the 
- * ones they alternate with. 
- * 
- * Marchers work by pattern-matching, choosing their movement based on the patterns of their neighbors. 
- */
+//Marchers A and B
 
 function mdecide_one_corner(corner)
 {
@@ -17,7 +11,7 @@ function mdecide_one_edge(corner)
 {
 	//This occurs when we march forward as the end, but the next corner neighbor is obstructed
 	//Find this condition
-	if (view[CCW[corner][1]].color === UP_REALIGN)
+	if (view[CCW[corner][1]].color === U_REALIGN)
 	{
 		if (view[CCW[corner][2]].food === 1) return {cell:corner};
 		if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER) return {cell:corner};
@@ -36,37 +30,36 @@ function mdecide_two_edge_bent(corner)
 		return sanitize(saboteur(), FREE_ORDER);
 	
 	//In recovery, do the moving step
-	if ([DOWN_STALLED].includes(view[CCW[corner][1]].color))
-		if ([DOWN_STALLED, UP_READY, DOWN_GATHERER].includes(view[CCW[corner][3]].color))
-			if ([DOWN_STALLED, UP_READY].includes(view[4].color))
-				return turn_color2(DOWN_STALLED, corner); 
+	if ([D_STALLED].includes(view[CCW[corner][1]].color))
+		if ([D_STALLED, U_READY, D_GATHERER].includes(view[CCW[corner][3]].color))
+			if ([D_STALLED, U_READY].includes(view[4].color))
+				return turn_color2(D_STALLED, corner); 
 
 	//Special case: when the queen is visible at CCW[corner][1], we may need to do signal transmission
 	if (view[CCW[corner][1]].ant.type === QUEEN)
 	{
 		var provisional = linewatch(CCW[corner][4]);
-		if (provisional !== null)
-			return turn_color(provisional, CCW[corner][4]); 
-		if (view[CCW[corner][3]].color === UP_REALIGN && view[CCW[corner][1]].color === DOWN_GATHERER)
-			if (view[4].color === DOWN_GATHERER)
-				return turn_color(DOWN_GATHERER, CCW[corner][4]); 
+		if (provisional !== null) return turn_color(provisional, CCW[corner][4]); 
+		if (view[CCW[corner][3]].color === U_REALIGN && view[CCW[corner][1]].color === D_GATHERER)
+			if (view[4].color === D_GATHERER)
+				return turn_color(D_GATHERER, CCW[corner][4]); 
 	}
 
-	if (view[CCW[corner][1]].color === UP_REALIGN_END && view[CCW[corner][3]].color === UP_REALIGN)
-		if ([DOWN_MARCH, UP_REALIGN_END].includes(view[4].color))
-			return turn_color2(UP_REALIGN_END, corner); 
+	if (view[CCW[corner][1]].color === U_SENTINEL && view[CCW[corner][3]].color === U_REALIGN)
+		if ([D_MARCH, U_SENTINEL].includes(view[4].color))
+			return turn_color2(U_SENTINEL, corner); 
 
-	if (view[CCW[corner][1]].color === UP_REALIGN_END && view[CCW[corner][3]].color === DOWN_STALLED)
-		if ([UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
-			return turn_color2(UP_REALIGN_END, corner); 
+	if (view[CCW[corner][1]].color === U_SENTINEL && view[CCW[corner][3]].color === D_STALLED)
+		if ([U_SENTINEL, D_STALLED].includes(view[4].color))
+			return turn_color2(U_SENTINEL, corner); 
 
-	if (view[CCW[corner][1]].color === UP_REALIGN_END && view[CCW[corner][3]].color === DOWN_MARCH)
-		if ([UP_REALIGN_END, DOWN_MARCH].includes(view[4].color))
-			return turn_color2(DOWN_MARCH, corner); 
+	if (view[CCW[corner][1]].color === U_SENTINEL && view[CCW[corner][3]].color === D_MARCH)
+		if ([U_SENTINEL, D_MARCH].includes(view[4].color))
+			return turn_color2(D_MARCH, corner); 
 
-	if (view[CCW[corner][1]].color === DOWN_GATHERER && view[CCW[corner][3]].color === DOWN_STALLED)
-		if ([DOWN_GATHERER].includes(view[4].color))
-			return turn_color2(DOWN_STALLED, corner); 
+	if (view[CCW[corner][1]].color === D_GATHERER && view[CCW[corner][3]].color === D_STALLED)
+		if ([D_GATHERER].includes(view[4].color))
+			return turn_color2(D_STALLED, corner); 
 	
 	return {cell:CCW[corner][2]}; 
 }
@@ -74,53 +67,42 @@ function mdecide_two_edge_bent(corner)
 function mdecide_two_edge_straight(corner)
 {
 	//(Remember, we don't know if it's CCW[corner][1] or CCW[corner][5] that's upstream)
-	return turn_color2(UP_REALIGN, corner); 
+	return turn_color2(U_REALIGN, corner); 
 }
 
 function mdecide_edge_corner_left(corner)
 {
 	//Eject in scenarios where we would otherwise deadlock
-	if (view[CCW[corner][1]].ant.type === GATHERER && view[corner].ant.type === QUEEN)	
-		return sanitize(saboteur(), FREE_ORDER);
-	if (view[CCW[corner][1]].ant.type === QUEEN && view[corner].ant.type === GATHERER)	
-		return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[corner][1]].ant.type === GATHERER && view[corner].ant.type === QUEEN) return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[corner][1]].ant.type === QUEEN && view[corner].ant.type === GATHERER) return sanitize(saboteur(), FREE_ORDER);
 
 	//Special logic for arranging corners correctly
-	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN)
-		return {cell:CCW[corner][3]};
+	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN) return {cell:CCW[corner][3]};
 
 	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
 
 	var provisional = linewatch(CCW[corner][4]);
 	if (provisional !== null) 
 	{
-		if (provisional === UP_REALIGN)
-			return turn_color(UP_REALIGN_END, CCW[corner][3]); 
+		if (provisional === U_REALIGN) return turn_color(U_SENTINEL, CCW[corner][3]); 
 		return turn_color(provisional, CCW[corner][3]); 
 	}
 
-	if (down_sig === UP_REALIGN && [UP_REALIGN_END].includes(view[4].color))
+	if (down_sig === U_REALIGN && [U_SENTINEL].includes(view[4].color))
 	{
-		if (view[corner].color === DOWN_MARCH)
-			return {cell:CCW[corner][2]};
-		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
+		if (view[corner].color === D_MARCH) return {cell:CCW[corner][2]};
+		return turn_color(U_SENTINEL, CCW[corner][3]); 
 	}
-	if (down_sig === UP_REALIGN && [DOWN_MARCH].includes(view[4].color))
-		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
-	if ([DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, CCW[corner][3]); 
-	if ([DOWN_STALLED].includes(down_sig) && [UP_REALIGN_END].includes(view[4].color))
-		return turn_color(UP_REALIGN_END, CCW[corner][3]); 
-	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
+	if (down_sig === U_REALIGN && [D_MARCH].includes(view[4].color)) return turn_color(U_SENTINEL, CCW[corner][3]); 
+	if ([D_STALLED].includes(down_sig) && [D_MARCH, D_STALLED].includes(view[4].color)) return turn_color(D_STALLED, CCW[corner][3]); 
+	if ([D_STALLED].includes(down_sig) && [U_SENTINEL].includes(view[4].color)) return turn_color(U_SENTINEL, CCW[corner][3]); 
+	if ([U_READY].includes(down_sig) && [D_STALLED].includes(view[4].color))
 	{
-		if (view[CCW[corner][2]].color !== DOWN_MARCH)
-			return {cell:CCW[corner][2], color:DOWN_MARCH};
-		return turn_color(DOWN_MARCH, CCW[corner][3]); 
+		if (view[CCW[corner][2]].color !== D_MARCH) return {cell:CCW[corner][2], color:D_MARCH};
+		return turn_color(D_MARCH, CCW[corner][3]); 
 	}
-	if ([UP_READY].includes(down_sig) && [UP_REALIGN_END].includes(view[4].color))
-		return turn_color(DOWN_MARCH, CCW[corner][3]); 
-	if (down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
-		return turn_color(DOWN_STALLED, CCW[corner][3]); 
+	if ([U_READY].includes(down_sig) && [U_SENTINEL].includes(view[4].color)) return turn_color(D_MARCH, CCW[corner][3]); 
+	if (down_sig === D_GATHERER && view[4].color === D_GATHERER) return turn_color(D_STALLED, CCW[corner][3]); 
 
 	//If none of the signals fit, go by the march
 	return {cell:CCW[corner][2]};
@@ -140,22 +122,22 @@ function mdecide_edge_corner_right(corner)
 	var provisional = linewatch(CCW[corner][4]);
 	if (provisional !== null) 
 	{
-		if (provisional === UP_REALIGN)
-			return turn_color(UP_REALIGN_END, CCW[corner][3]); 
+		if (provisional === U_REALIGN)
+			return turn_color(U_SENTINEL, CCW[corner][3]); 
 		return turn_color(provisional, CCW[corner][3]); 
 	}
-	if ([DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && [UP_REALIGN_END, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, CCW[corner][3]); 
-	if (down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
-		return turn_color(DOWN_STALLED, CCW[corner][3]); 
-	if ([UP_READY].includes(down_sig) && [DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_MARCH, CCW[corner][3]); 
-	if (down_sig === UP_REALIGN && view[4].color === UP_REALIGN_END)
+	if ([D_FOOD, D_GATHERER].includes(down_sig) && [U_SENTINEL, D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, CCW[corner][3]); 
+	if (down_sig === D_STALLED && view[4].color === D_STALLED)
+		return turn_color(D_STALLED, CCW[corner][3]); 
+	if ([U_READY].includes(down_sig) && [D_STALLED].includes(view[4].color))
+		return turn_color(D_MARCH, CCW[corner][3]); 
+	if (down_sig === U_REALIGN && view[4].color === U_SENTINEL)
 		return {cell:CCW[corner][6]};
 
 	//If none of the signals fit, go the color
-	if (down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
-		return turn_color(DOWN_MARCH, CCW[corner][3]); 
+	if (down_sig === D_MARCH && view[4].color === D_MARCH)
+		return turn_color(D_MARCH, CCW[corner][3]); 
 
 	return turn_color(down_sig, CCW[corner][3]); 
 	
@@ -164,9 +146,9 @@ function mdecide_edge_corner_right(corner)
 function mdecide_edge_corner_spawn(corner)
 {
 	if (view[corner].ant.type === QUEEN)
-		if (view[corner].color === DOWN_MARCH && view[CCW[corner][3]].color === DOWN_STALLED)
-			if (view[4].color === DOWN_STALLED)
-				return turn_color2(DOWN_STALLED, corner); 
+		if (view[corner].color === D_MARCH && view[CCW[corner][3]].color === D_STALLED)
+			if (view[4].color === D_STALLED)
+				return turn_color2(D_STALLED, corner); 
 	return sanitize(saboteur(), FREE_ORDER);
 	
 }
@@ -175,75 +157,74 @@ function mdecide_three_march(corner)
 {
 	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
 	var up_sig = view[CCW[corner][3]].color;
-	//If we need to stay still, there will be UP_REALIGN_END near the top
+	//If we need to stay still, there will be U_SENTINEL near the top
 	
 	var provisional = linewatch2(corner);
 	if (provisional !== null)
 		return turn_color(provisional, corner); 
 
-	if (up_sig === UP_REALIGN_END && down_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === U_SENTINEL && down_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === UP_REALIGN_END && [DOWN_STALLED].includes(down_sig) && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === U_SENTINEL && [D_STALLED].includes(down_sig) && [D_MARCH, D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
-		if (view[corner].color === UP_REALIGN_END)
+	if (up_sig === U_REALIGN && down_sig === U_REALIGN && view[4].color === U_REALIGN)
+		if (view[corner].color === U_SENTINEL)
 		{
-			if (view[CCW[corner][7]].color === DOWN_MARCH)	
-				return turn_color(UP_REALIGN, corner); 
+			if (view[CCW[corner][7]].color === D_MARCH) return turn_color(U_REALIGN, corner); 
 			return {cell:CCW[corner][2]};
 		}
 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && [DOWN_MARCH, DOWN_FOOD].includes(view[4].color))
-		return turn_color(DOWN_FOOD, corner);
+	if (up_sig === U_REALIGN && down_sig === D_FOOD && [D_MARCH, D_FOOD].includes(view[4].color))
+		return turn_color(D_FOOD, corner);
 
-	if (up_sig === UP_REALIGN && down_sig === UP_READY && [DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_MARCH, corner); 
+	if (up_sig === U_REALIGN && down_sig === U_READY && [D_STALLED].includes(view[4].color))
+		return turn_color(D_MARCH, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color(UP_READY, corner); 
+	if (up_sig === U_REALIGN && down_sig === U_READY && view[4].color === D_STALLED)
+		return turn_color(U_READY, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED && [DOWN_MARCH, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === U_REALIGN && down_sig === D_STALLED && [D_MARCH, D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === U_REALIGN && down_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_MARCH && view[4].color === DOWN_STALLED)
-		return turn_color(DOWN_STALLED, corner);
+	if (up_sig === U_REALIGN && down_sig === D_MARCH && view[4].color === D_STALLED)
+		return turn_color(D_STALLED, corner);
 
-	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
-		if (view[corner].color === UP_REALIGN_END)
-			return turn_color(UP_REALIGN, corner); 
+	if (up_sig === D_MARCH && down_sig === U_REALIGN && view[4].color === D_MARCH)
+		if (view[corner].color === U_SENTINEL)
+			return turn_color(U_REALIGN, corner); 
 
-	if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
-		return turn_color(DOWN_MARCH, corner); 
+	if (up_sig === D_MARCH && [U_READY].includes(down_sig) && view[4].color === U_READY)
+		return turn_color(D_MARCH, corner); 
 	
-	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color(UP_READY, corner); 
+	if (up_sig === D_STALLED && down_sig === U_READY && view[4].color === D_STALLED)
+		return turn_color(U_READY, corner); 
 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === D_STALLED && down_sig === D_STALLED && [D_STALLED, D_MARCH].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === D_STALLED && down_sig === D_GATHERER && view[4].color === D_GATHERER)
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_MARCH && [DOWN_STALLED].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === D_STALLED && down_sig === D_MARCH && [D_STALLED].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [DOWN_STALLED, DOWN_MARCH].includes(view[4].color))
-		return turn_color(DOWN_STALLED, corner); 
+	if (up_sig === D_STALLED && down_sig === U_REALIGN && [D_STALLED, D_MARCH].includes(view[4].color))
+		return turn_color(D_STALLED, corner); 
 
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && view[4].color === DOWN_GATHERER)
+	if (up_sig === D_GATHERER && down_sig === D_STALLED && view[4].color === D_GATHERER)
 		if (view[CCW[corner][3]].ant.type === QUEEN)
-			return turn_color(DOWN_STALLED, corner); 
+			return turn_color(D_STALLED, corner); 
 
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_FOOD && view[4].color === DOWN_FOOD)
-		return turn_color(DOWN_FOOD, corner); 
+	if (up_sig === D_FOOD && down_sig === D_FOOD && view[4].color === D_FOOD)
+		return turn_color(D_FOOD, corner); 
 
-	if ([DOWN_FOOD, DOWN_GATHERER].includes(up_sig) && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
-		return turn_color(DOWN_GATHERER, corner); 
+	if ([D_FOOD, D_GATHERER].includes(up_sig) && down_sig === D_GATHERER && view[4].color === D_GATHERER)
+		return turn_color(D_GATHERER, corner); 
 
 	//If none matches our current situation, return
 	return {cell:CCW[corner][2]};
@@ -253,31 +234,30 @@ function mdecide_three_march(corner)
 function mdecide_three_stand(corner)
 {
 	var provisional = linewatch2(corner);
-	if (provisional !== null) 
-		return turn_color2(provisional, corner); 
+	if (provisional !== null) return turn_color2(provisional, corner); 
 	
 	var up_sig = view[CCW[corner][3]].color
 	var down_sig = PAIRSIDES[view[corner].color][view[CCW[corner][7]].color];
 
-	if (up_sig === UP_REALIGN && [DOWN_MARCH, DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_MARCH)
-		return turn_color2(UP_REALIGN, corner); 
+	if (up_sig === U_REALIGN && [D_MARCH, D_STALLED].includes(down_sig) && view[4].color === D_MARCH)
+		return turn_color2(U_REALIGN, corner); 
 
-	if (up_sig === UP_REALIGN && [DOWN_MARCH, DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_REALIGN, UP_READY].includes(down_sig))
-		if (view[4].color === UP_REALIGN)
-			return turn_color2(UP_REALIGN, corner); 
+	if (up_sig === U_REALIGN && [D_MARCH, D_FOOD, D_GATHERER, D_STALLED, U_REALIGN, U_READY].includes(down_sig))
+		if (view[4].color === U_REALIGN)
+			return turn_color2(U_REALIGN, corner); 
 
-	if (up_sig === DOWN_MARCH && down_sig === UP_REALIGN && view[4].color === DOWN_MARCH)
-		return turn_color2(UP_REALIGN, corner); 
+	if (up_sig === D_MARCH && down_sig === U_REALIGN && view[4].color === D_MARCH)
+		return turn_color2(U_REALIGN, corner); 
 
-	if (up_sig === DOWN_STALLED && [DOWN_STALLED, UP_REALIGN].includes(down_sig) && view[4].color === DOWN_STALLED)
-		return turn_color2(DOWN_STALLED, corner); 
+	if (up_sig === D_STALLED && [D_STALLED, U_REALIGN].includes(down_sig) && view[4].color === D_STALLED)
+		return turn_color2(D_STALLED, corner); 
 	
 	//Else send the all clear signal
-	return turn_color2(DOWN_MARCH, corner); 
+	return turn_color2(D_MARCH, corner); 
 	
 }
 
-function mdecide_three_queen_stand(corner)
+function mdecide_three_unstand(corner)
 {
 	//This is FOUR_STAIRS, but the gatherer jumped the gun here, 
 	//or the corner is stalled 
@@ -300,25 +280,25 @@ function mdecide_three_queen_stand(corner)
 
 		var up_sig = view[CCW[corner][5]].color;
 		var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][7]].color];
-		if (down_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
-			return turn_color(UP_REALIGN, CCW[corner][4]); 
+		if (down_sig === D_FOOD && view[4].color === D_MARCH)
+			return turn_color(U_REALIGN, CCW[corner][4]); 
 
-		if (up_sig === UP_REALIGN_END && [DOWN_MARCH].includes(down_sig) && view[4].color === UP_REALIGN_END)
-			return turn_color(DOWN_MARCH, CCW[corner][4]); 
-		if (up_sig === UP_REALIGN_END && [DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && view[4].color === UP_REALIGN)
-			return turn_color(DOWN_STALLED, CCW[corner][4]); 
-		if (up_sig === UP_REALIGN_END && down_sig === DOWN_STALLED && view[4].color === UP_REALIGN_END)
-			return turn_color(DOWN_STALLED, CCW[corner][4]); 
-		if (up_sig === UP_REALIGN_END && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-			return turn_color(UP_READY, CCW[corner][4]); 
-		if (up_sig === DOWN_STALLED && [UP_READY].includes(down_sig) && view[4].color === DOWN_STALLED)
-			return turn_color(UP_READY, CCW[corner][4]); 
-		if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && view[4].color === DOWN_GATHERER)
-			return turn_color(DOWN_STALLED, CCW[corner][4]); 
-		if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
-			return turn_color(DOWN_STALLED, CCW[corner][4]);
-		if (up_sig === DOWN_MARCH && [UP_READY].includes(down_sig) && view[4].color === UP_READY)
-			return turn_color(DOWN_MARCH, CCW[corner][4]); 
+		if (up_sig === U_SENTINEL && [D_MARCH].includes(down_sig) && view[4].color === U_SENTINEL)
+			return turn_color(D_MARCH, CCW[corner][4]); 
+		if (up_sig === U_SENTINEL && [D_FOOD, D_GATHERER].includes(down_sig) && view[4].color === U_REALIGN)
+			return turn_color(D_STALLED, CCW[corner][4]); 
+		if (up_sig === U_SENTINEL && down_sig === D_STALLED && view[4].color === U_SENTINEL)
+			return turn_color(D_STALLED, CCW[corner][4]); 
+		if (up_sig === U_SENTINEL && down_sig === U_READY && view[4].color === D_STALLED)
+			return turn_color(U_READY, CCW[corner][4]); 
+		if (up_sig === D_STALLED && [U_READY].includes(down_sig) && view[4].color === D_STALLED)
+			return turn_color(U_READY, CCW[corner][4]); 
+		if (up_sig === D_STALLED && down_sig === D_GATHERER && view[4].color === D_GATHERER)
+			return turn_color(D_STALLED, CCW[corner][4]); 
+		if (up_sig === D_STALLED && down_sig === D_STALLED && view[4].color === D_STALLED)
+			return turn_color(D_STALLED, CCW[corner][4]);
+		if (up_sig === D_MARCH && [U_READY].includes(down_sig) && view[4].color === U_READY)
+			return turn_color(D_MARCH, CCW[corner][4]); 
 
 		return turn_color(view[4].color, CCW[corner][4]); 
 	}
@@ -327,10 +307,10 @@ function mdecide_three_queen_stand(corner)
 function mdecide_three_recover(corner)
 {
 	//This should only happen in the middle of recovery
-	return turn_color(UP_REALIGN_END, corner); 
+	return turn_color(U_SENTINEL, corner); 
 }
 
-function mdecide_three_marcher_hang(corner)
+function mdecide_three_hang(corner)
 {
 	return turn_color2(view[4].color, CCW[corner][4]); 
 }
@@ -346,35 +326,35 @@ function mdecide_four_z(corner)
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
 
-	if (up_sig === DOWN_FOOD && [DOWN_FOOD, DOWN_STALLED, UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === D_FOOD && [D_FOOD, D_STALLED, U_REALIGN].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(U_REALIGN, CCW[corner][4]);
 
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
-		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === D_FOOD && down_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(view[4].color))
+		return turn_color2(U_REALIGN, CCW[corner][4]);
 
-	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN)
-		return turn_color2(UP_REALIGN, CCW[corner][4]); 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
-		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === D_STALLED && down_sig === U_REALIGN)
+		return turn_color2(U_REALIGN, CCW[corner][4]); 
+	if (up_sig === D_STALLED && down_sig === D_FOOD && view[4].color === U_REALIGN)
+		return turn_color2(U_REALIGN, CCW[corner][4]);
 
-	if (up_sig === DOWN_GATHERER && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, CCW[corner][4]); 
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
-		return turn_color2(UP_REALIGN, CCW[corner][4]);
+	if (up_sig === D_GATHERER && down_sig === U_REALIGN && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, CCW[corner][4]); 
+	if (up_sig === D_GATHERER && down_sig === D_FOOD && [U_REALIGN, D_GATHERER].includes(view[4].color))
+		return turn_color2(U_REALIGN, CCW[corner][4]);
 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_FOOD && view[4].color === UP_REALIGN)
-		return turn_color2(UP_REALIGN, CCW[corner][4]); 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_STALLED)
-		return turn_color2(UP_REALIGN, CCW[corner][4]); 
-	if (up_sig === UP_REALIGN && down_sig === DOWN_GATHERER && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, CCW[corner][4]); 
-	if (up_sig === UP_REALIGN && down_sig === UP_READY && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, CCW[corner][4]); 
+	if (up_sig === U_REALIGN && down_sig === D_FOOD && view[4].color === U_REALIGN)
+		return turn_color2(U_REALIGN, CCW[corner][4]); 
+	if (up_sig === U_REALIGN && down_sig === D_STALLED)
+		return turn_color2(U_REALIGN, CCW[corner][4]); 
+	if (up_sig === U_REALIGN && down_sig === D_GATHERER && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, CCW[corner][4]); 
+	if (up_sig === U_REALIGN && down_sig === U_READY && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, CCW[corner][4]); 
 
-	if (up_sig === UP_READY && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, CCW[corner][4]); 
+	if (up_sig === U_READY && down_sig === U_REALIGN && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, CCW[corner][4]); 
 
-	return turn_color2(DOWN_MARCH, CCW[corner][4]); 
+	return turn_color2(D_MARCH, CCW[corner][4]); 
 }
 
 function mdecide_four_stairs(corner)
@@ -395,103 +375,103 @@ function mdecide_four_stairs(corner)
 	var down_sig = PAIRSIDES[view[CCW[corner][4]].color][view[CCW[corner][3]].color];
 
 
-	if (up_sig === DOWN_MARCH && down_sig === UP_READY && view[4].color === UP_READY)
-		return turn_color2(DOWN_MARCH, corner);
+	if (up_sig === D_MARCH && down_sig === U_READY && view[4].color === U_READY)
+		return turn_color2(D_MARCH, corner);
 
-	if (up_sig === DOWN_MARCH && down_sig === DOWN_FOOD && view[4].color === DOWN_MARCH)
-		return turn_color2(DOWN_FOOD, corner);
+	if (up_sig === D_MARCH && down_sig === D_FOOD && view[4].color === D_MARCH)
+		return turn_color2(D_FOOD, corner);
 
-	if (up_sig === DOWN_MARCH && down_sig === DOWN_STALLED && view[4].color === DOWN_MARCH)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_MARCH && down_sig === D_STALLED && view[4].color === D_MARCH)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_MARCH && [DOWN_GATHERER, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_MARCH && [D_GATHERER, D_STALLED].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_MARCH && [DOWN_MARCH, DOWN_FOOD, UP_REALIGN, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, corner);
-
-
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_MARCH && view[4].color === DOWN_MARCH)
-		return turn_color2(DOWN_FOOD, corner);
-
-	if (up_sig === DOWN_FOOD && down_sig === DOWN_GATHERER && [UP_REALIGN, DOWN_GATHERER].includes(view[4].color))
-		return turn_color2(DOWN_FOOD, corner);
-
-	if (up_sig === DOWN_FOOD && [UP_REALIGN, DOWN_STALLED].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
-
-	if (up_sig === DOWN_FOOD && [DOWN_MARCH, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, corner);
-
-	if (up_sig === DOWN_FOOD && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_MARCH && [D_MARCH, D_FOOD, U_REALIGN, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, corner);
 
 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_FOOD && down_sig === D_MARCH && view[4].color === D_MARCH)
+		return turn_color2(D_FOOD, corner);
 
-	if (up_sig === DOWN_STALLED && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color2(UP_READY, corner);
+	if (up_sig === D_FOOD && down_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(view[4].color))
+		return turn_color2(D_FOOD, corner);
 
-	if (up_sig === DOWN_STALLED && [DOWN_MARCH, DOWN_STALLED].includes(down_sig) && view[4].color === DOWN_MARCH)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_FOOD && [U_REALIGN, D_STALLED].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_STALLED && down_sig === UP_REALIGN && [UP_REALIGN, DOWN_MARCH].includes(view[4].color))
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_FOOD && [D_MARCH, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, corner);
 
-	if (up_sig === DOWN_STALLED && down_sig === DOWN_GATHERER && [DOWN_STALLED, DOWN_GATHERER].includes(view[4].color))
-		return turn_color2(DOWN_STALLED, corner);
-
-	if (up_sig === DOWN_STALLED && [DOWN_FOOD, DOWN_MARCH].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
-
-	if (up_sig === DOWN_STALLED && [DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, corner);
+	if (up_sig === D_FOOD && down_sig === U_READY && view[4].color === D_STALLED)
+		return turn_color2(D_STALLED, corner);
 
 
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_FOOD && [DOWN_GATHERER, UP_REALIGN].includes(view[4].color))
-		return turn_color2(DOWN_FOOD, corner);
+	if (up_sig === D_STALLED && down_sig === D_STALLED && view[4].color === D_STALLED)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_GATHERER && down_sig === UP_READY && view[4].color === DOWN_STALLED)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_STALLED && down_sig === U_READY && view[4].color === D_STALLED)
+		return turn_color2(U_READY, corner);
 
-	if (up_sig === DOWN_GATHERER && [DOWN_MARCH, UP_REALIGN].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_STALLED && [D_MARCH, D_STALLED].includes(down_sig) && view[4].color === D_MARCH)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_GATHERER && down_sig === DOWN_STALLED && [DOWN_STALLED, DOWN_GATHERER].includes(view[4].color))
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_STALLED && down_sig === U_REALIGN && [U_REALIGN, D_MARCH].includes(view[4].color))
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === DOWN_GATHERER && [DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_STALLED && down_sig === D_GATHERER && [D_STALLED, D_GATHERER].includes(view[4].color))
+		return turn_color2(D_STALLED, corner);
 
+	if (up_sig === D_STALLED && [D_FOOD, D_MARCH].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === UP_REALIGN && [DOWN_FOOD, DOWN_GATHERER, DOWN_STALLED, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
-
-	if (up_sig === UP_REALIGN && [DOWN_STALLED, UP_REALIGN].includes(down_sig) && view[4].color === DOWN_MARCH)
-		return turn_color2(DOWN_STALLED, corner);
-
-	if (up_sig === UP_REALIGN && down_sig === DOWN_MARCH && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_MARCH, corner);
-
-	if (up_sig === UP_REALIGN && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_STALLED && [D_GATHERER, D_STALLED, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, corner);
 
 
-	if (up_sig === UP_READY && down_sig === DOWN_STALLED && view[4].color === DOWN_STALLED)
-		return turn_color2(UP_READY, corner);
+	if (up_sig === D_GATHERER && down_sig === D_FOOD && [D_GATHERER, U_REALIGN].includes(view[4].color))
+		return turn_color2(D_FOOD, corner);
 
-	if (up_sig === UP_READY && down_sig === DOWN_MARCH && view[4].color === UP_READY)
-		return turn_color2(DOWN_MARCH, corner);
+	if (up_sig === D_GATHERER && down_sig === U_READY && view[4].color === D_STALLED)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === UP_READY && [DOWN_FOOD, DOWN_GATHERER].includes(down_sig) && view[4].color === DOWN_STALLED)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_GATHERER && [D_MARCH, U_REALIGN].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === UP_READY && down_sig === UP_REALIGN && view[4].color === UP_REALIGN)
-		return turn_color2(DOWN_STALLED, corner);
+	if (up_sig === D_GATHERER && down_sig === D_STALLED && [D_STALLED, D_GATHERER].includes(view[4].color))
+		return turn_color2(D_STALLED, corner);
 
-	if (up_sig === UP_READY && [DOWN_MARCH, DOWN_FOOD, DOWN_GATHERER, UP_READY].includes(down_sig) && view[4].color === UP_REALIGN)
-		return turn_color2(UP_READY, corner);
+	if (up_sig === D_GATHERER && [D_GATHERER, D_STALLED, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
+
+
+	if (up_sig === U_REALIGN && [D_FOOD, D_GATHERER, D_STALLED, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
+
+	if (up_sig === U_REALIGN && [D_STALLED, U_REALIGN].includes(down_sig) && view[4].color === D_MARCH)
+		return turn_color2(D_STALLED, corner);
+
+	if (up_sig === U_REALIGN && down_sig === D_MARCH && view[4].color === U_REALIGN)
+		return turn_color2(D_MARCH, corner);
+
+	if (up_sig === U_REALIGN && down_sig === U_REALIGN && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
+
+
+	if (up_sig === U_READY && down_sig === D_STALLED && view[4].color === D_STALLED)
+		return turn_color2(U_READY, corner);
+
+	if (up_sig === U_READY && down_sig === D_MARCH && view[4].color === U_READY)
+		return turn_color2(D_MARCH, corner);
+
+	if (up_sig === U_READY && [D_FOOD, D_GATHERER].includes(down_sig) && view[4].color === D_STALLED)
+		return turn_color2(D_STALLED, corner);
+
+	if (up_sig === U_READY && down_sig === U_REALIGN && view[4].color === U_REALIGN)
+		return turn_color2(D_STALLED, corner);
+
+	if (up_sig === U_READY && [D_MARCH, D_FOOD, D_GATHERER, U_READY].includes(down_sig) && view[4].color === U_REALIGN)
+		return turn_color2(U_READY, corner);
 
 
 	return turn_color2(view[4].color, corner);
@@ -504,11 +484,11 @@ function marcher_step_watch(candidate)
 	if (candidate.cell === 4) return candidate;
 	if (candidate.hasOwnProperty("color")) return candidate;
 	if (view[candidate.cell].food !== 0)
-		return turn_color2(DOWN_FOOD, 0);
+		return turn_color2(D_FOOD, 0);
 	if (is_harvestable(candidate.cell))
-		return turn_color2(DOWN_FOOD, 0);
+		return turn_color2(D_FOOD, 0);
 	if (view[candidate.cell].ant !== null)
-		return turn_color2(UP_PANIC, 0);
+		return turn_color2(U_PANIC, 0);
 	return candidate;
 }
 
@@ -531,7 +511,7 @@ function marcher_decision()
 		return sanitize(saboteur(), FREE_ORDER);
 	}
 	var corner = view_corner();
-	if (view[4].color === UP_PANIC) return sanitize(saboteur(), FREE_ORDER);
+	if (view[4].color === U_PANIC) return sanitize(saboteur(), FREE_ORDER);
 	if (this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
 	switch (neighbor_type(corner))
 	{
@@ -545,8 +525,8 @@ function marcher_decision()
 		case THREE_MARCH: return marcher_step_watch(mdecide_three_march(corner));
 		case THREE_STAND: return marcher_step_watch(mdecide_three_stand(corner));
 		case THREE_RECOVER: return marcher_step_watch(mdecide_three_recover(corner));
-		case THREE_QUEEN_STAND: return marcher_step_watch(mdecide_three_queen_stand(corner));
-		case THREE_MARCHER_HANG: return marcher_step_watch(mdecide_three_marcher_hang(corner));
+		case THREE_UNSTAND: return marcher_step_watch(mdecide_three_unstand(corner));
+		case THREE_HANG: return marcher_step_watch(mdecide_three_hang(corner));
 		case FOUR_Z: return marcher_step_watch(mdecide_four_z(corner));
 		case FOUR_STAIRS: return marcher_step_watch(mdecide_four_stairs(corner));
 		default: return sanitize(saboteur(), FREE_ORDER);
