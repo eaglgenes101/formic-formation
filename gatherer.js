@@ -18,12 +18,9 @@ function gdecide_two_edge_bent(corner)
 function gdecide_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
-	if (view[corner].color === D_FOOD && view[CCW[corner][1]].color === D_FOOD)
-		return {cell:CCW[corner][7]};
-	if (view[corner].color === D_STALLED && view[CCW[corner][1]].color === D_STALLED)
-		return turn_color(U_READY, CCW[corner][1]); 
-	if (view[corner].color === D_MARCH && view[CCW[corner][1]].color === D_MARCH)
-		return turn_color(D_MARCH, CCW[corner][1]);
+	if (view[corner].color === D_FOOD && view[CCW[corner][1]].color === D_FOOD) return {cell:CCW[corner][7]};
+	if (view[corner].color === D_STALLED && view[CCW[corner][1]].color === D_STALLED) return turn_color(U_READY, CCW[corner][1]); 
+	if (view[corner].color === D_MARCH && view[CCW[corner][1]].color === D_MARCH) return turn_color(D_MARCH, CCW[corner][1]);
 	return turn_color(view[4].color, CCW[corner][1]);
 	
 }
@@ -71,7 +68,6 @@ function early_gatherer()
 			{
 				if (view[4].color === D_FOOD && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
 				else if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
-				//else return {cell:4, color: D_FOOD};
 			}
 		for (try_cell of random_permutation(EDGES))
 			if (view[try_cell].food > 0) 
@@ -82,10 +78,8 @@ function early_gatherer()
 					else return {cell:CCW[queen_cell][1]};
 				}
 				else if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
-				//else return {cell:4, color: D_MARCH};
 			}
 	}
-	//if (view[4].color === D_FOOD) return {cell:4, color:D_MARCH};
 	return {cell:CCW[queen_cell][1]};
 	
 }

@@ -17,7 +17,11 @@ function is_gatherer_marcher(cell)
 
 function is_like(cell)
 {
+	if (view[cell].color === U_PANIC) return false;
+	if (is_ally(CCW[cell][1]) && view[CCW[cell][1]].color === U_PANIC) return false;
+	if (is_ally(CCW[cell][7]) && view[CCW[cell][7]].color === U_PANIC) return false;
 	if (CORNERS.includes(cell) && is_ally(cell))
+	{
 		switch(view[cell].ant.type)
 		{
 			case MARCHER_A: return view[cell].ant.food === 0 && this_ant().type !== MARCHER_B;
@@ -26,12 +30,15 @@ function is_like(cell)
 			case QUEEN: return true;
 			default: return false;
 		}
+	}
 	return false;
 }
 
 function is_other(cell)
 {
+	if (view[cell].color === U_PANIC) return false;
 	if (EDGES.includes(cell) && is_ally(cell))
+	{
 		switch(view[cell].ant.type)
 		{
 			case MARCHER_A: return view[cell].ant.food === 0 && this_ant().type !== MARCHER_A;
@@ -40,6 +47,7 @@ function is_other(cell)
 			case QUEEN: return true;
 			default: return false;
 		}
+	}
 	return false;
 }
 
