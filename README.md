@@ -97,6 +97,6 @@ Release notes
 
 1.1: Compacted a bunch of stuff, improved logic relating to error cases
 
-
+1.1.1: Hotfix to solve disqualification problem
 
 
