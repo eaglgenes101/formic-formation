@@ -94,7 +94,7 @@ const QUEEN_FORM_PROB_MAX = 0.5;
 const QUEEN_FORM_PROB_MIN = 0.15;
 const QUEEN_FORM_PROB_DECAY = 0.01;
 const DISCOLOR_THRESHOLD = 25;
-const ERASE_THRESHOLD = 15;
+const ERASE_THRESHOLD = 12;
 
 /*
 Functions shared by all ant types

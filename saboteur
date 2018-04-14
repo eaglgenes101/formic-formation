@@ -23,9 +23,8 @@ function sdecide_alone()
 		if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) 
 			return {cell:try_cell};
 	for (try_cell of random_permutation(CORNERS))
-		if (view[try_cell].color === 1)
-			if (view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
-				return {cell:try_cell};
+		if (view[try_cell].color === 1 && view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
+			return {cell:try_cell};
 
 	return {cell:1};
 }
@@ -68,17 +67,18 @@ function sdecide_discolor()
 
 function sdecide_stride()
 {
-	
-	for (try_cell of random_permutation(CORNERS))
+	var stride_scores = [0,0,0,0,0,0,0,0,0];
+	for (try_cell of SCAN_MOVES)
 	{
-		if (view[try_cell].color !== view[CCW[try_cell][1]].color)
-			if (view[try_cell].color !== view[CCW[try_cell][7]].color) return {cell:try_cell};
+		if (view[try_cell].color !== view[CCW[try_cell][1]].color) stride_scores[try_cell] += 2;
+		if (view[try_cell].color !== view[CCW[try_cell][7]].color) stride_scores[try_cell] += 2;
+		if (view[try_cell].color !== view[CCW[try_cell][2]].color) stride_scores[try_cell] += 1;
+		if (view[try_cell].color !== view[CCW[try_cell][6]].color) stride_scores[try_cell] += 1;
+		if (view[try_cell].color !== view[4].color) stride_scores[try_cell] += 1;
 	}
-	for (try_cell of random_permutation(CORNERS))
-	{
-		if (view[try_cell].color !== view[CCW[try_cell][1]].color) return {cell:try_cell};
-		if (view[try_cell].color !== view[CCW[try_cell][7]].color) return {cell:try_cell};
-	}
+	var max_stride_score = Math.max(...stride_scores);
+	for (var i = 0; i < 9; i++)
+		if (stride_scores[i] === max_stride_score) return {cell:i};
 	return {cell:0};
 }
 
@@ -103,7 +103,12 @@ function sdecide_obstruct()
 					if (ant_off === 2 && random_choice(.3)) return {cell: CCW[try_cell][1]};
 					if (ant_off === 6 && random_choice(.3)) return {cell: CCW[try_cell][7]};
 					if (ant_off === 4 && random_choice(.3)) return {cell: CCW[try_cell][random_choice(.5)?2:6]};
-					if (random_choice(.3)) return {cell: 4};
+					if (random_choice(.3))
+					{
+						var rand_neighbors = random_subset(NEIGHBORS[try_cell], 2);
+						if (rand_neighbors[0] !== rand_neighbors[1])
+							return {cell:rand_neighbors[0], color:view[rand_neighbors[1]].color};
+					}
 				}
 		}
 	return {cell:1};
@@ -113,7 +118,6 @@ function sdecide_obstruct()
 function saboteur()
 {
 	var num_enemies = 0;
-
 	for (try_cell of SCAN_MOVES)
 		if (is_enemy(try_cell)) num_enemies++;
 
