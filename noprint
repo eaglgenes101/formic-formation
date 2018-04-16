@@ -1,4 +1,4 @@
-var marcher_count;var gatherer_count;var excess_gatherers;var try_cell;var lh_cell;var rh_cell;var ant_off;
+var marcher_count;var gatherer_count;var excess_gatherers;var try_cell;var lh_cell;var rh_cell;var ant_off;var alt_cell;
 
 function debug(message)
 {

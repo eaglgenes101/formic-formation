@@ -33,74 +33,15 @@ function ant_char(cell)
 	else return ". ";
 }
 
-function display_color(c)
-{
-	switch (c)
-	{
-		case 0: return "an undefined color";
-		case 1: return "white (Down March)";
-		case 2: return "yellow (Down Food)";
-		case 3: return "magenta (Down Stalled)";
-		case 4: return "cyan (Down Gatherer)";
-		case 5: return "red (Up Realign)";
-		case 6: return "green (Up Realign End)";
-		case 7: return "blue (Up Ready)";
-		case 8: return "black (Up Panic)";
-		default: return "with a broken paintbrush";
-	}
-}
-
-function display_direction(d)
-{
-	switch (d)
-	{
-		case 0: return "northwest";
-		case 1: return "north";
-		case 2: return "northeast";
-		case 3: return "west";
-		case 4: return "in place";
-		case 5: return "east";
-		case 6: return "southwest";
-		case 7: return "south";
-		case 8: return "southeast";
-		default: return "on Mars";
-	}
-}
-
-function display_decision(candidate)
-{
-	var corner = view_corner();
-	var cell_moving = null;
-	if (candidate.cell === 4) cell_moving = 4;
-	else if (candidate.cell === corner) cell_moving = 0;
-	else if (candidate.cell === CCW[corner][1]) cell_moving = 3;
-	else if (candidate.cell === CCW[corner][2]) cell_moving = 6;
-	else if (candidate.cell === CCW[corner][3]) cell_moving = 7;
-	else if (candidate.cell === CCW[corner][4]) cell_moving = 8;
-	else if (candidate.cell === CCW[corner][5]) cell_moving = 5;
-	else if (candidate.cell === CCW[corner][6]) cell_moving = 2;
-	else if (candidate.cell === CCW[corner][7]) cell_moving = 1;
-	
-	if (candidate.hasOwnProperty("color")) return "Coloring " + display_direction(cell_moving) + " " + display_color(candidate.color);
-	else if (candidate.hasOwnProperty("type")) return "Spawning " + display_type(candidate.type) + " " + display_direction(cell_moving);
-	else return "Moving " + display_direction(cell_moving);
-}
-
 function debug_view()
 {
-	var corner = view_corner();
-	debug(ant_char(CCW[corner][0]) + ant_char(CCW[corner][7]) + ant_char(CCW[corner][6]));
-	debug(ant_char(CCW[corner][1]) + ant_char(            4 ) + ant_char(CCW[corner][5]));
-	debug(ant_char(CCW[corner][2]) + ant_char(CCW[corner][3]) + ant_char(CCW[corner][4]));
-}
-
-function debug_decision(decision)
-{
-	debug(display_decision(decision));
+	var c = view_corner();
+	debug(ant_char(CCW[c][0]) + ant_char(CCW[c][7]) + ant_char(CCW[c][6]));
+	debug(ant_char(CCW[c][1]) + ant_char(            4 ) + ant_char(CCW[c][5]));
+	debug(ant_char(CCW[c][2]) + ant_char(CCW[c][3]) + ant_char(CCW[c][4]));
 	debug(this_ant().type === QUEEN ? "============" : "------");
 }
 
-//debug_view();
+debug_view();
 var decision = main_decide();
-//debug_decision(decision);
 return decision;

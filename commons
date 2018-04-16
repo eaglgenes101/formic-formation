@@ -35,19 +35,17 @@ const NEARS = [
 [3,6,0,7],	[1,3,5,7,4],	[5,2,8,4],
 [6,3,7],	[7,8,6,4],	[8,7,5]];
 
-//Downstream signal colors (travel instantaneously)
-const D_MARCH = 1; //We're all ready! Let's go!
-const D_FOOD = 2; //We found food!
-const D_STALLED = 3; //There's no obstruction, but we're waiting for a ready signal
-const D_GATHERER = 4; //Gatherer: "I'm still here!"
+//Signal colors
+const D_MARCH = 1;
+const D_FOOD = 2;
+const D_STALLED = 3;
+const D_GATHERER = 4;
+const U_REALIGN = 5;
+const U_SENTINEL = 6;
+const U_READY = 7;
+const U_PANIC = 8;
 
-//Upstream signal colors (travel at lightspeed)
-const U_REALIGN = 5; //Realign 
-const U_SENTINEL = 6; //Realign end
-const U_READY = 7; //Ready to move as soon as the end is aligned
-const U_PANIC = 8; //Everyone! Scatter! 
-
-//Pair reads from upstream (corner, side)
+//Pair reads from upstream (c, side)
 const PAIRUPS = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,0,0,1,1,0,1],
@@ -58,7 +56,7 @@ const PAIRUPS = [
 [6,1,2,3,0,5,5,0,6],
 [7,0,0,0,0,0,0,7,7],
 [8,1,2,3,4,5,6,7,8]];
-//Pair reads from downstream (corner, side)
+//Pair reads from downstream (c, side)
 const PAIRDOWNS = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,3,4,5,5,0,1],
@@ -69,7 +67,7 @@ const PAIRDOWNS = [
 [6,5,5,3,0,5,5,0,6],
 [7,0,0,3,0,0,0,7,7],
 [8,1,2,3,4,5,6,7,8]];
-//Pair reads from either direction (corner, side)
+//Pair reads from either direction (c, side)
 const PAIRSIDES = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,3,4,1,1,0,1],
@@ -87,8 +85,8 @@ const FINAL_SEED = 2338395782;
 
 //Tuneables
 const SABOTEUR_RECOLOR_PROB = 0.8;
-const QUEEN_SPAWN_PROB_MIN = 0.8;
-const QUEEN_SPAWN_PROB_DECAY = 0.01;
+const QUEEN_SPAWN_PROB_MIN = 0.4;
+const QUEEN_SPAWN_PROB_DECAY = 0.05;
 const QUEEN_FORM_PROB_MAX = 0.5;
 const QUEEN_FORM_PROB_MIN = 0.15;
 const QUEEN_FORM_PROB_DECAY = 0.01;
@@ -127,14 +125,12 @@ function ant_rand()
 	return state >>> 0;
 }
 
-//Applications of the output of ant_rand()
-function random_choice(prob)
+function rand_choice(prob)
 {
 	return ant_rand()/4294967296 < prob;
 }
 
-//Generate a random permutation
-function random_subset(array, num)
+function rand_sub(array, num)
 {
 	var return_array = array.slice();
 	for (var i = 0; i < num; i++)
@@ -147,7 +143,7 @@ function random_subset(array, num)
 	return return_array.slice(0, num);
 }
 
-function random_permutation(array)
+function rand_perm(array)
 {
 	var return_array = array.slice();
 	for (var i = 0; i < array.length-1; i++)
@@ -199,15 +195,12 @@ function sanitize(prop, trial_matrix)
 	if (prop.color < 1 || prop.color > 8) delete prop.color;
 	if (prop.type < 1 || prop.type > 4) delete prop.type;
 
-	//Prevent workers from trying to birth worker ants
 	if (prop.hasOwnProperty("type") && this_ant().type !== QUEEN) delete prop.type;
-
-	//Prevent birthing of workers in occupied areas
 	if (prop.hasOwnProperty("type"))
 	{
 		//Check the prop cell first
 		if (view[prop.cell].food === 0 && view[prop.cell].ant === null) return prop;
-		for (try_cell of random_permutation(trial_matrix[prop.cell]))
+		for (try_cell of rand_perm(trial_matrix[prop.cell]))
 			if (view[try_cell].food === 0 && view[try_cell].ant === null)
 			{
 				prop.cell = try_cell;
@@ -222,7 +215,7 @@ function sanitize(prop, trial_matrix)
 	//Check the prop cell
 	if (view[prop.cell].ant === null)
 		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prop.cell].food === 0) return prop;
-	for (try_cell of random_permutation(trial_matrix[prop.cell]))
+	for (try_cell of rand_perm(trial_matrix[prop.cell]))
 		if (view[try_cell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[try_cell].food === 0))
 		{
 			prop.cell = try_cell;
@@ -232,66 +225,84 @@ function sanitize(prop, trial_matrix)
 }
 
 //Common line-watching function for signalling and stalled ants
-function linewatch(corner)
+function linewatch(c)
 {
-	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_GATHERER;
-	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1])) return D_GATHERER;
-	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === D_MARCH) return D_STALLED;
-	if (view[CCW[corner][6]].food === 1)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_FOOD;
-	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === D_FOOD)
+	if (is_ally(CCW[c][6]) && view[CCW[c][6]].ant.type === GATHERER)
+		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_GATHERER;
+	if (is_ally(CCW[c][7]) && view[CCW[c][7]].ant.type === GATHERER)
+		if (is_ally(CCW[c][1])) return D_GATHERER;
+	if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type === GATHERER)
+		if (is_ally(CCW[c][3]) && view[4].color === D_MARCH) return D_STALLED;
+	if (view[CCW[c][6]].food === 1)
+		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[c][7]].food === 1 && is_ally(CCW[c][1]) && view[CCW[c][1]].color === D_FOOD)
 		return D_FOOD;
-	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
+	if (view[CCW[c][5]].food === 1 && is_ally(CCW[c][3]) && view[CCW[c][3]].ant.type !== QUEEN)
 		if (view[4].color === D_MARCH) return U_REALIGN;
 	return null;
 }
 
-function linewatch2(corner)
+function linewatch2(c)
 {
-	if (is_ally(CCW[corner][6]) && view[CCW[corner][6]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_GATHERER;
-	if (is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1])) return D_GATHERER;
-	if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][3]) && view[4].color === D_MARCH) return D_STALLED;
-	if (is_ally(CCW[corner][2]) && view[CCW[corner][2]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return D_GATHERER;
-	if (is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === D_GATHERER) return D_GATHERER;
-	if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type === GATHERER)
-		if (is_ally(CCW[corner][7]) && view[4].color === D_MARCH) return D_STALLED;
-	if (view[CCW[corner][6]].food === 1)
-		if (is_ally(CCW[corner][5]) && view[CCW[corner][5]].ant.type !== GATHERER) return D_FOOD;
-	if (view[CCW[corner][7]].food === 1 && is_ally(CCW[corner][1]) && view[CCW[corner][1]].color === D_FOOD)
+	if (is_ally(CCW[c][6]) && view[CCW[c][6]].ant.type === GATHERER)
+		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_GATHERER;
+	if (is_ally(CCW[c][7]) && view[CCW[c][7]].ant.type === GATHERER)
+		if (is_ally(CCW[c][1])) return D_GATHERER;
+	if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type === GATHERER)
+		if (is_ally(CCW[c][3]) && view[4].color === D_MARCH) return D_STALLED;
+	if (is_ally(CCW[c][2]) && view[CCW[c][2]].ant.type === GATHERER)
+		if (is_ally(CCW[c][1]) && view[CCW[c][1]].ant.type !== GATHERER) return D_GATHERER;
+	if (is_ally(CCW[c][3]) && view[CCW[c][3]].ant.type === GATHERER)
+		if (is_ally(CCW[c][5]) && view[CCW[c][5]].color === D_GATHERER) return D_GATHERER;
+	if (is_ally(CCW[c][1]) && view[CCW[c][1]].ant.type === GATHERER)
+		if (is_ally(CCW[c][7]) && view[4].color === D_MARCH) return D_STALLED;
+	if (view[CCW[c][6]].food === 1)
+		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[c][7]].food === 1 && is_ally(CCW[c][1]) && view[CCW[c][1]].color === D_FOOD)
 		return D_FOOD;
-	if (view[CCW[corner][5]].food === 1 && is_ally(CCW[corner][3]) && view[CCW[corner][3]].ant.type !== QUEEN)
+	if (view[CCW[c][5]].food === 1 && is_ally(CCW[c][3]) && view[CCW[c][3]].ant.type !== QUEEN)
 		if (view[4].color === D_MARCH) return U_REALIGN;
-	if (view[CCW[corner][2]].food === 1)
-		if (is_ally(CCW[corner][1]) && view[CCW[corner][1]].ant.type !== GATHERER) return D_FOOD;
-	if (view[CCW[corner][3]].food === 1 && is_ally(CCW[corner][5]) && view[CCW[corner][5]].color === D_FOOD)
+	if (view[CCW[c][2]].food === 1)
+		if (is_ally(CCW[c][1]) && view[CCW[c][1]].ant.type !== GATHERER) return D_FOOD;
+	if (view[CCW[c][3]].food === 1 && is_ally(CCW[c][5]) && view[CCW[c][5]].color === D_FOOD)
 		return {cell:4, color:D_FOOD};
-	if (view[CCW[corner][1]].food === 1 && is_ally(CCW[corner][7]) && view[CCW[corner][7]].ant.type !== QUEEN)
+	if (view[CCW[c][1]].food === 1 && is_ally(CCW[c][7]) && view[CCW[c][7]].ant.type !== QUEEN)
 		if (view[4].color === D_MARCH) return U_REALIGN;
 	return null;
 }
 
-function turn_color(output, corner)
+function sigc(output, c)
 {
 	if (view[4].color === output)
 		for (try_cell of [7,6,5,4,3,2,1,0])
-			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== D_MARCH)
-				return {cell:CCW[corner][try_cell], color:D_MARCH};
+		{
+			var off_cell = CCW[c][try_cell];
+			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)
+			{
+				if (this_ant().type === QUEEN || view[try_cell].food !== 0) 
+					for (alt_cell of NEIGHBORS[off_cell])
+						if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
+							continue;
+				return {cell:CCW[c][try_cell], color:D_MARCH};
+			}
+		}
 	return {cell:4, color:output};
 }
 
-function turn_color2(output, corner)
+function sigc2(output, c)
 {
 	if (view[4].color === output)
 		for (try_cell of [7,3,6,2,5,1,4,0])
-			if (!is_ally(CCW[corner][try_cell]) && view[CCW[corner][try_cell]].color !== D_MARCH)
-				return {cell:CCW[corner][try_cell], color:D_MARCH};
+		{
+			var off_cell = CCW[c][try_cell];
+			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)
+			{
+				if (this_ant().type === QUEEN || view[try_cell].food !== 0) 
+					for (alt_cell of NEIGHBORS[off_cell])
+						if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
+							continue;
+				return {cell:CCW[c][try_cell], color:D_MARCH};
+			}
+		}
 	return {cell:4, color:output};
 }
