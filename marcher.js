@@ -11,7 +11,7 @@ function mdec_one_edge(c)
 {
 	//This occurs when we march forward as the end, but the next c neighbor is obstructed
 	//Find this condition
-	if (view[CCW[c][1]].color === U_REALIGN)
+	if ([U_REALIGN, D_MARCH].includes(view[CCW[c][1]].color))
 	{
 		if (view[CCW[c][2]].food === 1) return {cell:c};
 		if (is_ally(CCW[c][2]) && view[CCW[c][2]].ant.type === GATHERER) return {cell:c};

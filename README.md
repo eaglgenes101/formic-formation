@@ -82,7 +82,6 @@ To-do
 ------
 
 * Clean out logical cruft
-* Allow the queen to extend the line even if food is off-phase
 * Test and refine queen looting
 * See if enemy workers can be walked around
 * Investigate signal state reduction

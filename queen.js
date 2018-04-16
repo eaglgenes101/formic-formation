@@ -68,7 +68,8 @@ function early_queen()
 	for (try_cell of rand_perm(SCAN_MOVES))
 		if (view[try_cell].food > 0) 
 		{
-			if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
+			if (view[try_cell].color !== D_FOOD && NEARS[try_cell].includes(gatherer_cell)) 
+				return {cell:try_cell, color:D_FOOD};
 		}
 
 	//To prevent gliding spins, color our own cell white if it's yellow

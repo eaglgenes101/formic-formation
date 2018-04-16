@@ -86,7 +86,8 @@ function early_gatherer()
 		for (try_cell of rand_perm(EDGES))
 			if (view[try_cell].food > 0) 
 			{
-				if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
+				if (view[try_cell].color !== D_FOOD && NEARS[try_cell].includes(queen_cell)) 
+					return {cell:try_cell, color:D_FOOD};
 			}
 	}
 	return {cell:CCW[queen_cell][1]};
