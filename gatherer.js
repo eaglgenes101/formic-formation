@@ -10,12 +10,12 @@ function gwatch(candidate)
 	return candidate;
 }
 
-function gdec_two_edge_bent(c)
+function gdec_ee_bent(c)
 {
 	return {cell:CCW[c][4]};
 }
 
-function gdec_edge_corner_left(c)
+function gdec_ec_left(c)
 {
 	//Look for signal to walk the line for food
 	if (view[c].color === D_FOOD && view[CCW[c][1]].color === D_FOOD) return {cell:CCW[c][7]};
@@ -25,7 +25,7 @@ function gdec_edge_corner_left(c)
 	
 }
 
-function gdec_edge_corner_right(c)
+function gdec_ec_right(c)
 {
 	if ([D_MARCH, D_FOOD].includes(view[c].color) && [D_MARCH, D_FOOD].includes(view[CCW[c][7]].color))
 		return {cell:CCW[c][6]};
@@ -37,7 +37,7 @@ function gdec_edge_corner_right(c)
 	
 }
 
-function gdec_two_corner_edged(c)
+function gdec_cc_edged(c)
 {
 	//Look for queen at CCW[c][2]
 	if (view[CCW[c][2]].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
@@ -99,7 +99,7 @@ function gatherer_retrieve()
 	var c = view_corner();
 	switch(neighbor_type(c))
 	{
-		case EDGE_CORNER_LEFT: return gwatch({cell:CCW[c][2]});
+		case EC_LEFT: return gwatch({cell:CCW[c][2]});
 		case THREE_BLOCK: 
 		{
 			//Walk forward only if given the D_FOOD signal
@@ -117,7 +117,7 @@ function gatherer_return()
 	var c = view_corner();
 	switch(neighbor_type(c))
 	{
-		case EDGE_CORNER_LEFT: return gwatch({cell:CCW[c][2]});
+		case EC_LEFT: return gwatch({cell:CCW[c][2]});
 		case THREE_BLOCK: return gwatch({cell:CCW[c][2]});
 		case FOUR_BENT: return gwatch({cell:CCW[c][4]});
 		default: return sanitize(early_gatherer(), FREE_ORDER);
@@ -131,10 +131,10 @@ function gatherer_formation()
 	var c = view_corner();
 	switch (neighbor_type(c))
 	{
-		case EDGE_CORNER_LEFT: return gwatch(gdec_edge_corner_left(c));
-		case EDGE_CORNER_RIGHT: return gwatch(gdec_edge_corner_right(c));
-		case TWO_CORNER_EDGED: return gwatch(gdec_two_corner_edged(c));
-		case TWO_EDGE_BENT: return gwatch(gdec_two_edge_bent(c));
+		case EC_LEFT: return gwatch(gdec_ec_left(c));
+		case EC_RIGHT: return gwatch(gdec_ec_right(c));
+		case CC_EDGED: return gwatch(gdec_cc_edged(c));
+		case EE_BENT: return gwatch(gdec_ee_bent(c));
 		case THREE_BLOCK: return gwatch(gdec_three_block(c));
 		case THREE_UNSTAND: return gwatch(gdec_three_unstand(c));
 		case FOUR_BENT: return gwatch(gdec_four_bent(c));

@@ -46,7 +46,7 @@ const U_READY = 7;
 const U_PANIC = 8;
 
 //Pair reads from upstream (c, side)
-const PAIRUPS = [
+const PUPS = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,0,0,1,1,0,1],
 [2,0,2,0,4,2,2,0,2],
@@ -57,7 +57,7 @@ const PAIRUPS = [
 [7,0,0,0,0,0,0,7,7],
 [8,1,2,3,4,5,6,7,8]];
 //Pair reads from downstream (c, side)
-const PAIRDOWNS = [
+const PDOWNS = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,3,4,5,5,0,1],
 [2,0,2,3,4,5,5,0,2],
@@ -68,7 +68,7 @@ const PAIRDOWNS = [
 [7,0,0,3,0,0,0,7,7],
 [8,1,2,3,4,5,6,7,8]];
 //Pair reads from either direction (c, side)
-const PAIRSIDES = [
+const PSIDES = [
 [0,1,2,3,4,5,6,7,8],
 [1,1,0,3,4,1,1,0,1],
 [2,0,2,0,4,5,5,0,2],
@@ -85,10 +85,11 @@ const FINAL_SEED = 2338395782;
 
 //Tuneables
 const SABOTEUR_RECOLOR_PROB = 0.8;
+const QUEEN_SPAWN_PROB_MAX = 0.8;
 const QUEEN_SPAWN_PROB_MIN = 0.4;
 const QUEEN_SPAWN_PROB_DECAY = 0.05;
-const QUEEN_FORM_PROB_MAX = 0.5;
-const QUEEN_FORM_PROB_MIN = 0.15;
+const QUEEN_FORM_PROB_MAX = 0.4;
+const QUEEN_FORM_PROB_MIN = 0.2;
 const QUEEN_FORM_PROB_DECAY = 0.01;
 const DISCOLOR_THRESHOLD = 25;
 const ERASE_THRESHOLD = 12;
@@ -159,10 +160,7 @@ function rand_perm(array)
 function index_sort(arr)
 {
 	var index_array = [];
-	for (var i = 0; i < arr.length; i++)
-	{
-		index_array.push(i);
-	}
+	for (var i = 0; i < arr.length; i++) index_array.push(i);
 	index_array.sort((a,b) => (arr[a] === arr[b])?(a-b):(arr[a] - arr[b]));
 	return index_array;
 }
@@ -225,7 +223,7 @@ function sanitize(prop, trial_matrix)
 }
 
 //Common line-watching function for signalling and stalled ants
-function linewatch(c)
+function lchk(c)
 {
 	if (is_ally(CCW[c][6]) && view[CCW[c][6]].ant.type === GATHERER)
 		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_GATHERER;
@@ -242,7 +240,7 @@ function linewatch(c)
 	return null;
 }
 
-function linewatch2(c)
+function lchk2(c)
 {
 	if (is_ally(CCW[c][6]) && view[CCW[c][6]].ant.type === GATHERER)
 		if (is_ally(CCW[c][5]) && view[CCW[c][5]].ant.type !== GATHERER) return D_GATHERER;

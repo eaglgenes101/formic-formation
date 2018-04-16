@@ -65,17 +65,10 @@ function early_queen()
 	if (gatherer_cell === null) 
 		return opening_queen();
 
-	for (try_cell of rand_perm(CORNERS))
+	for (try_cell of rand_perm(SCAN_MOVES))
 		if (view[try_cell].food > 0) 
 		{
 			if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
-			else if (NEARS[try_cell].includes(gatherer_cell)) return {cell:try_cell};
-		}
-	for (try_cell of rand_perm(EDGES))
-		if (view[try_cell].food > 0) 
-		{
-			if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
-			else return {cell:4, color: D_MARCH};
 		}
 
 	//To prevent gliding spins, color our own cell white if it's yellow
@@ -129,32 +122,32 @@ function qwatch(candidate)
 	return candidate;
 }
 
-function qdec_two_edge_straight(c)
+function qdec_ee_straight(c)
 {
 	//Don't fight the gatherer
 	return sigc2(view[4].color, c); 
 }
 
-function qdec_two_edge_bent(c)
+function qdec_ee_bent(c)
 {
 	return {cell:CCW[c][2]};
 }
 
-function qdec_edge_corner_skewed(c)
+function qdec_ec_skewed(c)
 {
 	if (view[c].ant.type === MARCHER_A) return {cell:CCW[c][7], type:MARCHER_B};
 	if (view[c].ant.type === MARCHER_B) return {cell:CCW[c][7], type:MARCHER_A};
 	return sanitize(opening_queen(), FREE_ORDER);
 }
 
-function qdec_edge_corner_spawn(c)
+function qdec_ec_spawn(c)
 {
 	if (view[c].ant.type === MARCHER_A) return {cell:CCW[c][1], type:MARCHER_B};
 	if (view[c].ant.type === MARCHER_B) return {cell:CCW[c][1], type:MARCHER_A};
 	return sanitize(opening_queen(), FREE_ORDER);
 }
 
-function qdec_two_corner_edged(c)
+function qdec_cc_edged(c)
 {
 	if (view[CCW[c][2]].ant.type === MARCHER_A) return {cell:CCW[c][1], type:MARCHER_B};
 	if (view[CCW[c][2]].ant.type === MARCHER_B) return {cell:CCW[c][1], type:MARCHER_A};
@@ -163,19 +156,16 @@ function qdec_two_corner_edged(c)
 
 function qdec_three_march(c)
 {
-	var u_sig = PAIRUPS[view[c].color][view[CCW[c][1]].color];
+	var u_sig = PUPS[view[c].color][view[CCW[c][1]].color];
 	if (u_sig === D_STALLED)
 	{
-		if (view[CCW[c][3]].color === D_MARCH && [D_MARCH, D_GATHERER].includes(view[4].color))
-			return sigc(D_STALLED, c); 
-		if (view[CCW[c][3]].color === U_READY && view[4].color === D_STALLED)
-			return sigc(U_READY, c); 
+		if (view[CCW[c][3]].color === D_MARCH && [D_MARCH, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, c); 
+		if (view[CCW[c][3]].color === U_READY && view[4].color === D_STALLED) return sigc(U_READY, c); 
 	}
 	if (u_sig === D_MARCH && view[CCW[c][3]].color === U_READY && view[4].color === U_READY)
 		return sigc(D_MARCH, c); 
 	if (u_sig === U_READY && view[CCW[c][3]].color === U_REALIGN && view[4].color === U_READY)
-		if (view[CCW[c][1]].color === D_MARCH)
-			return sigc(D_MARCH, c); 
+		if (view[CCW[c][1]].color === D_MARCH) return sigc(D_MARCH, c); 
 
 	//Now with those found
 	return sigc(view[4].color, c); 
@@ -183,19 +173,16 @@ function qdec_three_march(c)
 
 function qdec_three_stand(c)
 {
-	var u_sig = PAIRUPS[view[c].color][view[CCW[c][7]].color];
+	var u_sig = PUPS[view[c].color][view[CCW[c][7]].color];
 	if (u_sig === D_STALLED)
 	{
-		if (view[CCW[c][3]].color === D_MARCH && view[4].color === D_GATHERER)
-			return sigc(D_STALLED, c); 
-		if (view[CCW[c][3]].color === U_READY && view[4].color === D_STALLED)
-			return sigc(U_READY, c); 
+		if (view[CCW[c][3]].color === D_MARCH && view[4].color === D_GATHERER) return sigc(D_STALLED, c); 
+		if (view[CCW[c][3]].color === U_READY && view[4].color === D_STALLED) return sigc(U_READY, c); 
 	}
 	if (u_sig === D_MARCH && view[CCW[c][3]].color === U_READY && view[4].color === U_READY)
 		return sigc(D_MARCH, c); 
 	if (u_sig === U_READY && view[CCW[c][3]].color === U_REALIGN && view[4].color === U_READY)
-		if (view[CCW[c][1]].color === D_MARCH)
-			return sigc(D_MARCH, c); 
+		if (view[CCW[c][1]].color === D_MARCH) return sigc(D_MARCH, c); 
 
 	//Now with those found
 	return sigc(view[4].color, c); 
@@ -203,31 +190,31 @@ function qdec_three_stand(c)
 
 function qdec_three_recover(c)
 {
-	var u_sig = PAIRUPS[view[c].color][view[CCW[c][1]].color];
+	var u_sig = PUPS[view[c].color][view[CCW[c][1]].color];
 	if (u_sig === D_FOOD) return sigc(D_FOOD, c); 
 	
 	//With probability, spawn a worker. 
 	if (this_ant().food > 0 && [D_STALLED, U_READY].includes(u_sig))
 	{
-		var one_minus_prob = 1-QUEEN_SPAWN_PROB_MIN
+		var one_minus_prob = QUEEN_SPAWN_PROB_MAX-QUEEN_SPAWN_PROB_MIN
 		var food_coefficient = QUEEN_SPAWN_PROB_DECAY/one_minus_prob
 		var actual_prob = one_minus_prob/(food_coefficient*(this_ant().food-1)+1) + QUEEN_SPAWN_PROB_MIN;
 		if (rand_choice(actual_prob)) return {cell:CCW[c][3]};
 	}
 
-	var provisional = linewatch(c)
+	var provisional = lchk(c)
 	if (provisional !== null) return sigc(provisional, c);
 	return sigc(view[4].color, c);
 }
 
 function qdec_three_unstand(c)
 {
-	var u_sig = PAIRUPS[view[c].color][view[CCW[c][7]].color];
+	var u_sig = PUPS[view[c].color][view[CCW[c][7]].color];
 
 	if (this_ant().food > 0 && u_sig === D_STALLED && view[CCW[c][5]].color === D_MARCH && view[4].color === D_STALLED)
 	{
 		//Initiate off-phase spawning
-		var one_minus_prob = 1-QUEEN_SPAWN_PROB_MIN
+		var one_minus_prob = QUEEN_SPAWN_PROB_MAX-QUEEN_SPAWN_PROB_MIN
 		var food_coefficient = QUEEN_SPAWN_PROB_DECAY/one_minus_prob
 		var actual_prob = one_minus_prob/(food_coefficient*(this_ant().food-1)+1) + QUEEN_SPAWN_PROB_MIN;
 		if (rand_choice(actual_prob)) return {cell:CCW[c][3]};
@@ -242,13 +229,13 @@ function qdec_three_unstand(c)
 
 function qdec_three_block(c)
 {
-	var u_sig = PAIRUPS[view[c].color][view[CCW[c][1]].color];
+	var u_sig = PUPS[view[c].color][view[CCW[c][1]].color];
 	return sigc(u_sig, c); 
 }
 
 function qdec_three_side(c)
 {
-	var u_sig = PAIRUPS[view[CCW[c][1]].color][view[CCW[c][2]].color];
+	var u_sig = PUPS[view[CCW[c][1]].color][view[CCW[c][2]].color];
 	return sigc(u_sig, CCW[c][2]); 
 }
 
@@ -262,14 +249,14 @@ function queen_wait()
 			if (this_ant().food > 1) return {cell:CCW[c][3], type:GATHERER};
 		}
 		break;
-		case EDGE_CORNER_LEFT:
+		case EC_LEFT:
 		{
-			var u_sig = PAIRUPS[view[c].color][view[CCW[c][1]].color];
+			var u_sig = PUPS[view[c].color][view[CCW[c][1]].color];
 			if (u_sig === D_GATHERER) return sigc(D_GATHERER, c); 
 			if (u_sig === U_REALIGN && [U_REALIGN, U_SENTINEL].includes(view[c].color))
 				if ([U_REALIGN, U_SENTINEL].includes(view[CCW[c][1]].color))
 					return sanitize(early_queen(), LEFT_ORDER);
-			var provisional = linewatch(c);
+			var provisional = lchk(c);
 			if (provisional !== null) return sigc(provisional, c); 
 			if (this_ant().food > 1) 
 			{
@@ -278,14 +265,14 @@ function queen_wait()
 			}
 		}
 		break;
-		case EDGE_CORNER_RIGHT:
+		case EC_RIGHT:
 		{
-			var u_sig = PAIRUPS[view[c].color][view[CCW[c][7]].color];
+			var u_sig = PUPS[view[c].color][view[CCW[c][7]].color];
 			if (u_sig === D_GATHERER) return sigc(D_GATHERER, c); 
 			if (u_sig === U_REALIGN && [U_REALIGN, U_SENTINEL].includes(view[c].color))
 				if ([U_REALIGN, U_SENTINEL].includes(view[CCW[c][7]].color))
 					return sanitize(early_queen(), LEFT_ORDER);
-			var provisional = linewatch(c);
+			var provisional = lchk(c);
 			if (provisional !== null) return sigc(provisional, c); 
 			if (this_ant().food > 1) 
 			{
@@ -305,11 +292,11 @@ function queen_march()
 	var c = view_corner();
 	switch (neighbor_type(c))
 	{
-		case TWO_EDGE_STRAIGHT: return qwatch(qdec_two_edge_straight(c));
-		case TWO_EDGE_BENT: return qwatch(qdec_two_edge_bent(c));
-		case EDGE_CORNER_SKEWED: return qwatch(qdec_edge_corner_skewed(c));
-		case EDGE_CORNER_SPAWN: return qwatch(qdec_edge_corner_spawn(c));
-		case TWO_CORNER_EDGED: return qwatch(qdec_two_corner_edged(c));
+		case EE_STRAIGHT: return qwatch(qdec_ee_straight(c));
+		case EE_BENT: return qwatch(qdec_ee_bent(c));
+		case EC_SKEWED: return qwatch(qdec_ec_skewed(c));
+		case EC_SPAWN: return qwatch(qdec_ec_spawn(c));
+		case CC_EDGED: return qwatch(qdec_cc_edged(c));
 		case THREE_MARCH: return qwatch(qdec_three_march(c));
 		case THREE_STAND: return qwatch(qdec_three_stand(c));
 		case THREE_RECOVER: return qwatch(qdec_three_recover(c));
