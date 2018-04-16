@@ -1,7 +1,7 @@
 //The gatherer
 
 //Don't step on food or enemies. Instead, signal. 
-function gatherer_step_watch(candidate)
+function gwatch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
 	if (candidate.hasOwnProperty("color")) return candidate;
@@ -10,12 +10,12 @@ function gatherer_step_watch(candidate)
 	return candidate;
 }
 
-function gdecide_two_edge_bent(corner)
+function gdec_two_edge_bent(corner)
 {
 	return {cell:CCW[corner][4]};
 }
 
-function gdecide_edge_corner_left(corner)
+function gdec_edge_corner_left(corner)
 {
 	//Look for signal to walk the line for food
 	if (view[corner].color === D_FOOD && view[CCW[corner][1]].color === D_FOOD) return {cell:CCW[corner][7]};
@@ -25,7 +25,7 @@ function gdecide_edge_corner_left(corner)
 	
 }
 
-function gdecide_edge_corner_right(corner)
+function gdec_edge_corner_right(corner)
 {
 	if ([D_MARCH, D_FOOD].includes(view[corner].color) && [D_MARCH, D_FOOD].includes(view[CCW[corner][7]].color))
 		return {cell:CCW[corner][6]};
@@ -37,13 +37,27 @@ function gdecide_edge_corner_right(corner)
 	
 }
 
-function gdecide_three_block(corner)
+function gdec_two_corner_edged(corner)
+{
+	//Look for queen at CCW[corner][2]
+	if (view[CCW[corner][2]].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
+	return {cell:CCW[corner][1]};
+}
+
+function gdec_three_block(corner)
 {
 	if (view[CCW[corner][7]].color == D_FOOD) return {cell: CCW[corner][6]};
 	return {cell:CCW[corner][2]};
 }
 
-function gdecide_four_bent(corner)
+function gdec_three_unstand(corner)
+{
+	//Look for queen at CCW[corner][5]
+	if (view[CCW[corner][5]].ant.type !== QUEEN) return sanitize(saboteur(), FREE_ORDER);
+	return {cell:CCW[corner][4]};
+}
+
+function gdec_four_bent(corner)
 {
 	return {cell:CCW[corner][4]};
 }
@@ -90,14 +104,14 @@ function gatherer_retrieve()
 	var corner = view_corner();
 	switch(neighbor_type(corner))
 	{
-		case EDGE_CORNER_LEFT: return gatherer_step_watch({cell:CCW[corner][2]});
+		case EDGE_CORNER_LEFT: return gwatch({cell:CCW[corner][2]});
 		case THREE_BLOCK: 
 		{
 			//Walk forward only if given the D_FOOD signal
-			if (view[CCW[corner][7]].color === D_FOOD) return gatherer_step_watch({cell:CCW[corner][6]});
-			return gatherer_step_watch({cell:CCW[corner][2]});
+			if (view[CCW[corner][7]].color === D_FOOD) return gwatch({cell:CCW[corner][6]});
+			return gwatch({cell:CCW[corner][2]});
 		}
-		case FOUR_BENT: return gatherer_step_watch(turn_color(view[4].color, corner));
+		case FOUR_BENT: return gwatch(turn_color(view[4].color, corner));
 		default: return sanitize(early_gatherer(), FREE_ORDER);
 	}
 }
@@ -108,9 +122,9 @@ function gatherer_return()
 	var corner = view_corner();
 	switch(neighbor_type(corner))
 	{
-		case EDGE_CORNER_LEFT: return gatherer_step_watch({cell:CCW[corner][2]});
-		case THREE_BLOCK: return gatherer_step_watch({cell:CCW[corner][2]});
-		case FOUR_BENT: return gatherer_step_watch({cell:CCW[corner][4]});
+		case EDGE_CORNER_LEFT: return gwatch({cell:CCW[corner][2]});
+		case THREE_BLOCK: return gwatch({cell:CCW[corner][2]});
+		case FOUR_BENT: return gwatch({cell:CCW[corner][4]});
 		default: return sanitize(early_gatherer(), FREE_ORDER);
 	}
 }
@@ -122,11 +136,13 @@ function gatherer_formation()
 	var corner = view_corner();
 	switch (neighbor_type(corner))
 	{
-		case EDGE_CORNER_LEFT: return gatherer_step_watch(gdecide_edge_corner_left(corner));
-		case EDGE_CORNER_RIGHT: return gatherer_step_watch(gdecide_edge_corner_right(corner));
-		case TWO_EDGE_BENT: return gatherer_step_watch(gdecide_two_edge_bent(corner));
-		case THREE_BLOCK: return gatherer_step_watch(gdecide_three_block(corner));
-		case FOUR_BENT: return gatherer_step_watch(gdecide_four_bent(corner));
+		case EDGE_CORNER_LEFT: return gwatch(gdec_edge_corner_left(corner));
+		case EDGE_CORNER_RIGHT: return gwatch(gdec_edge_corner_right(corner));
+		case TWO_CORNER_EDGED: return gwatch(gdec_two_corner_edged(corner));
+		case TWO_EDGE_BENT: return gwatch(gdec_two_edge_bent(corner));
+		case THREE_BLOCK: return gwatch(gdec_three_block(corner));
+		case THREE_UNSTAND: return gwatch(gdec_three_unstand(corner));
+		case FOUR_BENT: return gwatch(gdec_four_bent(corner));
 		default: return sanitize(early_gatherer(), LEFT_ORDER);
 	}
 }
@@ -144,9 +160,9 @@ function gatherer_decision()
 			if (view[try_cell].ant.type === QUEEN) queen_pos = try_cell;
 		}
 	if (gatherer_count > 0) return sanitize(saboteur(), FREE_ORDER);
-	if (this_ant().food > 0 && marcher_count > 0) return gatherer_step_watch(gatherer_return());
-	else if ((queen_pos !== null) && (marcher_count > 0)) return gatherer_step_watch(gatherer_formation());
-	else if (marcher_count > 0) return gatherer_step_watch(gatherer_retrieve());
+	if (this_ant().food > 0 && marcher_count > 0) return gwatch(gatherer_return());
+	else if (queen_pos !== null && marcher_count > 0) return gwatch(gatherer_formation());
+	else if (marcher_count > 0) return gwatch(gatherer_retrieve());
 	else if (queen_pos !== null) return sanitize(early_gatherer(), LEFT_ORDER);
 	else return sanitize(saboteur(), FREE_ORDER);
 }

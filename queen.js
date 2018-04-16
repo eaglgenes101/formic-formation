@@ -64,11 +64,12 @@ function early_queen()
 		if (is_ally(try_cell))
 		{
 			ally_count++;
-			if (view[try_cell].ant.type === GATHERER) gatherer_cell = try_cell;
+			if (view[try_cell].ant.type === GATHERER && EDGES.include(try_cell)) gatherer_cell = try_cell;
 		}
 	}
 
-	if (gatherer_cell === null || CORNERS.includes(gatherer_cell)) return {cell:4};
+	if (gatherer_cell === null) 
+		return opening_queen();
 
 	for (try_cell of random_permutation(CORNERS))
 		if (view[try_cell].food > 0) 
@@ -124,7 +125,7 @@ function early_queen()
 }
 
 //Don't step on food or enemies. Instead, signal. 
-function queen_step_watch(candidate)
+function qwatch(candidate)
 {
 	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return turn_color2(U_PANIC, 0); 
 	if (candidate.cell === 4) return candidate;
@@ -134,25 +135,34 @@ function queen_step_watch(candidate)
 	return candidate;
 }
 
-function qdecide_two_edge_straight(corner)
+function qdec_two_edge_straight(corner)
 {
-	//One of the two is the gatherer, right?
-	return turn_color2(view[4].color, corner); 
+	//Don't fight the gatherer
+	var trial = turn_color2(view[4].color, corner); 
+	if (view[trial.cell].food !== 0) return {cell:4};
+	else return trial;
 }
 
-function qdecide_two_edge_bent(corner)
+function qdec_two_edge_bent(corner)
 {
 	return {cell:CCW[corner][2]};
 }
 
-function qdecide_edge_corner_skewed(corner)
+function qdec_edge_corner_skewed(corner)
 {
 	if (view[corner].ant.type === MARCHER_A) return {cell:CCW[corner][7], type:MARCHER_B};
 	if (view[corner].ant.type === MARCHER_B) return {cell:CCW[corner][7], type:MARCHER_A};
 	return sanitize(opening_queen(), FREE_ORDER);
 }
 
-function qdecide_three_march(corner)
+function qdec_edge_corner_spawn(corner)
+{
+	if (view[corner].ant.type === MARCHER_A) return {cell:CCW[corner][1], type:MARCHER_B};
+	if (view[corner].ant.type === MARCHER_B) return {cell:CCW[corner][1], type:MARCHER_A};
+	return sanitize(opening_queen(), FREE_ORDER);
+}
+
+function qdec_three_march(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 	if (upstream === D_STALLED)
@@ -172,7 +182,7 @@ function qdecide_three_march(corner)
 	return turn_color(view[4].color, corner); 
 }
 
-function qdecide_three_stand(corner)
+function qdec_three_stand(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
 	if (upstream === D_STALLED)
@@ -192,7 +202,7 @@ function qdecide_three_stand(corner)
 	return turn_color(view[4].color, corner); 
 }
 
-function qdecide_three_recover(corner)
+function qdec_three_recover(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 	if (upstream === D_FOOD) return turn_color(D_FOOD, corner); 
@@ -211,17 +221,27 @@ function qdecide_three_recover(corner)
 	return turn_color(view[4].color, corner);
 }
 
-function qdecide_three_unstand(corner)
+function qdec_three_unstand(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][7]].color];
+
+	if (this_ant().food > 0 && upstream === D_STALLED && view[CCW[corner][5]].color === D_MARCH && view[4].color === D_STALLED)
+	{
+		//Initiate off-phase spawning
+		var one_minus_prob = 1-QUEEN_SPAWN_PROB_MIN
+		var food_coefficient = QUEEN_SPAWN_PROB_DECAY/one_minus_prob
+		var actual_prob = one_minus_prob/(food_coefficient*(this_ant().food-1)+1) + QUEEN_SPAWN_PROB_MIN;
+		if (random_choice(actual_prob)) return {cell:CCW[corner][3]};
+	}
 
 	//Reply to stalled with ready
 	if (upstream === D_STALLED && view[CCW[corner][5]].color === U_READY && view[4].color === D_STALLED)
 		return turn_color(U_READY, corner); 
+
 	return turn_color(upstream, corner); 
 }
 
-function qdecide_three_block(corner)
+function qdec_three_block(corner)
 {
 	var upstream = PAIRUPS[view[corner].color][view[CCW[corner][1]].color];
 	return turn_color(upstream, corner); 
@@ -280,14 +300,15 @@ function queen_march()
 	var corner = view_corner();
 	switch (neighbor_type(corner))
 	{
-		case TWO_EDGE_STRAIGHT: return queen_step_watch(qdecide_two_edge_straight(corner));
-		case TWO_EDGE_BENT: return queen_step_watch(qdecide_two_edge_bent(corner));
-		case EDGE_CORNER_SKEWED: return queen_step_watch(qdecide_edge_corner_skewed(corner));
-		case THREE_MARCH: return queen_step_watch(qdecide_three_march(corner));
-		case THREE_STAND: return queen_step_watch(qdecide_three_stand(corner));
-		case THREE_RECOVER: return queen_step_watch(qdecide_three_recover(corner));
-		case THREE_UNSTAND: return queen_step_watch(qdecide_three_unstand(corner));
-		case THREE_BLOCK: return queen_step_watch(qdecide_three_block(corner));
+		case TWO_EDGE_STRAIGHT: return qwatch(qdec_two_edge_straight(corner));
+		case TWO_EDGE_BENT: return qwatch(qdec_two_edge_bent(corner));
+		case EDGE_CORNER_SKEWED: return qwatch(qdec_edge_corner_skewed(corner));
+		case EDGE_CORNER_SPAWN: return qwatch(qdec_edge_corner_spawn(corner));
+		case THREE_MARCH: return qwatch(qdec_three_march(corner));
+		case THREE_STAND: return qwatch(qdec_three_stand(corner));
+		case THREE_RECOVER: return qwatch(qdec_three_recover(corner));
+		case THREE_UNSTAND: return qwatch(qdec_three_unstand(corner));
+		case THREE_BLOCK: return qwatch(qdec_three_block(corner));
 		default: return sanitize(early_queen(), LEFT_ORDER);
 	}
 }
@@ -310,8 +331,8 @@ function queen_decision()
 		}
 		else if (is_enemy(try_cell)) return sanitize(opening_queen(), FREE_ORDER);
 	}
-	if (marcher_count > 0 && gatherer_count === 1 && excess_gatherers === 0) return queen_step_watch(queen_march());
-	else if (marcher_count > 0 && gatherer_count === 0 && excess_gatherers === 0) return queen_step_watch(queen_wait());
+	if (marcher_count > 0 && gatherer_count === 1 && excess_gatherers === 0) return qwatch(queen_march());
+	else if (marcher_count > 0 && gatherer_count === 0 && excess_gatherers === 0) return qwatch(queen_wait());
 	else if (gatherer_count === 1 && excess_gatherers === 0) return sanitize(early_queen(), RIGHT_ORDER);
 	else return sanitize(opening_queen(), FREE_ORDER);
 }

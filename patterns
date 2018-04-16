@@ -94,8 +94,14 @@ b**
 *Ba
 ****/const EDGE_CORNER_SKEWED = 24;/*
 b**
-*Ba
-****/const EDGE_CORNER_SPAWN = 25;/*
+*B*
+*a**/const EDGE_CORNER_SPAWN = 25;/*
+b**
+*B*
+b***/const TWO_CORNER_EDGED = 26;/*
+b**
+*B*
+b***/const TWO_CORNER_LINE = 27;/*
 b**
 aB*
 *a**/const THREE_MARCH = 30;/*
@@ -114,6 +120,9 @@ aB*
 b**
 *B*
 *ab*/const THREE_HANG = 35;/*
+b**
+aB*
+**b*/const THREE_UNHANG = 36;/*
 ba*
 *B*
 *ab*/const FOUR_Z = 40;/*
@@ -137,6 +146,7 @@ function neighbor_type(top_left)
 	if (corners.length === 1 && edges.length === 0) return ONE_CORNER;
 	if (corners.length === 0 && edges.length === 1) return ONE_EDGE;
 	if (corners.length === 0 && edges.length === 2) return (edges[1] === CCW[edges[0]][4]) ? TWO_EDGE_STRAIGHT : TWO_EDGE_BENT;
+	if (corners.length === 2 && edges.length === 0) return (corners[1] === CCW[corners[0]][4]) ? TWO_CORNER_LINE : TWO_CORNER_EDGED;
 	else if (corners.length === 1 && edges.length === 1)
 	{
 		if (edges[0] === CCW[top_left][1]) return EDGE_CORNER_LEFT;
@@ -158,6 +168,7 @@ function neighbor_type(top_left)
 	else if (corners.length === 2 && edges.length === 1)
 	{
 		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][3])) return THREE_HANG;
+		if (corners.includes(CCW[top_left][4]) && edges.includes(CCW[top_left][1])) return THREE_UNHANG;
 	}
 	else if (corners.length === 2 && edges.length === 2)
 	{

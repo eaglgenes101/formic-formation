@@ -1,13 +1,13 @@
 //Marchers A and B
 
-function mdecide_one_corner(corner)
+function mdec_one_corner(corner)
 {
 	if (view[corner].ant.type === QUEEN)
 		return turn_color2(view[4].color, corner);
 	else return sanitize(saboteur(), FREE_ORDER);
 }
 
-function mdecide_one_edge(corner)
+function mdec_one_edge(corner)
 {
 	//This occurs when we march forward as the end, but the next corner neighbor is obstructed
 	//Find this condition
@@ -20,7 +20,7 @@ function mdecide_one_edge(corner)
 	return sanitize(saboteur(), FREE_ORDER);
 }
 
-function mdecide_two_edge_bent(corner)
+function mdec_two_edge_bent(corner)
 {
 	//Eject in scenarios where we would otherwise deadlock
 	if (view[CCW[corner][1]].ant.type === GATHERER && view[CCW[corner][3]].ant.type === QUEEN)	
@@ -60,13 +60,13 @@ function mdecide_two_edge_bent(corner)
 	return {cell:CCW[corner][2]}; 
 }
 
-function mdecide_two_edge_straight(corner)
+function mdec_two_edge_straight(corner)
 {
 	//(Remember, we don't know if it's CCW[corner][1] or CCW[corner][5] that's upstream)
 	return turn_color2(U_REALIGN, corner); 
 }
 
-function mdecide_edge_corner_left(corner)
+function mdec_edge_corner_left(corner)
 {
 	//Eject in scenarios where we would otherwise deadlock
 	if (view[CCW[corner][1]].ant.type === GATHERER && view[corner].ant.type === QUEEN) return sanitize(saboteur(), FREE_ORDER);
@@ -76,6 +76,12 @@ function mdecide_edge_corner_left(corner)
 	if (is_other(CCW[corner][1]) && view[corner].ant.type === QUEEN) return {cell:CCW[corner][3]};
 
 	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
+
+	//Special logic for spawning workers correctly
+	if (view[CCW[corner][4]].ant.type === GATHERER && down_sig === D_STALLED && view[4].color === D_STALLED)
+	{
+		return turn_color(D_STALLED, CCW[corner][7]);
+	}
 
 	var provisional = linewatch(CCW[corner][4]);
 	if (provisional !== null) 
@@ -105,7 +111,7 @@ function mdecide_edge_corner_left(corner)
 	
 }
 
-function mdecide_edge_corner_right(corner)
+function mdec_edge_corner_right(corner)
 {
 
 	//Special logic do early-game correctly
@@ -168,14 +174,14 @@ function mdecide_edge_corner_right(corner)
 	
 }
 
-function mdecide_edge_corner_spawn(corner)
+function mdec_edge_corner_spawn(corner)
 {
 	if (view[corner].ant.type === QUEEN && view[corner].color === D_MARCH && view[CCW[corner][3]].color === D_STALLED)
 		if (view[4].color === D_STALLED) return turn_color2(D_STALLED, corner); 
 	return sanitize(saboteur(), FREE_ORDER);
 }
 
-function mdecide_three_march(corner)
+function mdec_three_march(corner)
 {
 	var down_sig = PAIRDOWNS[view[corner].color][view[CCW[corner][1]].color];
 	var up_sig = view[CCW[corner][3]].color;
@@ -255,7 +261,7 @@ function mdecide_three_march(corner)
 	
 }
 
-function mdecide_three_stand(corner)
+function mdec_three_stand(corner)
 {
 	var provisional = linewatch2(corner);
 	if (provisional !== null) return turn_color2(provisional, corner); 
@@ -282,7 +288,7 @@ function mdecide_three_stand(corner)
 	
 }
 
-function mdecide_three_unstand(corner)
+function mdec_three_unstand(corner)
 {
 	//This is FOUR_STAIRS, but the gatherer jumped the gun here, 
 	//or the corner is stalled 
@@ -377,24 +383,22 @@ function mdecide_three_unstand(corner)
 				return turn_color(D_MARCH, CCW[corner][4]);
 		}
 
-		//Catch-all rule to resist deadlocking
-
 		return turn_color(view[4].color, CCW[corner][4]); 
 	}
 }
 
-function mdecide_three_recover(corner)
+function mdec_three_recover(corner)
 {
 	//This should only happen in the middle of recovery
 	return turn_color(U_SENTINEL, corner); 
 }
 
-function mdecide_three_hang(corner)
+function mdec_three_hang(corner)
 {
 	return turn_color2(view[4].color, CCW[corner][4]); 
 }
 
-function mdecide_four_z(corner)
+function mdec_four_z(corner)
 {
 	//Under certain conditions, this can appear during recovery
 	//But this is usually a normal-march thing, so check both sides for indicators
@@ -446,7 +450,7 @@ function mdecide_four_z(corner)
 	return turn_color2(D_MARCH, CCW[corner][4]); 
 }
 
-function mdecide_four_stairs(corner)
+function mdec_four_stairs(corner)
 {
 	//This is a heavyweight. We are stalled, and therefore we become a transmission channel of sorts for 
 	//all sorts of signals. The signals needs to be transmitted correctly for the whole gameplan to work out. 
@@ -555,7 +559,7 @@ function mdecide_four_stairs(corner)
 }
 
 //Don't step on food or enemies. Instead, signal. 
-function marcher_step_watch(candidate)
+function mwatch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
 	if (candidate.hasOwnProperty("color")) return candidate;
@@ -579,20 +583,20 @@ function marcher_decision()
 	if (view[4].color === U_PANIC || this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
 	switch (neighbor_type(corner))
 	{
-		case ONE_CORNER: return marcher_step_watch(mdecide_one_corner(corner));
-		case ONE_EDGE: return marcher_step_watch(mdecide_one_edge(corner));
-		case TWO_EDGE_BENT: return marcher_step_watch(mdecide_two_edge_bent(corner));
-		case TWO_EDGE_STRAIGHT: return marcher_step_watch(mdecide_two_edge_straight(corner));
-		case EDGE_CORNER_LEFT: return marcher_step_watch(mdecide_edge_corner_left(corner));
-		case EDGE_CORNER_RIGHT: return marcher_step_watch(mdecide_edge_corner_right(corner));
-		case EDGE_CORNER_SPAWN: return marcher_step_watch(mdecide_edge_corner_spawn(corner));
-		case THREE_MARCH: return marcher_step_watch(mdecide_three_march(corner));
-		case THREE_STAND: return marcher_step_watch(mdecide_three_stand(corner));
-		case THREE_RECOVER: return marcher_step_watch(mdecide_three_recover(corner));
-		case THREE_UNSTAND: return marcher_step_watch(mdecide_three_unstand(corner));
-		case THREE_HANG: return marcher_step_watch(mdecide_three_hang(corner));
-		case FOUR_Z: return marcher_step_watch(mdecide_four_z(corner));
-		case FOUR_STAIRS: return marcher_step_watch(mdecide_four_stairs(corner));
+		case ONE_CORNER: return mwatch(mdec_one_corner(corner));
+		case ONE_EDGE: return mwatch(mdec_one_edge(corner));
+		case TWO_EDGE_BENT: return mwatch(mdec_two_edge_bent(corner));
+		case TWO_EDGE_STRAIGHT: return mwatch(mdec_two_edge_straight(corner));
+		case EDGE_CORNER_LEFT: return mwatch(mdec_edge_corner_left(corner));
+		case EDGE_CORNER_RIGHT: return mwatch(mdec_edge_corner_right(corner));
+		case EDGE_CORNER_SPAWN: return mwatch(mdec_edge_corner_spawn(corner));
+		case THREE_MARCH: return mwatch(mdec_three_march(corner));
+		case THREE_STAND: return mwatch(mdec_three_stand(corner));
+		case THREE_RECOVER: return mwatch(mdec_three_recover(corner));
+		case THREE_UNSTAND: return mwatch(mdec_three_unstand(corner));
+		case THREE_HANG: return mwatch(mdec_three_hang(corner));
+		case FOUR_Z: return mwatch(mdec_four_z(corner));
+		case FOUR_STAIRS: return mwatch(mdec_four_stairs(corner));
 		default: return sanitize(saboteur(), FREE_ORDER);
 	}
 	

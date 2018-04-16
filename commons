@@ -87,7 +87,6 @@ const FINAL_SEED = 2338395782;
 
 //Tuneables
 const SABOTEUR_RECOLOR_PROB = 0.8;
-const SABOTEUR_OBSTRUCT_PROB = 0.8;
 const QUEEN_SPAWN_PROB_MIN = 0.8;
 const QUEEN_SPAWN_PROB_DECAY = 0.01;
 const QUEEN_FORM_PROB_MAX = 0.5;
@@ -95,14 +94,8 @@ const QUEEN_FORM_PROB_MIN = 0.15;
 const QUEEN_FORM_PROB_DECAY = 0.01;
 const DISCOLOR_THRESHOLD = 25;
 const ERASE_THRESHOLD = 12;
+const SABOTEUR_OBSTRUCT_FUZZ = 4;
 
-/*
-Functions shared by all ant types
-*/
-
-//Xorshift pseudo-rng used to help ants make decisions with probability more granular than 1/4
-//There are many situations where the function is _NOT_ applicable, such as in the middle of empty space, 
-//so use caution when using the functions defined here
 var state = null;
 
 function rand_init()
@@ -110,13 +103,14 @@ function rand_init()
 	state = INIT_SEED;
 	for (var cell = 0; cell < 9; cell++)
 	{
-		state ^= view[cell].color;
-		state ^= view[cell].food << 3;
-		if (view[cell].ant !== null)
+		var v = view[cell];
+		state ^= v.color;
+		state ^= v.food << 3;
+		if (v.ant !== null)
 		{
-			state ^= view[cell].ant.friend << 4;
-			state ^= view[cell].ant.type << 5;
-			state ^= view[cell].ant.food << 8;
+			state ^= v.ant.friend << 4;
+			state ^= v.ant.type << 5;
+			state ^= v.ant.food << 8;
 		}
 		ant_rand(); //Mix it in
 	}
@@ -166,6 +160,17 @@ function random_permutation(array)
 	return return_array;
 }
 
+function index_sort(arr)
+{
+	var index_array = [];
+	for (var i = 0; i < arr.length; i++)
+	{
+		index_array.push(i);
+	}
+	index_array.sort((a,b) => (arr[a] === arr[b])?(a-b):(arr[a] - arr[b]));
+	return index_array;
+}
+
 function this_ant()
 {
 	return view[4].ant;
@@ -187,41 +192,41 @@ function is_harvestable(cell)
 }
 
 //Movement submission sanitizer
-function sanitize(prospective, trial_matrix)
+function sanitize(prop, trial_matrix)
 {
 	//Bounds-checking
-	if (prospective.cell < 0 || prospective.cell > 8) prospective.cell = 4;
-	if (prospective.color < 1 || prospective.color > 8) delete prospective.color;
-	if (prospective.type < 1 || prospective.type > 4) delete prospective.type;
+	if (prop.cell < 0 || prop.cell > 8) prop.cell = 4;
+	if (prop.color < 1 || prop.color > 8) delete prop.color;
+	if (prop.type < 1 || prop.type > 4) delete prop.type;
 
 	//Prevent workers from trying to birth worker ants
-	if (prospective.hasOwnProperty("type") && this_ant().type !== QUEEN) delete prospective.type;
+	if (prop.hasOwnProperty("type") && this_ant().type !== QUEEN) delete prop.type;
 
 	//Prevent birthing of workers in occupied areas
-	if (prospective.hasOwnProperty("type"))
+	if (prop.hasOwnProperty("type"))
 	{
-		//Check the prospective cell first
-		if (view[prospective.cell].food === 0 && view[prospective.cell].ant === null) return prospective;
-		for (try_cell of random_permutation(trial_matrix[prospective.cell]))
+		//Check the prop cell first
+		if (view[prop.cell].food === 0 && view[prop.cell].ant === null) return prop;
+		for (try_cell of random_permutation(trial_matrix[prop.cell]))
 			if (view[try_cell].food === 0 && view[try_cell].ant === null)
 			{
-				prospective.cell = try_cell;
-				return prospective;
+				prop.cell = try_cell;
+				return prop;
 			}
 		return {cell:4};
 	}
 
 	//If we're just coloring spaces, it's fine
-	if (prospective.hasOwnProperty("color")) return prospective;
+	if (prop.hasOwnProperty("color")) return prop;
 
-	//Check the prospective cell
-	if (view[prospective.cell].ant === null)
-		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prospective.cell].food === 0) return prospective;
-	for (try_cell of random_permutation(trial_matrix[prospective.cell]))
+	//Check the prop cell
+	if (view[prop.cell].ant === null)
+		if (this_ant().type === QUEEN || this_ant().food === 0 || view[prop.cell].food === 0) return prop;
+	for (try_cell of random_permutation(trial_matrix[prop.cell]))
 		if (view[try_cell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[try_cell].food === 0))
 		{
-			prospective.cell = try_cell;
-			return prospective;
+			prop.cell = try_cell;
+			return prop;
 		}
 	return {cell:4};
 }
