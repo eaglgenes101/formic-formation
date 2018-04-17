@@ -26,14 +26,10 @@ const CCW = [
 [0,3,6,7,8,5,2,1],[1,0,3,6,7,8,5,2],[2,1,0,3,6,7,8,5],
 [3,6,7,8,5,2,1,0],[4,4,4,4,4,4,4,4],[5,2,1,0,3,6,7,8],
 [6,7,8,5,2,1,0,3],[7,8,5,2,1,0,3,6],[8,5,2,1,0,3,6,7]];
-const NEIGHBORS = [
-[0,1,3,4],	[1,0,2,3,5,4],		[2,5,1,4],
-[3,6,0,7,1,4],	[1,3,5,7,8,6,2,0,4],	[5,2,8,1,7,4],
-[6,3,7,4],	[7,8,6,5,3,4],		[8,7,5,4]];
-const NEARS = [
-[0,1,3],	[1,0,2,4],	[2,5,1],
-[3,6,0,7],	[1,3,5,7,4],	[5,2,8,4],
-[6,3,7],	[7,8,6,4],	[8,7,5]];
+const NEAR_WEIGHTS = [
+[3,2,0,2,1,0,0,0,0], [2,3,2,1,2,1,0,0,0], [0,2,3,0,1,2,0,0,0],
+[2,1,0,3,2,0,2,1,0], [1,2,1,2,3,2,1,2,1], [0,1,2,0,2,3,0,1,2],
+[0,0,0,2,1,0,3,2,0], [0,0,0,1,2,1,2,3,2], [0,0,0,0,1,2,0,2,3]];
 
 //Signal colors
 const D_MARCH = 1;
@@ -85,15 +81,17 @@ const FINAL_SEED = 2338395782;
 
 //Tuneables
 const SABOTEUR_RECOLOR_PROB = 0.8;
+const SABOTEUR_OFFSTRIDE_PROB = 0.3;
 const QUEEN_SPAWN_PROB_MAX = 0.7;
 const QUEEN_SPAWN_PROB_MIN = 0.4;
 const QUEEN_SPAWN_PROB_DECAY = 0.05;
 const QUEEN_FORM_PROB_MAX = 0.4;
 const QUEEN_FORM_PROB_MIN = 0.2;
 const QUEEN_FORM_PROB_DECAY = 0.01;
-const DISCOLOR_THRESHOLD = 25;
-const ERASE_THRESHOLD = 12;
+const DISCOLOR_THRESHOLD = 40;
+const ERASE_THRESHOLD = 25;
 const SABOTEUR_OBSTRUCT_FUZZ = 4;
+const OBSTRUCT_QUEEN_WEIGHT = 3;
 
 var state = null;
 
@@ -278,9 +276,13 @@ function sigc(output, c)
 			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)
 			{
 				if (this_ant().type === QUEEN || view[try_cell].food !== 0) 
-					for (alt_cell of NEIGHBORS[off_cell])
-						if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
-							continue;
+					for (alt_cell of SCAN_MOVES)
+					{
+						var neighbor_weight = NEAR_WEIGHTS[try_cell][alt_cell];
+						if (neighbor_weight > 0 && neighbor_weight < 3)
+							if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
+								continue;
+					}
 				return {cell:CCW[c][try_cell], color:D_MARCH};
 			}
 		}
@@ -296,9 +298,13 @@ function sigc2(output, c)
 			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)
 			{
 				if (this_ant().type === QUEEN || view[try_cell].food !== 0) 
-					for (alt_cell of NEIGHBORS[off_cell])
-						if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
-							continue;
+					for (alt_cell of SCAN_MOVES)
+					{
+						var neighbor_weight = NEAR_WEIGHTS[try_cell][alt_cell];
+						if (neighbor_weight > 0 && neighbor_weight < 3)
+							if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
+								continue;
+					}
 				return {cell:CCW[c][try_cell], color:D_MARCH};
 			}
 		}

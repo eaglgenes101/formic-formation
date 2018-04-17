@@ -67,18 +67,21 @@ function sdec_discolor()
 
 function sdec_stride()
 {
-	var stride_scores = [0,0,0,0,0,0,0,0,0];
-	for (try_cell of SCAN_MOVES)
+	if (!rand_choice(SABOTEUR_OFFSTRIDE_PROB))
 	{
-		if (view[try_cell].color !== view[CCW[try_cell][1]].color) stride_scores[try_cell] += 2;
-		if (view[try_cell].color !== view[CCW[try_cell][7]].color) stride_scores[try_cell] += 2;
-		if (view[try_cell].color !== view[CCW[try_cell][2]].color) stride_scores[try_cell] += 1;
-		if (view[try_cell].color !== view[CCW[try_cell][6]].color) stride_scores[try_cell] += 1;
-		if (view[try_cell].color !== view[4].color) stride_scores[try_cell] += 1;
+		var stride_scores = [0,0,0,0,0,0,0,0,0];
+		for (try_cell of SCAN_MOVES)
+		{
+			if (view[try_cell].color !== view[CCW[try_cell][1]].color) stride_scores[try_cell] += 2;
+			if (view[try_cell].color !== view[CCW[try_cell][7]].color) stride_scores[try_cell] += 2;
+			if (view[try_cell].color !== view[CCW[try_cell][2]].color) stride_scores[try_cell] += 1;
+			if (view[try_cell].color !== view[CCW[try_cell][6]].color) stride_scores[try_cell] += 1;
+			if (view[try_cell].color !== view[4].color) stride_scores[try_cell] += 1;
+		}
+		var max_stride_score = Math.max(...stride_scores);
+		for (var i = 0; i < 9; i++)
+			if (stride_scores[i] === max_stride_score) return {cell:i};
 	}
-	var max_stride_score = Math.max(...stride_scores);
-	for (var i = 0; i < 9; i++)
-		if (stride_scores[i] === max_stride_score) return {cell:i};
 	return {cell:0};
 }
 
@@ -89,9 +92,9 @@ function sdec_obstruct_textured()
 	{
 		if (is_enemy(try_cell))
 		{
-			proximities[try_cell]++;
-			for (alt_cell of NEARS[try_cell]) proximities[alt_cell]++;
-			for (alt_cell of NEIGHBORS[try_cell]) proximities[alt_cell]++;
+			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
+			for (var i = 0; i < 9; i++)
+				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
@@ -116,9 +119,8 @@ function sdec_obstruct_textured()
 	{
 		if (is_ally(try_cell))
 		{
-			proximities[try_cell]++;
-			for (alt_cell of NEARS[try_cell]) proximities[alt_cell]++;
-			for (alt_cell of NEIGHBORS[try_cell]) proximities[alt_cell]++;
+			for (var i = 0; i < 9; i++)
+				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i];
 		}
 	}
 	//Update prox_order
@@ -136,9 +138,9 @@ function sdec_obstruct_flat()
 	{
 		if (is_enemy(try_cell))
 		{
-			proximities[try_cell]++;
-			for (alt_cell of NEARS[try_cell]) proximities[alt_cell]++;
-			for (alt_cell of NEIGHBORS[try_cell]) proximities[alt_cell]++;
+			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
+			for (var i = 0; i < 9; i++)
+				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
@@ -160,9 +162,8 @@ function sdec_obstruct_flat()
 	{
 		if (is_ally(try_cell))
 		{
-			proximities[try_cell]++;
-			for (alt_cell of NEARS[try_cell]) proximities[alt_cell]++;
-			for (alt_cell of NEIGHBORS[try_cell]) proximities[alt_cell]++;
+			for (var i = 0; i < 9; i++)
+				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i];
 		}
 	}
 	//Update prox_order
@@ -186,12 +187,15 @@ function saboteur()
 		var num_enemies = 0;
 		for (try_cell of SCAN_MOVES)
 			if (is_enemy(try_cell)) num_enemies++;
-		var diversity = 45;
+		var diversity = 0;
 		var counts = [0,0,0,0,0,0,0,0,0];
 		for (var i = 0; i < 9; i++) 
 		{
-			diversity -= 1 + counts[view[i].color];
-			counts[view[i].color]++;
+			if (view[i].color !== D_MARCH)
+			{
+				diversity += 5 - counts[view[i].color];
+				counts[view[i].color]++;
+			}
 		}
 		if (num_enemies > 0)
 		{

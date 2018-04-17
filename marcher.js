@@ -145,32 +145,32 @@ function mdec_ec_right(c)
 	if (d_sig === D_MARCH)
 	{
 		if (view[4].color === D_MARCH) return sigc(D_MARCH, CCW[c][3]); 
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]); 
 	}
 	if (d_sig === D_FOOD)
 	{
 		if ([U_SENTINEL, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]); 
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
 	}
 	if (d_sig === D_GATHERER)
 	{
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]);
 		if ([U_SENTINEL, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]); 
 	}
 	if (d_sig === D_STALLED)
 	{
 		if (view[4].color === D_STALLED) return sigc(D_STALLED, CCW[c][3]); 
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
 	}
 	if (d_sig === U_READY)
 	{
 		if (view[4].color === D_STALLED) return sigc(D_MARCH, CCW[c][3]); 
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, CCW[c][3]);
 	}
 	if (d_sig === U_REALIGN)
 	{
 		if (view[4].color === U_SENTINEL) return {cell:CCW[c][6]};
-		if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, CCW[c][3]);
 	}
 
 	return sigc(d_sig, CCW[c][3]); 

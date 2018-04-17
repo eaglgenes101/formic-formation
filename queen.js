@@ -38,9 +38,9 @@ function opening_queen()
 	if (view[4].color !== 8) return {cell:4, color: 8};
 
 	for (try_cell of rand_perm(CORNERS))
-		if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) return {cell:try_cell};
+		if (view[try_cell].color !== 8 && view[CCW[try_cell][4]].color === 8) return {cell:try_cell};
 	for (try_cell of rand_perm(CORNERS))
-		if (view[try_cell].color === 1 && view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
+		if (view[try_cell].color !== 8 && view[CCW[try_cell][2]].color === 8 && view[CCW[try_cell][6]].color === 8) 
 			return {cell:try_cell};
 
 	return {cell:0};
@@ -68,7 +68,7 @@ function early_queen()
 	for (try_cell of rand_perm(SCAN_MOVES))
 		if (view[try_cell].food > 0) 
 		{
-			if (view[try_cell].color !== D_FOOD && NEARS[try_cell].includes(gatherer_cell)) 
+			if (view[try_cell].color !== D_FOOD && NEAR_WEIGHTS[try_cell][gatherer_cell] === 2) 
 				return {cell:try_cell, color:D_FOOD};
 		}
 

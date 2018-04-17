@@ -80,13 +80,13 @@ function early_gatherer()
 		for (try_cell of rand_perm(CORNERS))
 			if (view[try_cell].food > 0) 
 			{
-				if (view[try_cell].color === D_FOOD && NEARS[try_cell].includes(queen_cell)) return {cell:try_cell};
+				if (view[try_cell].color === D_FOOD && NEAR_WEIGHTS[try_cell][queen_cell] === 2) return {cell:try_cell};
 				else if (view[try_cell].color !== D_FOOD) return {cell:try_cell, color:D_FOOD};
 			}
 		for (try_cell of rand_perm(EDGES))
 			if (view[try_cell].food > 0) 
 			{
-				if (view[try_cell].color !== D_FOOD && NEARS[try_cell].includes(queen_cell)) 
+				if (view[try_cell].color !== D_FOOD && NEAR_WEIGHTS[try_cell][queen_cell] === 2) 
 					return {cell:try_cell, color:D_FOOD};
 			}
 	}
