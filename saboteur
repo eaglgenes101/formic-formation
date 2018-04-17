@@ -150,8 +150,8 @@ function sdec_obstruct_flat()
 		for (var i = 8; i > 0; i--)
 		{
 			var i_cell = prox_order[i];
-			if (view[i_cell].color !== DOWN_MARCH)
-				return {cell:i_cell, color:DOWN_MARCH};
+			if (view[i_cell].color !== D_MARCH)
+				return {cell:i_cell, color:D_MARCH};
 		}
 	}
 	//Factor allies in
