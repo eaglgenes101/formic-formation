@@ -98,4 +98,4 @@ Release notes
 
 1.1.1: Hotfix to solve disqualification problem
 
-
+1.2: Removed further deadlocks, saboteur now overhauled

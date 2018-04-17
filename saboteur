@@ -94,7 +94,7 @@ function sdec_obstruct_textured()
 		{
 			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i]*wt;
+				proximities[try_cell] += NEARS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
@@ -120,7 +120,7 @@ function sdec_obstruct_textured()
 		if (is_ally(try_cell))
 		{
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i];
+				proximities[try_cell] += NEARS[try_cell][i];
 		}
 	}
 	//Update prox_order
@@ -140,7 +140,7 @@ function sdec_obstruct_flat()
 		{
 			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i]*wt;
+				proximities[try_cell] += NEARS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
@@ -163,7 +163,7 @@ function sdec_obstruct_flat()
 		if (is_ally(try_cell))
 		{
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEAR_WEIGHTS[try_cell][i];
+				proximities[try_cell] += NEARS[try_cell][i];
 		}
 	}
 	//Update prox_order

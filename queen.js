@@ -68,7 +68,7 @@ function early_queen()
 	for (try_cell of rand_perm(SCAN_MOVES))
 		if (view[try_cell].food > 0) 
 		{
-			if (view[try_cell].color !== D_FOOD && NEAR_WEIGHTS[try_cell][gatherer_cell] === 2) 
+			if (view[try_cell].color !== D_FOOD && NEARS[try_cell][gatherer_cell] === 2) 
 				return {cell:try_cell, color:D_FOOD};
 		}
 
