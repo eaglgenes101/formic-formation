@@ -18,6 +18,12 @@ const LEFT_ORDER = [
 [0,1],    [],   [8,7],
 [7,3,0,1],[6,3],[5,7,6,3]];
 
+//Cleanup order lookup tables
+const S_END = [6,5,7,4,0,2,1,3];
+const S_FRONT = [7,5,6,0,4,1,3,2];
+const S_SIDE = [7,3,5,1,6,2,0,4];
+const S_GATHERER = [7,6,5,4,0,3,2,1];
+
 //Spacial information lookup tables
 const SCAN_MOVES = [0,1,2,3,5,6,7,8];
 const CORNERS = [0,2,6,8];
@@ -80,18 +86,22 @@ const INIT_SEED = 3734978372;
 const FINAL_SEED = 2338395782;
 
 //Tuneables
-const SABOTEUR_RECOLOR_PROB = 0.8;
-const SABOTEUR_OFFSTRIDE_PROB = 0.3;
-const QUEEN_SPAWN_PROB_MAX = 0.7;
-const QUEEN_SPAWN_PROB_MIN = 0.4;
-const QUEEN_SPAWN_PROB_DECAY = 0.05;
-const QUEEN_FORM_PROB_MAX = 0.4;
-const QUEEN_FORM_PROB_MIN = 0.2;
-const QUEEN_FORM_PROB_DECAY = 0.01;
-const DISCOLOR_THRESHOLD = 40;
-const ERASE_THRESHOLD = 25;
-const SABOTEUR_OBSTRUCT_FUZZ = 4;
-const OBSTRUCT_QUEEN_WEIGHT = 3;
+const SRECOLOR_PROB = 0.8;
+const SOFFSTRIDE_PROB = 0.3;
+const QFSPAWNP_MAX = 0.1;
+const QFSPAWNP_MIN = 0.0;
+const QFSPAWNP_DECAY = 0.01;
+const QBSPAWNP_MAX = 1.0;
+const QBSPAWNP_MIN = 0.7;
+const QBSPAWNP_DECAY = 0.03;
+const QFORMP_MAX = 0.4;
+const QFORMP_MIN = 0.2;
+const QFORMP_DECAY = 0.01;
+const DISCOLORT = 35;
+const ERASET = 15;
+const SOBSTRUCT_FUZZ = 3;
+const SSTRIDE_FUZZ = 3;
+const OBSTRUCT_QWT = 3;
 
 var state = null;
 
@@ -267,32 +277,10 @@ function lchk2(c)
 	return null;
 }
 
-function sigc(output, c)
+function sigc(output, order, c)
 {
 	if (view[4].color === output)
-		for (try_cell of [7,6,5,4,3,2,1,0])
-		{
-			var off_cell = CCW[c][try_cell];
-			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)
-			{
-				if (this_ant().type === QUEEN || view[try_cell].food !== 0) 
-					for (alt_cell of SCAN_MOVES)
-					{
-						var neighbor_weight = NEARS[try_cell][alt_cell];
-						if (neighbor_weight > 0 && neighbor_weight < 3)
-							if (is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
-								continue;
-					}
-				return {cell:CCW[c][try_cell], color:D_MARCH};
-			}
-		}
-	return {cell:4, color:output};
-}
-
-function sigc2(output, c)
-{
-	if (view[4].color === output)
-		for (try_cell of [7,3,6,2,5,1,4,0])
+		for (try_cell of order)
 		{
 			var off_cell = CCW[c][try_cell];
 			if (!is_ally(off_cell) && view[off_cell].color !== D_MARCH)

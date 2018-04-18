@@ -5,8 +5,8 @@ function gwatch(candidate)
 {
 	if (candidate.cell === 4) return candidate;
 	if (candidate.hasOwnProperty("color")) return candidate;
-	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return sigc2(U_PANIC, 0);
-	if (view[candidate.cell].ant !== null) return sigc2(U_PANIC, 0); 
+	if (view[candidate.cell].food !== 0 && this_ant().food !== 0) return sigc(U_PANIC, S_SIDE, 0);
+	if (view[candidate.cell].ant !== null) return sigc(U_PANIC, S_SIDE, 0); 
 	return candidate;
 }
 
@@ -19,9 +19,9 @@ function gdec_ec_left(c)
 {
 	//Look for signal to walk the line for food
 	if (view[c].color === D_FOOD && view[CCW[c][1]].color === D_FOOD) return {cell:CCW[c][7]};
-	if (view[c].color === D_STALLED && view[CCW[c][1]].color === D_STALLED) return sigc(U_READY, CCW[c][1]); 
-	if (view[c].color === D_MARCH && view[CCW[c][1]].color === D_MARCH) return sigc(D_MARCH, CCW[c][1]);
-	return sigc(view[4].color, CCW[c][1]);
+	if (view[c].color === D_STALLED && view[CCW[c][1]].color === D_STALLED) return sigc(U_READY, S_GATHERER, c); 
+	if (view[c].color === D_MARCH && view[CCW[c][1]].color === D_MARCH) return sigc(D_MARCH, S_GATHERER, c);
+	return sigc(view[4].color, S_GATHERER, c);
 	
 }
 
@@ -32,8 +32,8 @@ function gdec_ec_right(c)
 	if (is_ally(c) && view[c].ant.type === QUEEN)
 		return {cell:CCW[c][1]};
 	if (view[c].color === D_STALLED && view[CCW[c][7]].color === D_STALLED)
-		return sigc(U_READY, CCW[c][1]);
-	return sigc(view[4].color, CCW[c][1]);
+		return sigc(U_READY, S_GATHERER, c);
+	return sigc(view[4].color, S_GATHERER, c);
 	
 }
 
@@ -107,7 +107,7 @@ function gatherer_retrieve()
 			if (view[CCW[c][7]].color === D_FOOD) return gwatch({cell:CCW[c][6]});
 			return gwatch({cell:CCW[c][2]});
 		}
-		case FOUR_BENT: return gwatch(sigc(view[4].color, c));
+		case FOUR_BENT: return gwatch(sigc(view[4].color, S_FRONT, c));
 		default: return sanitize(early_gatherer(), FREE_ORDER);
 	}
 }

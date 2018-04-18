@@ -67,7 +67,7 @@ function sdec_discolor()
 
 function sdec_stride()
 {
-	if (!rand_choice(SABOTEUR_OFFSTRIDE_PROB))
+	if (!rand_choice(SOFFSTRIDE_PROB))
 	{
 		var stride_scores = [0,0,0,0,0,0,0,0,0];
 		for (try_cell of SCAN_MOVES)
@@ -77,6 +77,7 @@ function sdec_stride()
 			if (view[try_cell].color !== view[CCW[try_cell][2]].color) stride_scores[try_cell] += 1;
 			if (view[try_cell].color !== view[CCW[try_cell][6]].color) stride_scores[try_cell] += 1;
 			if (view[try_cell].color !== view[4].color) stride_scores[try_cell] += 1;
+			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ;
 		}
 		var max_stride_score = Math.max(...stride_scores);
 		for (var i = 0; i < 9; i++)
@@ -92,17 +93,18 @@ function sdec_obstruct_textured()
 	{
 		if (is_enemy(try_cell))
 		{
-			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
+			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEARS[try_cell][i]*wt;
+				proximities[i] += NEARS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
-		proximities[i] += ant_rand()%SABOTEUR_OBSTRUCT_FUZZ;
-	var prox_order = index_sort(proximities);
+		proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
 		
-	if (rand_choice(SABOTEUR_RECOLOR_PROB))
+	var prox_order;
+	if (rand_choice(SRECOLOR_PROB))
 	{
+		prox_order = index_sort(proximities);
 		for (var i = 8; i > 0; i--)
 		{
 			var i_cell = prox_order[i];
@@ -120,7 +122,7 @@ function sdec_obstruct_textured()
 		if (is_ally(try_cell))
 		{
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEARS[try_cell][i];
+				proximities[i] += NEARS[try_cell][i];
 		}
 	}
 	//Update prox_order
@@ -138,17 +140,18 @@ function sdec_obstruct_flat()
 	{
 		if (is_enemy(try_cell))
 		{
-			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QUEEN_WEIGHT : 1;
+			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEARS[try_cell][i]*wt;
+				proximities[i] += NEARS[try_cell][i]*wt;
 		}
 	}
 	for (var i = 0; i < 9; i++)
-		proximities[i] += ant_rand()%SABOTEUR_OBSTRUCT_FUZZ;
+		proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
 	var prox_order = index_sort(proximities);
 		
-	if (rand_choice(SABOTEUR_RECOLOR_PROB))
+	if (rand_choice(SRECOLOR_PROB))
 	{
+		prox_order = index_sort(proximities);
 		for (var i = 8; i > 0; i--)
 		{
 			var i_cell = prox_order[i];
@@ -163,7 +166,7 @@ function sdec_obstruct_flat()
 		if (is_ally(try_cell))
 		{
 			for (var i = 0; i < 9; i++)
-				proximities[try_cell] += NEARS[try_cell][i];
+				proximities[i] += NEARS[try_cell][i];
 		}
 	}
 	//Update prox_order
@@ -191,21 +194,18 @@ function saboteur()
 		var counts = [0,0,0,0,0,0,0,0,0];
 		for (var i = 0; i < 9; i++) 
 		{
-			if (view[i].color !== D_MARCH)
-			{
-				diversity += 5 - counts[view[i].color];
-				counts[view[i].color]++;
-			}
+			diversity += 5 - counts[view[i].color];
+			counts[view[i].color]++;
 		}
 		if (num_enemies > 0)
 		{
-			if (diversity >= ERASE_THRESHOLD) return sdec_obstruct_textured();
+			if (diversity >= ERASET) return sdec_obstruct_textured();
 			else return sdec_obstruct_flat();
 		}
 		else
 		{
-			if (diversity >= DISCOLOR_THRESHOLD) return sdec_discolor();
-			else if (diversity >= ERASE_THRESHOLD) return sdec_stride();
+			if (diversity >= DISCOLORT) return sdec_discolor();
+			else if (diversity >= ERASET) return sdec_stride();
 			else return sdec_erase();
 		}
 	}
