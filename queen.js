@@ -116,6 +116,7 @@ function early_queen()
 function qwatch(candidate)
 {
 	if (candidate.hasOwnProperty("type") && this_ant().food === 0) return sigc(U_PANIC, S_SIDE, 0); 
+	if (candidate.hasOwnProperty("type") && view[candidate.cell].food !== 0) return sigc(U_PANIC, S_SIDE, 0);
 	if (candidate.cell === 4) return candidate;
 	if (candidate.hasOwnProperty("color")) return candidate;
 	if (is_enemy(candidate.cell)) return sigc(U_PANIC, S_SIDE, 0); 

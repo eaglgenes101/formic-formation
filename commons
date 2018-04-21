@@ -86,21 +86,21 @@ const INIT_SEED = 3734978372;
 const FINAL_SEED = 2338395782;
 
 //Tuneables
-const SRECOLOR_PROB = 0.8;
+const SRECOLOR_PROB = 0.7;
 const SOFFSTRIDE_PROB = 0.3;
-const QFSPAWNP_MAX = 0.1;
-const QFSPAWNP_MIN = 0.0;
-const QFSPAWNP_DECAY = 0.01;
-const QBSPAWNP_MAX = 1.0;
+const QFSPAWNP_MAX = 0.05;
+const QFSPAWNP_MIN = 0.00;
+const QFSPAWNP_DECAY = 0.005;
+const QBSPAWNP_MAX = 0.8;
 const QBSPAWNP_MIN = 0.7;
-const QBSPAWNP_DECAY = 0.03;
+const QBSPAWNP_DECAY = 0.01;
 const QFORMP_MAX = 0.4;
 const QFORMP_MIN = 0.2;
 const QFORMP_DECAY = 0.01;
 const DISCOLORT = 35;
 const ERASET = 15;
-const SOBSTRUCT_FUZZ = 3;
-const SSTRIDE_FUZZ = 3;
+const SOBSTRUCT_FUZZ = 6;
+const SSTRIDE_FUZZ = 6;
 const OBSTRUCT_QWT = 3;
 
 var state = null;

@@ -34,6 +34,13 @@ function mdec_ee_bent(c)
 	//Keep still to assist spawning
 	if (is_ally(c) && view[c].ant.type === GATHERER)
 		return sigc(view[4].color, S_SIDE, CCW[c][4]);
+
+	var provisional = lchk(c);
+	if (provisional !== null) 
+	{
+		if (provisional === U_REALIGN) return sigc(U_SENTINEL, S_END, c); 
+		return sigc(provisional, S_END, c); 
+	}
 	
 	//In recovery, do the moving step
 	if (u_sig === D_STALLED)
