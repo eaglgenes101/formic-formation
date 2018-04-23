@@ -15,9 +15,9 @@ function is_gatherer_marcher(cell)
 
 function is_like(cell)
 {
-	if (view[cell].color === U_PANIC) return false;
-	if (is_ally(CCW[cell][1]) && view[CCW[cell][1]].color === U_PANIC) return false;
-	if (is_ally(CCW[cell][7]) && view[CCW[cell][7]].color === U_PANIC) return false;
+	if (c_at(cell) === U_PANIC) return false;
+	if (is_ally(CCW[cell][1]) && c_at(CCW[cell][1]) === U_PANIC) return false;
+	if (is_ally(CCW[cell][7]) && c_at(CCW[cell][7]) === U_PANIC) return false;
 	if (CORNERS.includes(cell) && is_ally(cell))
 	{
 		switch(view[cell].ant.type)
@@ -34,7 +34,7 @@ function is_like(cell)
 
 function is_other(cell)
 {
-	if (view[cell].color === U_PANIC) return false;
+	if (c_at(cell) === U_PANIC) return false;
 	if (EDGES.includes(cell) && is_ally(cell))
 	{
 		switch(view[cell].ant.type)
@@ -56,8 +56,8 @@ function view_corner()
 		for (var j = 0; j < 8; j++)
 		{
 			scores[i] *= 2;
-			var try_cell = CCW[CORNERS[i]][j];
-			if (is_ally(try_cell) && (is_like(try_cell) || is_other(try_cell))) scores[i]++;
+			var tcell = CCW[CORNERS[i]][j];
+			if (is_ally(tcell) && (is_like(tcell) || is_other(tcell))) scores[i]++;
 		}
 	if (scores[0] > scores[1] && scores[0] > scores[2] && scores[0] > scores[3]) return CORNERS[0];
 	else if (scores[1] > scores[2] && scores[1] > scores[3]) return CORNERS[1];
@@ -134,11 +134,11 @@ ba**/const FOUR_BENT = 42;
 function neighbor_type(top_left)
 {
 	var corners = [];
-	for (try_cell of CORNERS)
-		if (is_ally(try_cell) && is_like(try_cell)) corners.push(try_cell);
+	for (tcell of CORNERS)
+		if (is_ally(tcell) && is_like(tcell)) corners.push(tcell);
 	var edges = [];
-	for (try_cell of EDGES)
-		if (is_ally(try_cell) && is_other(try_cell)) edges.push(try_cell);
+	for (tcell of EDGES)
+		if (is_ally(tcell) && is_other(tcell)) edges.push(tcell);
 	if (corners.length === 1 && edges.length === 0) return ONE_CORNER;
 	if (corners.length === 0 && edges.length === 1) return ONE_EDGE;
 	if (corners.length === 0 && edges.length === 2) return (edges[1] === CCW[edges[0]][4]) ? EE_STRAIGHT : EE_BENT;

@@ -1,43 +1,98 @@
-/*/
- * 
- * Saboteur routine for disrupting other nests
- * 
-/*/
+//Saboteur routines
+
+function sok(cand)
+{
+	if (cand === 4) return true;
+	if (view[cand].ant !== null) return false;
+	if (this_ant().type === GATHERER)
+	{
+		//If a gatherer, don't realign with friendly queens
+		for (tcell of SCAN_MOVES)
+			if (NEARS[cand][tcell] > 1)
+				if (is_ally(tcell) && view[tcell].ant.type === QUEEN) return false;
+		return true;
+	}
+	else
+	{
+		//If a marcher, unless holding food, don't align more workers than we break alignment with
+		if (this_ant().food !== 0) return true;
+		var okscore = 0;
+		for (tcell of SCAN_MOVES)
+			if (is_ally(tcell) && view[tcell].ant.food === 0 && [MARCHER_A, MARCHER_B].includes(view[tcell].ant.type))
+			{
+				var wt = (view[tcell].ant.type === this_ant().type)?1:-1;
+				if (NEARS[4][tcell] === 5) okscore += wt;
+				if (NEARS[4][tcell] === 4) okscore -= wt;
+				if (NEARS[cand][tcell] === 5) okscore -= wt;
+				if (NEARS[cand][tcell] === 4) okscore += wt;
+			}
+		return okscore >= 0;
+	}
+	
+
+}
+
+function ssep()
+{
+	var cands = [0,0,0,0,0,0,0,0,0];
+	for (tcell of SCAN_MOVES)
+	{
+		if (is_ally(tcell))
+		{
+			var wt = (is_like(tcell) || is_other(tcell))?3:1;
+			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i]*wt;
+		}
+	}
+	if (Math.min(...cands) === 0) return null;
+	prox_order = index_sort(cands);
+	for (var i = 0; i < 9; i++)
+	{
+		var i_cell = prox_order[i];
+		if (sok(i_cell)) return {cell:i_cell};
+	}
+	return null;
+}
+
+function sstep(col)
+{
+	var cands = [0,0,0,0,9,0,0,0,0];
+	for (tcell of SCAN_MOVES)
+		if (c_at(tcell) === col)
+			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i];
+	prox_order = index_sort(cands);
+	for (var i = 0; i < 9; i++)
+	{
+		var i_cell = prox_order[i];
+		if (sok(i_cell)) return {cell:i_cell};
+	}
+	return {cell:4};
+}
 
 function sdec_alone()
 {
-	//Actively avoid other allied workers
-	for (try_cell of rand_perm(SCAN_MOVES))
-		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
+	var try_sep = ssep();
+	if (try_sep !== null) return try_sep;
 
 	var c = U_PANIC;
-	for (try_cell of rand_sub(SCAN_MOVES, 7))
-		if (view[try_cell].color > 1 && view[try_cell].color !== c) 
+	for (tcell of rand_sub(SCAN_MOVES, 7))
+		if (c_at(tcell) > 1 && c_at(tcell) !== c) 
 		{
-			c = view[try_cell].color;
+			c = c_at(tcell);
 			break;
 		}
-	if (view[4].color === 1) return {cell: 4, color: c};
+	if (c_at(4) === 1) return {cell: 4, color: c};
 	//Try to move in straight lines
-	for (try_cell of rand_perm(CORNERS))
-		if (view[try_cell].color === 1 && view[CCW[try_cell][4]].color !== 1) 
-			return {cell:try_cell};
-	for (try_cell of rand_perm(CORNERS))
-		if (view[try_cell].color === 1 && view[CCW[try_cell][2]].color !== 1 && view[CCW[try_cell][6]].color !== 1) 
-			return {cell:try_cell};
-
-	return {cell:1};
+	return sstep(c);
 }
 
 function sdec_erase()
 {
-	//Actively avoid other allied workers
-	for (try_cell of rand_perm(SCAN_MOVES))
-		if (is_ally(try_cell) && view[CCW[try_cell][4]].ant === null) return {cell:CCW[try_cell][4]};
+	var try_sep = ssep();
+	if (try_sep !== null) return try_sep;
 
-	for (try_cell of rand_perm(SCAN_MOVES))
-		if (view[try_cell].color !== 1) return {cell:try_cell, color:1};
-	if (view[4].color !== 1) return {cell:4, color:1};
+	for (tcell of rand_perm(SCAN_MOVES))
+		if (c_at(tcell) !== 1) return {cell:tcell, color:1};
+	if (c_at(4) !== 1) return {cell:4, color:1};
 
 	return {cell:0};
 }
@@ -45,22 +100,18 @@ function sdec_erase()
 function sdec_discolor()
 {
 	//Recolor squares, with a pattern that is surprisingly good at breaking deadlocks
-	if (view[1].color !== view[6].color && view[6].color !== 1) return {cell:1, color:view[6].color};
-	if (view[2].color !== view[3].color) return {cell:3, color:view[2].color};
-	
-	for (try_cell of rand_perm(EDGES))
-		if (view[try_cell].color !== 1) 
-			if (view[CCW[try_cell][1]] !== 1 && view[CCW[try_cell][7]] !== 1) 
-				return {cell:try_cell};
-	for (try_cell of rand_perm(CORNERS))
-		if (view[try_cell].color !== 1) 
-			if (view[CCW[try_cell][1]] !== 1 || view[CCW[try_cell][7]] !== 1) 
-				return {cell:try_cell};
+	if (c_at(1) !== c_at(6) && c_at(6) !== 1) return {cell:1, color:c_at(6)};
+	if (c_at(2) !== c_at(3)) return {cell:3, color:c_at(2)};
 
-	//Stick around allies
-	for (try_cell of rand_perm(SCAN_MOVES))
-		if (is_ally(try_cell)) 
-			return {cell:try_cell};
+	var proximities = [0,0,0,0,0,0,0,0,0];
+	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
+	for (tcell of SCAN_MOVES)
+		if (is_ally(tcell))
+			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
+	var prox_order = index_sort(proximities);
+
+	for (var i = 8; i >= 0; i--)
+		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
 
 	return {cell:0};
 }
@@ -70,13 +121,10 @@ function sdec_stride()
 	if (!rand_choice(SOFFSTRIDE_PROB))
 	{
 		var stride_scores = [0,0,0,0,0,0,0,0,0];
-		for (try_cell of SCAN_MOVES)
+		for (tcell of SCAN_MOVES)
 		{
-			if (view[try_cell].color !== view[CCW[try_cell][1]].color) stride_scores[try_cell] += 2;
-			if (view[try_cell].color !== view[CCW[try_cell][7]].color) stride_scores[try_cell] += 2;
-			if (view[try_cell].color !== view[CCW[try_cell][2]].color) stride_scores[try_cell] += 1;
-			if (view[try_cell].color !== view[CCW[try_cell][6]].color) stride_scores[try_cell] += 1;
-			if (view[try_cell].color !== view[4].color) stride_scores[try_cell] += 1;
+			for (var i = 0; i < 9; i++) 
+				if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
 			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ;
 		}
 		var max_stride_score = Math.max(...stride_scores);
@@ -89,17 +137,15 @@ function sdec_stride()
 function sdec_obstruct_textured()
 {
 	var proximities = [0,0,0,0,0,0,0,0,0];
-	for (try_cell of SCAN_MOVES)
+	for (tcell of SCAN_MOVES)
 	{
-		if (is_enemy(try_cell))
+		if (is_enemy(tcell))
 		{
-			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
-			for (var i = 0; i < 9; i++)
-				proximities[i] += NEARS[try_cell][i]*wt;
+			var wt = (view[tcell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
+			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i]*wt;
 		}
 	}
-	for (var i = 0; i < 9; i++)
-		proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
+	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
 		
 	var prox_order;
 	if (rand_choice(SRECOLOR_PROB))
@@ -111,42 +157,34 @@ function sdec_obstruct_textured()
 			for (var j = 0; j < i; j++)
 			{
 				var j_cell = prox_order[j];
-				if (view[i_cell].color !== view[j_cell].color)
-					return {cell:i_cell, color:view[j_cell].color};
+				if (c_at(i_cell) !== c_at(j_cell)) return {cell:i_cell, color:c_at(j_cell)};
 			}
 		}
 	}
 	//Factor allies in
-	for (try_cell of SCAN_MOVES)
-	{
-		if (is_ally(try_cell))
-		{
-			for (var i = 0; i < 9; i++)
-				proximities[i] += NEARS[try_cell][i];
-		}
-	}
+	for (tcell of SCAN_MOVES)
+		if (is_ally(tcell))
+			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
 	//Update prox_order
 	prox_order = index_sort(proximities);
 
 	for (var i = 8; i >= 0; i--)
-		if (view[prox_order[i]].ant === null) return {cell:prox_order[prox_order[i]]};
+		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
 	return {cell:4, color:1};
 }
 
 function sdec_obstruct_flat()
 {
 	var proximities = [0,0,0,0,0,0,0,0,0];
-	for (try_cell of SCAN_MOVES)
+	for (tcell of SCAN_MOVES)
 	{
-		if (is_enemy(try_cell))
+		if (is_enemy(tcell))
 		{
-			var wt = (view[try_cell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
-			for (var i = 0; i < 9; i++)
-				proximities[i] += NEARS[try_cell][i]*wt;
+			var wt = (view[tcell].ant.type === QUEEN) ? OBSTRUCT_QWT : 1;
+			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i]*wt;
 		}
 	}
-	for (var i = 0; i < 9; i++)
-		proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
+	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
 	var prox_order = index_sort(proximities);
 		
 	if (rand_choice(SRECOLOR_PROB))
@@ -155,25 +193,19 @@ function sdec_obstruct_flat()
 		for (var i = 8; i > 0; i--)
 		{
 			var i_cell = prox_order[i];
-			if (view[i_cell].color !== D_MARCH)
-				return {cell:i_cell, color:D_MARCH};
+			if (c_at(i_cell) !== D_MARCH) return {cell:i_cell, color:D_MARCH};
 		}
 	}
 	//Factor allies in
 
-	for (try_cell of SCAN_MOVES)
-	{
-		if (is_ally(try_cell))
-		{
-			for (var i = 0; i < 9; i++)
-				proximities[i] += NEARS[try_cell][i];
-		}
-	}
+	for (tcell of SCAN_MOVES)
+		if (is_ally(tcell))
+			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
 	//Update prox_order
 	prox_order = index_sort(proximities);
 
 	for (var i = 8; i >= 0; i--)
-		if (view[prox_order[i]].ant === null) return {cell:prox_order[prox_order[i]]};
+		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
 	return {cell:4, color:1};
 }
 
@@ -181,21 +213,21 @@ function sdec_obstruct_flat()
 function saboteur()
 {
 	var colored_neighbors = 0;
-	for (try_cell of SCAN_MOVES) 
-		if (view[try_cell].color > 1) colored_neighbors++;
+	for (tcell of SCAN_MOVES) 
+		if (c_at(tcell) > 1) colored_neighbors++;
 
 	if (colored_neighbors <= 2) return sdec_alone();
 	else
 	{
 		var num_enemies = 0;
-		for (try_cell of SCAN_MOVES)
-			if (is_enemy(try_cell)) num_enemies++;
+		for (tcell of SCAN_MOVES)
+			if (is_enemy(tcell)) num_enemies++;
 		var diversity = 0;
 		var counts = [0,0,0,0,0,0,0,0,0];
 		for (var i = 0; i < 9; i++) 
 		{
-			diversity += 5 - counts[view[i].color];
-			counts[view[i].color]++;
+			diversity += 5 - counts[c_at(i)];
+			counts[c_at(i)]++;
 		}
 		if (num_enemies > 0)
 		{

@@ -7,7 +7,7 @@ function main_decide()
 		case MARCHER_A: 
 		case MARCHER_B: 
 			return marcher_decision();
-		default: return sanitize(saboteur(), FREE_ORDER);
+		default: return sanitize(saboteur());
 	
 	}
 }

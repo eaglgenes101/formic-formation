@@ -3,37 +3,34 @@
 function mdec_one_corner(c)
 {
 	if (view[c].ant.type === QUEEN)
-		return sigc(view[4].color, S_SIDE, c);
-	else return sanitize(saboteur(), FREE_ORDER);
+		return sigc(c_at(4), S_SIDE, c);
+	else return sanitize(saboteur());
 }
 
 function mdec_one_edge(c)
 {
 	//This occurs when we march forward as the end, but the next c neighbor is obstructed
 	//Find this condition
-	if ([U_REALIGN, D_MARCH].includes(view[CCW[c][1]].color))
+	if ([U_REALIGN, D_MARCH].includes(c_at(CCW[c][1])))
 	{
 		if (view[CCW[c][2]].food === 1) return {cell:c};
 		if (is_ally(CCW[c][2]) && view[CCW[c][2]].ant.type === GATHERER) return {cell:c};
 	}
 	//Break away
-	return sanitize(saboteur(), FREE_ORDER);
+	return sanitize(saboteur());
 }
 
 function mdec_ee_bent(c)
 {
 	//Eject in scenarios where we would otherwise deadlock
-	if (view[CCW[c][1]].ant.type === GATHERER && view[CCW[c][3]].ant.type === QUEEN)	
-		return sanitize(saboteur(), FREE_ORDER);
-	if (view[CCW[c][1]].ant.type === QUEEN && view[CCW[c][3]].ant.type === GATHERER)	
-		return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[c][1]].ant.type === GATHERER && view[CCW[c][3]].ant.type === QUEEN) return sanitize(saboteur());
+	if (view[CCW[c][1]].ant.type === QUEEN && view[CCW[c][3]].ant.type === GATHERER) return sanitize(saboteur());
 
-	var u_sig = view[CCW[c][1]].color;
-	var d_sig = view[CCW[c][3]].color;
+	var u_sig = c_at(CCW[c][1]);
+	var d_sig = c_at(CCW[c][3]);
 
 	//Keep still to assist spawning
-	if (is_ally(c) && view[c].ant.type === GATHERER)
-		return sigc(view[4].color, S_SIDE, CCW[c][4]);
+	if (is_ally(c) && view[c].ant.type === GATHERER) return sigc(c_at(4), S_SIDE, CCW[c][4]);
 
 	var provisional = lchk(c);
 	if (provisional !== null) 
@@ -45,9 +42,9 @@ function mdec_ee_bent(c)
 	//In recovery, do the moving step
 	if (u_sig === D_STALLED)
 	{
-		if ([D_STALLED, U_READY, D_GATHERER].includes(d_sig) && [D_STALLED, U_READY].includes(view[4].color))
+		if ([D_STALLED, U_READY, D_GATHERER].includes(d_sig) && [D_STALLED, U_READY].includes(c_at(4)))
 			return sigc(D_STALLED, S_SIDE, c); 
-		if (d_sig === U_REALIGN && view[4].color === D_STALLED)
+		if (d_sig === U_REALIGN && c_at(4) === D_STALLED)
 			return sigc(D_STALLED, S_SIDE, c); 
 	}
 
@@ -56,22 +53,18 @@ function mdec_ee_bent(c)
 	{
 		var provisional = lchk(CCW[c][4]);
 		if (provisional !== null) return sigc(provisional, S_END, CCW[c][4]); 
-		if (u_sig === D_GATHERER && d_sig === U_REALIGN && view[4].color === D_GATHERER)
+		if (u_sig === D_GATHERER && d_sig === U_REALIGN && c_at(4) === D_GATHERER)
 			return sigc(D_GATHERER, S_END, CCW[c][4]); 
 	}
 
 	if (u_sig === U_SENTINEL)
 	{
-		if (d_sig === U_REALIGN && [D_MARCH, U_SENTINEL].includes(view[4].color)) 
-			return sigc(U_SENTINEL, S_SIDE, c); 
-		if (d_sig === D_STALLED && [U_SENTINEL, D_STALLED].includes(view[4].color)) 
-			return sigc(U_SENTINEL, S_SIDE, c); 
-		if (d_sig === D_MARCH && [U_SENTINEL, D_MARCH].includes(view[4].color)) 
-			return sigc(D_MARCH, S_SIDE, c); 
+		if (d_sig === U_REALIGN && [D_MARCH, U_SENTINEL].includes(c_at(4))) return sigc(U_SENTINEL, S_SIDE, c); 
+		if (d_sig === D_STALLED && [U_SENTINEL, D_STALLED].includes(c_at(4))) return sigc(U_SENTINEL, S_SIDE, c); 
+		if (d_sig === D_MARCH && [U_SENTINEL, D_MARCH].includes(c_at(4))) return sigc(D_MARCH, S_SIDE, c); 
 	}
 
-	if (u_sig === D_GATHERER && d_sig === D_STALLED && view[4].color === D_GATHERER)
-		return sigc(D_STALLED, S_SIDE, c); 
+	if (u_sig === D_GATHERER && d_sig === D_STALLED && c_at(4) === D_GATHERER) return sigc(D_STALLED, S_SIDE, c); 
 	
 	return {cell:CCW[c][2]}; 
 }
@@ -84,15 +77,15 @@ function mdec_ee_straight(c)
 function mdec_ec_left(c)
 {
 	//Eject in scenarios where we would otherwise deadlock
-	if (view[CCW[c][1]].ant.type === GATHERER && view[c].ant.type === QUEEN) return sanitize(saboteur(), FREE_ORDER);
-	if (view[CCW[c][1]].ant.type === QUEEN && view[c].ant.type === GATHERER) return sanitize(saboteur(), FREE_ORDER);
+	if (view[CCW[c][1]].ant.type === GATHERER && view[c].ant.type === QUEEN) return sanitize(saboteur());
+	if (view[CCW[c][1]].ant.type === QUEEN && view[c].ant.type === GATHERER) return sanitize(saboteur());
 
 	if (is_other(CCW[c][1]) && view[c].ant.type === QUEEN) return {cell:CCW[c][3]};
 
-	var d_sig = PDOWNS[view[c].color][view[CCW[c][1]].color];
+	var d_sig = PDOWNS[c_at(c)][c_at(CCW[c][1])];
 
 	//Special logic for spawning workers correctly
-	if (is_ally(CCW[c][4]) && view[CCW[c][4]].ant.type === GATHERER && d_sig === D_STALLED && view[4].color === D_STALLED)
+	if (is_ally(CCW[c][4]) && view[CCW[c][4]].ant.type === GATHERER && d_sig === D_STALLED && c_at(4) === D_STALLED)
 		return sigc(D_STALLED, S_END, c);
 
 	var provisional = lchk(CCW[c][4]);
@@ -103,32 +96,31 @@ function mdec_ec_left(c)
 	}
 	if (d_sig === U_REALIGN)
 	{
-		if (view[4].color === D_MARCH) return sigc(U_SENTINEL, S_END, CCW[c][4]); 
-		if (view[4].color === U_SENTINEL)
+		if (c_at(4) === D_MARCH) return sigc(U_SENTINEL, S_END, CCW[c][4]); 
+		if (c_at(4) === U_SENTINEL)
 		{
-			if (view[c].color === D_MARCH) 
-				return {cell:CCW[c][2]};
+			if (c_at(c) === D_MARCH) return {cell:CCW[c][2]};
 			return sigc(U_SENTINEL, S_END, CCW[c][4]); 
 		}
 	}
 	if (d_sig === D_STALLED)
 	{
-		if ([D_MARCH, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]); 
-		if (view[4].color === U_SENTINEL) return sigc(U_SENTINEL, S_END, CCW[c][4]); 
+		if ([D_MARCH, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]); 
+		if (c_at(4) === U_SENTINEL) return sigc(U_SENTINEL, S_END, CCW[c][4]); 
 	}
 	if (d_sig === D_GATHERER)
 	{
-		if (view[4].color === D_FOOD) return sigc(D_GATHERER, S_END, CCW[c][4]);
-		if (view[4].color === D_GATHERER) return sigc(D_STALLED, S_END, CCW[c][4]); 
+		if (c_at(4) === D_FOOD) return sigc(D_GATHERER, S_END, CCW[c][4]);
+		if (c_at(4) === D_GATHERER) return sigc(D_STALLED, S_END, CCW[c][4]); 
 	}
 	if (d_sig === U_READY)
 	{
-		if (view[4].color === D_STALLED)
+		if (c_at(4) === D_STALLED)
 		{
-			if (view[CCW[c][2]].color !== D_MARCH) return {cell:CCW[c][2], color:D_MARCH};
+			if (c_at(CCW[c][2]) !== D_MARCH) return {cell:CCW[c][2], color:D_MARCH};
 			return sigc(D_MARCH, S_END, CCW[c][4]); 
 		}
-		if (view[4].color === U_SENTINEL) return sigc(D_MARCH, S_END, CCW[c][4]); 
+		if (c_at(4) === U_SENTINEL) return sigc(D_MARCH, S_END, CCW[c][4]); 
 	}
 
 	//If none of the signals fit, go by the march
@@ -142,7 +134,7 @@ function mdec_ec_right(c)
 	if (view[c].ant.type === GATHERER && view[CCW[c][7]].ant.type === QUEEN)
 		if (is_ally(CCW[c][4]) && view[CCW[c][4]].ant.type !== this_ant().type) return {cell:CCW[c][5]};
 
-	var d_sig = PDOWNS[view[c].color][view[CCW[c][7]].color];
+	var d_sig = PDOWNS[c_at(c)][c_at(CCW[c][7])];
 	
 	var provisional = lchk(CCW[c][4]);
 	if (provisional !== null) 
@@ -152,33 +144,33 @@ function mdec_ec_right(c)
 	}
 	if (d_sig === D_MARCH)
 	{
-		if (view[4].color === D_MARCH) return sigc(D_MARCH, S_END, CCW[c][4]); 
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, S_END, CCW[c][4]); 
+		if (c_at(4) === D_MARCH) return sigc(D_MARCH, S_END, CCW[c][4]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_MARCH, S_END, CCW[c][4]); 
 	}
 	if (d_sig === D_FOOD)
 	{
-		if ([U_SENTINEL, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]); 
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]);
+		if ([U_SENTINEL, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]);
 	}
 	if (d_sig === D_GATHERER)
 	{
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, S_END, CCW[c][4]);
-		if ([U_SENTINEL, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_MARCH, S_END, CCW[c][4]);
+		if ([U_SENTINEL, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]); 
 	}
 	if (d_sig === D_STALLED)
 	{
-		if (view[4].color === D_STALLED) return sigc(D_STALLED, S_END, CCW[c][4]); 
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]);
+		if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_END, CCW[c][4]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]);
 	}
 	if (d_sig === U_READY)
 	{
-		if (view[4].color === D_STALLED) return sigc(D_MARCH, S_END, CCW[c][4]); 
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_MARCH, S_END, CCW[c][4]);
+		if (c_at(4) === D_STALLED) return sigc(D_MARCH, S_END, CCW[c][4]); 
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_MARCH, S_END, CCW[c][4]);
 	}
 	if (d_sig === U_REALIGN)
 	{
-		if (view[4].color === U_SENTINEL) return {cell:CCW[c][6]};
-		if ([D_FOOD, D_GATHERER, U_READY].includes(view[4].color)) return sigc(D_STALLED, S_END, CCW[c][4]);
+		if (c_at(4) === U_SENTINEL) return {cell:CCW[c][6]};
+		if ([D_FOOD, D_GATHERER, U_READY].includes(c_at(4))) return sigc(D_STALLED, S_END, CCW[c][4]);
 	}
 
 	return sigc(d_sig, S_END, CCW[c][4]); 
@@ -187,68 +179,65 @@ function mdec_ec_right(c)
 
 function mdec_ec_spawn(c)
 {
-	if (view[c].ant.type === QUEEN && view[c].color === D_MARCH && view[CCW[c][3]].color === D_STALLED)
-		if (view[4].color === D_STALLED) return sigc(D_STALLED, S_SIDE, c); 
-	return sanitize(saboteur(), FREE_ORDER);
+	if (view[c].ant.type === QUEEN && c_at(c) === D_MARCH && c_at(CCW[c][3]) === D_STALLED)
+		if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c); 
+	return sanitize(saboteur());
 }
 
 function mdec_three_march(c)
 {
-	var d_sig = PDOWNS[view[c].color][view[CCW[c][1]].color];
-	var u_sig = view[CCW[c][3]].color;
-	//If we need to stay still, there will be U_SENTINEL near the top
+	var d_sig = PDOWNS[c_at(c)][c_at(CCW[c][1])];
+	var u_sig = c_at(CCW[c][3]);
 	
 	var provisional = lchk2(c);
 	if (provisional !== null) return sigc(provisional, S_FRONT, c); 
 	
 	if (u_sig === U_SENTINEL)
 	{
-		if (d_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(view[4].color))
-			return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === D_STALLED && [D_MARCH, D_STALLED].includes(view[4].color))
-			return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === D_STALLED && [D_MARCH, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c); 
 	}
 	if (u_sig === U_REALIGN)
 	{
-		if (d_sig === U_REALIGN && view[4].color === U_REALIGN)
-			if (view[c].color === U_SENTINEL)
+		if (d_sig === U_REALIGN && c_at(4) === U_REALIGN)
+			if (c_at(c) === U_SENTINEL)
 			{
-				if (view[CCW[c][7]].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, c); 
+				if (c_at(CCW[c][7]) === D_MARCH) return sigc(U_REALIGN, S_FRONT, c); 
 				return {cell:CCW[c][2]};
 			}
 
-		if (d_sig === D_FOOD && [D_MARCH, D_FOOD].includes(view[4].color)) return sigc(D_FOOD, S_FRONT, c);
-		if (d_sig === U_READY && view[4].color === D_STALLED) return sigc(D_MARCH, S_FRONT, c); 
-		if (d_sig === D_STALLED && [D_MARCH, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, c);
-		if (d_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === D_MARCH && view[4].color === D_STALLED) return sigc(D_STALLED, S_FRONT, c);
+		if (d_sig === D_FOOD && [D_MARCH, D_FOOD].includes(c_at(4))) return sigc(D_FOOD, S_FRONT, c);
+		if (d_sig === U_READY && c_at(4) === D_STALLED) return sigc(D_MARCH, S_FRONT, c); 
+		if (d_sig === D_STALLED && [D_MARCH, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c);
+		if (d_sig === D_GATHERER && [D_GATHERER, D_STALLED].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === D_MARCH && c_at(4) === D_STALLED) return sigc(D_STALLED, S_FRONT, c);
 	}
 	if (u_sig === D_MARCH)
 	{
-		if (d_sig === D_FOOD && view[4].color === D_FOOD) return sigc(D_FOOD, S_FRONT, c);
-		if (d_sig === U_REALIGN && view[4].color === D_MARCH)
-			if (view[c].color === U_SENTINEL) return sigc(U_REALIGN, S_FRONT, c); 
-		if (d_sig === U_READY && view[4].color === U_READY) return sigc(D_MARCH, S_FRONT, c); 
+		if (d_sig === D_FOOD && c_at(4) === D_FOOD) return sigc(D_FOOD, S_FRONT, c);
+		if (d_sig === U_REALIGN && c_at(4) === D_MARCH)
+			if (c_at(c) === U_SENTINEL) return sigc(U_REALIGN, S_FRONT, c); 
+		if (d_sig === U_READY && c_at(4) === U_READY) return sigc(D_MARCH, S_FRONT, c); 
 	}
 	if (u_sig === D_STALLED)
 	{
-		if (d_sig === U_READY && view[4].color === D_STALLED) return sigc(U_READY, S_FRONT, c); 
-		if (d_sig === D_STALLED && [D_STALLED, D_MARCH].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === D_GATHERER && view[4].color === D_GATHERER) return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === D_MARCH && view[4].color === D_STALLED) return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === U_REALIGN && [D_STALLED, D_MARCH].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === U_READY && c_at(4) === D_STALLED) return sigc(U_READY, S_FRONT, c); 
+		if (d_sig === D_STALLED && [D_STALLED, D_MARCH].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === D_GATHERER && c_at(4) === D_GATHERER) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === D_MARCH && c_at(4) === D_STALLED) return sigc(D_STALLED, S_FRONT, c); 
+		if (d_sig === U_REALIGN && [D_STALLED, D_MARCH].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, c); 
 	}
 	if (u_sig === D_GATHERER)
 	{
-		if (d_sig === D_STALLED && view[4].color === D_GATHERER)
+		if (d_sig === D_STALLED && c_at(4) === D_GATHERER)
 			if (view[CCW[c][3]].ant.type === QUEEN) return sigc(D_STALLED, S_FRONT, c); 
-		if (d_sig === D_GATHERER && view[4].color === D_GATHERER) return sigc(D_GATHERER, S_FRONT, c); 
-		if (d_sig === D_FOOD && view[4].color === D_GATHERER) return sigc(D_FOOD, S_FRONT, c); 
+		if (d_sig === D_GATHERER && c_at(4) === D_GATHERER) return sigc(D_GATHERER, S_FRONT, c); 
+		if (d_sig === D_FOOD && c_at(4) === D_GATHERER) return sigc(D_FOOD, S_FRONT, c); 
 	}
 	if (u_sig === D_FOOD)
 	{
-		if (d_sig === D_FOOD && view[4].color === D_FOOD) return sigc(D_FOOD, S_FRONT, c); 
-		if (d_sig === D_GATHERER && view[4].color === D_GATHERER) return sigc(D_GATHERER, S_FRONT, c); 
+		if (d_sig === D_FOOD && c_at(4) === D_FOOD) return sigc(D_FOOD, S_FRONT, c); 
+		if (d_sig === D_GATHERER && c_at(4) === D_GATHERER) return sigc(D_GATHERER, S_FRONT, c); 
 	}
 
 	return {cell:CCW[c][2]};
@@ -260,17 +249,16 @@ function mdec_three_stand(c)
 	var provisional = lchk2(c);
 	if (provisional !== null) return sigc(provisional, S_SIDE, c); 
 	
-	var u_sig = view[CCW[c][3]].color
-	var d_sig = PSIDES[view[c].color][view[CCW[c][7]].color];
+	var u_sig = c_at(CCW[c][3]);
+	var d_sig = PSIDES[c_at(c)][c_at(CCW[c][7])];
 
 	if (u_sig === U_REALIGN)
 	{
-		if ([D_MARCH, D_STALLED].includes(d_sig) && view[4].color === D_MARCH) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
-		if (view[4].color === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
+		if ([D_MARCH, D_STALLED].includes(d_sig) && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
+		if (c_at(4) === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
 	}
-	if (u_sig === D_MARCH && d_sig === U_REALIGN && view[4].color === D_MARCH)
-		return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
-	if (u_sig === D_STALLED && [D_STALLED, U_REALIGN].includes(d_sig) && view[4].color === D_STALLED)
+	if (u_sig === D_MARCH && d_sig === U_REALIGN && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
+	if (u_sig === D_STALLED && [D_STALLED, U_REALIGN].includes(d_sig) && c_at(4) === D_STALLED) 
 		return sigc(D_STALLED, S_SIDE, CCW[c][4]); 
 	
 	return sigc(D_MARCH, S_SIDE, CCW[c][4]); 
@@ -283,7 +271,7 @@ function mdec_three_unstand(c)
 	{
 		var provisional = lchk(c);
 		if (provisional !== null) return sigc(provisional, S_FRONT, c); 
-		var d_sig = PUPS[view[c].color][view[CCW[c][7]].color];
+		var d_sig = PUPS[c_at(c)][c_at(CCW[c][7])];
 		return sigc(d_sig, S_FRONT, c); 
 	}
 	else
@@ -291,71 +279,71 @@ function mdec_three_unstand(c)
 		var provisional = lchk(CCW[c][4]);
 		if (provisional !== null) return sigc(provisional, S_FRONT, CCW[c][4]); 
 
-		var u_sig = view[CCW[c][5]].color;
-		var d_sig = PDOWNS[view[c].color][view[CCW[c][7]].color];
+		var u_sig = c_at(CCW[c][5]);
+		var d_sig = PDOWNS[c_at(c)][c_at(CCW[c][7])];
 
 		if (u_sig === D_MARCH)
 		{
-			if (d_sig === U_READY && view[4].color === U_READY) return sigc(D_MARCH, S_FRONT, CCW[c][4]); 
-			if (d_sig === D_FOOD && view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_MARCH, S_FRONT, CCW[c][4]);
+			if (d_sig === U_READY && c_at(4) === U_READY) return sigc(D_MARCH, S_FRONT, CCW[c][4]); 
+			if (d_sig === D_FOOD && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_MARCH, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === D_FOOD)
 		{
-			if (d_sig === D_FOOD && view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (d_sig === D_FOOD && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === D_GATHERER)
 		{
-			if (d_sig === D_FOOD && view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (d_sig === D_FOOD && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === D_STALLED)
 		{
 			if (d_sig === U_READY)
 			{
-				if (view[4].color === D_STALLED) return sigc(U_READY, S_FRONT, CCW[c][4]); 
-				if (view[4].color === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+				if (c_at(4) === D_STALLED) return sigc(U_READY, S_FRONT, CCW[c][4]); 
+				if (c_at(4) === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 			}
 			if (d_sig === D_FOOD)
 			{
-				if (view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-				if (view[4].color === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+				if (c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+				if (c_at(4) === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 			}
 			if (d_sig === D_STALLED)
 			{
-				if (view[4].color === D_STALLED) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
-				if (view[4].color === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+				if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+				if (c_at(4) === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 			}
-			if (d_sig === D_GATHERER && view[4].color === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]); 
-			if ([D_MARCH, U_REALIGN].includes(d_sig) && view[4].color === D_GATHERER) 
+			if (d_sig === D_GATHERER && c_at(4) === D_GATHERER) return sigc(D_STALLED, S_FRONT, CCW[c][4]); 
+			if ([D_MARCH, U_REALIGN].includes(d_sig) && c_at(4) === D_GATHERER) 
 				return sigc(D_STALLED, S_FRONT, CCW[c][4]);
-			if (view[4].color === D_FOOD) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (c_at(4) === D_FOOD) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === U_REALIGN)
 		{
-			if (d_sig === D_FOOD && view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (d_sig === D_FOOD && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === U_SENTINEL)
 		{
 			if (d_sig === D_FOOD)
 			{
-				if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
-				if (view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]);
+				if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+				if (c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]);
 			}
-			if (d_sig === D_GATHERER && view[4].color === U_REALIGN) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
-			if (d_sig === D_MARCH && view[4].color === U_SENTINEL) return sigc(D_MARCH, S_FRONT, CCW[c][4]); 
-			if (d_sig === D_STALLED && view[4].color === U_SENTINEL) return sigc(D_STALLED, S_FRONT, CCW[c][4]); 
-			if (d_sig === U_READY && view[4].color === D_STALLED) return sigc(U_READY, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (d_sig === D_GATHERER && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
+			if (d_sig === D_MARCH && c_at(4) === U_SENTINEL) return sigc(D_MARCH, S_FRONT, CCW[c][4]); 
+			if (d_sig === D_STALLED && c_at(4) === U_SENTINEL) return sigc(D_STALLED, S_FRONT, CCW[c][4]); 
+			if (d_sig === U_READY && c_at(4) === D_STALLED) return sigc(U_READY, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_FRONT, CCW[c][4]);
 		}
 		if (u_sig === U_READY)
 		{
-			if (d_sig === D_FOOD && view[4].color === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
-			if ([D_FOOD, D_GATHERER].includes(view[4].color)) return sigc(D_MARCH, S_FRONT, CCW[c][4]);
+			if (d_sig === D_FOOD && c_at(4) === D_MARCH) return sigc(U_REALIGN, S_FRONT, CCW[c][4]); 
+			if ([D_FOOD, D_GATHERER].includes(c_at(4))) return sigc(D_MARCH, S_FRONT, CCW[c][4]);
 		}
-		return sigc(view[4].color, S_FRONT, CCW[c][4]); 
+		return sigc(c_at(4), S_FRONT, CCW[c][4]); 
 	}
 }
 
@@ -367,50 +355,48 @@ function mdec_three_recover(c)
 
 function mdec_three_hang(c)
 {
-	return sigc(view[4].color, S_SIDE, CCW[c][4]); 
+	return sigc(c_at(4), S_SIDE, CCW[c][4]); 
 }
 
 function mdec_three_unhang(c)
 {
-	return sigc(view[4].color, S_SIDE, c); 
+	return sigc(c_at(4), S_SIDE, c); 
 }
 
 function mdec_four_z(c)
 {
-	//Under certain conditions, this can appear during recovery
-	//But this is usually a normal-march thing, so check both sides for indicators
 	var provisional = lchk2(CCW[c][4]);
 	if (provisional !== null) return sigc(provisional, S_SIDE, CCW[c][4]); 
 
-	var u_sig = PSIDES[view[c].color][view[CCW[c][7]].color];
-	var d_sig = PSIDES[view[CCW[c][4]].color][view[CCW[c][3]].color];
+	var u_sig = PSIDES[c_at(c)][c_at(CCW[c][7])];
+	var d_sig = PSIDES[c_at(CCW[c][4])][c_at(CCW[c][3])];
 
 	if (u_sig === D_FOOD)
 	{
-		if ([D_FOOD, D_STALLED, U_REALIGN].includes(d_sig) && view[4].color === U_REALIGN) 
+		if ([D_FOOD, D_STALLED, U_REALIGN].includes(d_sig) && c_at(4) === U_REALIGN) 
 			return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
-		if (d_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(view[4].color)) 
+		if (d_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(c_at(4))) 
 			return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
 	}
 	if (u_sig === D_STALLED)
 	{
 		if (d_sig === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
-		if (d_sig === D_FOOD && view[4].color === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
+		if (d_sig === D_FOOD && c_at(4) === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
 	}
 	if (u_sig === D_GATHERER)
 	{
-		if (d_sig === U_REALIGN && view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, CCW[c][4]); 
-		if (d_sig === D_FOOD && [U_REALIGN, D_GATHERER].includes(view[4].color)) 
+		if (d_sig === U_REALIGN && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, CCW[c][4]); 
+		if (d_sig === D_FOOD && [U_REALIGN, D_GATHERER].includes(c_at(4))) 
 			return sigc(U_REALIGN, S_SIDE, CCW[c][4]);
 	}
 	if (u_sig === U_REALIGN)
 	{
-		if (d_sig === D_FOOD && view[4].color === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
+		if (d_sig === D_FOOD && c_at(4) === U_REALIGN) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
 		if (d_sig === D_STALLED) return sigc(U_REALIGN, S_SIDE, CCW[c][4]); 
-		if (d_sig === D_GATHERER && view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, CCW[c][4]); 
-		if (d_sig === U_READY && view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, CCW[c][4]); 
+		if (d_sig === D_GATHERER && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, CCW[c][4]); 
+		if (d_sig === U_READY && c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, CCW[c][4]); 
 	}
-	if (u_sig === U_READY && d_sig === U_REALIGN && view[4].color === U_REALIGN)
+	if (u_sig === U_READY && d_sig === U_REALIGN && c_at(4) === U_REALIGN)
 		return sigc(D_MARCH, S_SIDE, CCW[c][4]); 
 
 	return sigc(D_MARCH, S_SIDE, CCW[c][4]); 
@@ -421,164 +407,150 @@ function mdec_four_stairs(c)
 	var provisional = lchk2(c);
 	if (provisional !== null) return sigc(provisional, S_SIDE, c);
 
-	var u_sig = PSIDES[view[c].color][view[CCW[c][1]].color];
-	var d_sig = PSIDES[view[CCW[c][4]].color][view[CCW[c][3]].color];
+	var u_sig = PSIDES[c_at(c)][c_at(CCW[c][1])];
+	var d_sig = PSIDES[c_at(CCW[c][4])][c_at(CCW[c][3])];
 
 	if (u_sig === D_MARCH)
 	{
 		if (d_sig === D_FOOD)
 		{
-			if (view[4].color === D_MARCH) return sigc(D_FOOD, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_FOOD, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
 		}
 		if (d_sig === U_READY)
 		{
-			if (view[4].color === U_READY) return sigc(D_MARCH, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === U_READY) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
 		}
 		if (d_sig === D_STALLED)
 		{
-			if (view[4].color === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
-		if (d_sig === D_GATHERER && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
-		if ([D_MARCH, U_REALIGN].includes(d_sig) && view[4].color === U_REALIGN)
-			return sigc(D_MARCH, S_SIDE, c);
+		if (d_sig === D_GATHERER && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+		if ([D_MARCH, U_REALIGN].includes(d_sig) && c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
 	}
 
 	if (u_sig === D_FOOD)
 	{
 		if (d_sig === D_MARCH)
 		{
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
-			if (view[4].color === D_MARCH) return sigc(D_FOOD, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_FOOD, S_SIDE, c);
 		}
 		if (d_sig === U_READY)
 		{
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
-			if (view[4].color === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
 		}
-		if (d_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(view[4].color))
-			return sigc(D_FOOD, S_SIDE, c);
-		if ([U_REALIGN, D_STALLED].includes(d_sig) && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === D_GATHERER && [U_REALIGN, D_GATHERER].includes(c_at(4))) return sigc(D_FOOD, S_SIDE, c);
+		if ([U_REALIGN, D_STALLED].includes(d_sig) && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 	}
 
 	if (u_sig === D_STALLED)
 	{
 		if (d_sig === D_STALLED)
 		{
-			if (view[4].color === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
 		}
 		if (d_sig === D_MARCH)
 		{
-			if (view[4].color === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
 		if (d_sig === D_GATHERER)
 		{
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
-			if ([D_STALLED, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if ([D_STALLED, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_SIDE, c);
 		}
 		if (d_sig === U_READY)
 		{
-			if (view[4].color === D_STALLED) return sigc(U_READY, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === D_STALLED) return sigc(U_READY, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
 		}
-		if (d_sig === U_REALIGN && [U_REALIGN, D_MARCH].includes(view[4].color))
-			return sigc(D_STALLED, S_SIDE, c);
-		if (d_sig === D_FOOD && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === U_REALIGN && [U_REALIGN, D_MARCH].includes(c_at(4))) return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === D_FOOD && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 	}
 
 	if (u_sig === D_GATHERER)
 	{
 		if (d_sig === D_STALLED)
 		{
-			if ([D_STALLED, D_GATHERER].includes(view[4].color)) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if ([D_STALLED, D_GATHERER].includes(c_at(4))) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
 		if (d_sig === U_READY)
 		{
-			if (view[4].color === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
-		if (d_sig === D_FOOD && [D_GATHERER, U_REALIGN].includes(view[4].color))
-			return sigc(D_FOOD, S_SIDE, c);
-		if ([D_MARCH, U_REALIGN].includes(d_sig) && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
-		if (d_sig === D_GATHERER && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === D_FOOD && [D_GATHERER, U_REALIGN].includes(c_at(4))) return sigc(D_FOOD, S_SIDE, c);
+		if ([D_MARCH, U_REALIGN].includes(d_sig) && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === D_GATHERER && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 	}
 
 	if (u_sig === U_REALIGN)
 	{
 		if (d_sig === U_REALIGN)
 		{
-			if (view[4].color === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
 		if (d_sig === D_STALLED)
 		{
-			if (view[4].color === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === D_MARCH) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 		}
-		if (d_sig === D_MARCH && view[4].color === U_REALIGN)
-			return sigc(D_MARCH, S_SIDE, c);
-		if ([D_FOOD, D_GATHERER, U_READY].includes(d_sig) && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === D_MARCH && c_at(4) === U_REALIGN) return sigc(D_MARCH, S_SIDE, c);
+		if ([D_FOOD, D_GATHERER, U_READY].includes(d_sig) && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
 	}
 
 	if (u_sig === U_READY)
 	{
 		if (d_sig === D_MARCH)
 		{
-			if (view[4].color === U_READY) return sigc(D_MARCH, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(U_READY, S_SIDE, c);
+			if (c_at(4) === U_READY) return sigc(D_MARCH, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(U_READY, S_SIDE, c);
 		}
 		if ([D_FOOD, D_GATHERER].includes(d_sig))
 		{
-			if (view[4].color === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
-			if (view[4].color === U_REALIGN) return sigc(U_READY, S_SIDE, c);
+			if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c);
+			if (c_at(4) === U_REALIGN) return sigc(U_READY, S_SIDE, c);
 		}
-		if (d_sig === D_STALLED && view[4].color === D_STALLED)
-			return sigc(U_READY, S_SIDE, c);
-		if (d_sig === U_REALIGN && view[4].color === U_REALIGN)
-			return sigc(D_STALLED, S_SIDE, c);
-		if (d_sig === U_READY && view[4].color === U_REALIGN)
-			return sigc(U_READY, S_SIDE, c);
+		if (d_sig === D_STALLED && c_at(4) === D_STALLED) return sigc(U_READY, S_SIDE, c);
+		if (d_sig === U_REALIGN && c_at(4) === U_REALIGN) return sigc(D_STALLED, S_SIDE, c);
+		if (d_sig === U_READY && c_at(4) === U_REALIGN) return sigc(U_READY, S_SIDE, c);
 	}
 
-	return sigc(view[4].color, S_SIDE, c);
+	return sigc(c_at(4), S_SIDE, c);
 	
 }
 
 //Don't step on food or enemies. Instead, signal. 
-function mwatch(candidate)
+function mwatch(cand)
 {
-	if (candidate.cell === 4) return candidate;
-	if (candidate.hasOwnProperty("color")) return candidate;
-	if (view[candidate.cell].food !== 0) return sigc(D_FOOD, S_SIDE, 0);
-	if (is_harvestable(candidate.cell)) return sigc(D_FOOD, S_SIDE, 0);
-	if (view[candidate.cell].ant !== null) return sigc(U_PANIC, S_SIDE, 0);
-	return candidate;
+	if (cand.cell === 4) return cand;
+	if (cand.hasOwnProperty("color")) return cand;
+	if (view[cand.cell].food !== 0) return sigc(D_FOOD, S_SIDE, 0);
+	if (is_harvestable(cand.cell)) return sigc(D_FOOD, S_SIDE, 0);
+	if (view[cand.cell].ant !== null) return sigc(U_PANIC, S_SIDE, 0);
+	return cand;
 }
 
 function marcher_decision()
 {
 	var gatherer_count = 0;
 	var enemy_count = 0;
-	for (try_cell of SCAN_MOVES)
+	for (tcell of SCAN_MOVES)
 	{
-		if (is_ally(try_cell) && view[try_cell].ant.type === GATHERER) gatherer_count++;
-		else if (is_enemy(try_cell) && !is_harvestable(try_cell))enemy_count++;
+		if (is_ally(tcell) && view[tcell].ant.type === GATHERER) gatherer_count++;
+		else if (is_enemy(tcell) && !is_harvestable(tcell))enemy_count++;
 	}
-	if (gatherer_count > 1 || enemy_count > 0) return sanitize(saboteur(), FREE_ORDER);
+	if (gatherer_count > 1 || enemy_count > 0) return sanitize(saboteur());
 	var c = view_corner();
-	if (view[4].color === U_PANIC || this_ant().food > 0) return sanitize(saboteur(), FREE_ORDER);
+	if (c_at(4) === U_PANIC || this_ant().food > 0) return sanitize(saboteur());
 	switch (neighbor_type(c))
 	{
 		case ONE_CORNER: return mwatch(mdec_one_corner(c));
@@ -596,7 +568,7 @@ function marcher_decision()
 		case THREE_UNHANG: return mwatch(mdec_three_unhang(c));
 		case FOUR_Z: return mwatch(mdec_four_z(c));
 		case FOUR_STAIRS: return mwatch(mdec_four_stairs(c));
-		default: return sanitize(saboteur(), FREE_ORDER);
+		default: return sanitize(saboteur());
 	}
 	
 }

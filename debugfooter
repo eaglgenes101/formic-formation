@@ -1,5 +1,4 @@
 // Debug footer
-// Contains functions used for debugging, as well as scripting to make use of them
 
 function ant_char(cell)
 {
@@ -37,7 +36,7 @@ function debug_view()
 {
 	var c = view_corner();
 	debug(ant_char(CCW[c][0]) + ant_char(CCW[c][7]) + ant_char(CCW[c][6]));
-	debug(ant_char(CCW[c][1]) + ant_char(            4 ) + ant_char(CCW[c][5]));
+	debug(ant_char(CCW[c][1]) + ant_char(       4 ) + ant_char(CCW[c][5]));
 	debug(ant_char(CCW[c][2]) + ant_char(CCW[c][3]) + ant_char(CCW[c][4]));
 	debug(this_ant().type === QUEEN ? "============" : "------");
 }
