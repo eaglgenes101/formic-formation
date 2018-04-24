@@ -231,14 +231,14 @@ function sigc(output, order, c)
 			var off_cell = CCW[c][tcell];
 			if (!is_ally(off_cell) && c_at(off_cell) !== D_MARCH)
 			{
-				if (this_ant().type === QUEEN || view[tcell].food !== 0) 
+				if (this_ant().type === QUEEN || view[off_cell].food !== 0) 
 					for (alt_cell of SCAN_MOVES)
 					{
-						var n_wt = NEARS[tcell][alt_cell];
+						var n_wt = NEARS[off_cell][alt_cell];
 						if (n_wt > 3 && n_wt < 6 && is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
 							continue;
 					}
-				return {cell:CCW[c][tcell], color:D_MARCH};
+				return {cell:off_cell, color:D_MARCH};
 			}
 		}
 	return {cell:4, color:output};

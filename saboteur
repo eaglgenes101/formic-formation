@@ -154,9 +154,8 @@ function sdec_stride()
 		var stride_scores = [0,0,0,0,0,0,0,0,0];
 		for (tcell of SCAN_MOVES)
 		{
-			if (c_at(tcell) !== 1)
-				for (var i = 0; i < 9; i++) 
-					if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
+			for (var i = 0; i < 9; i++) 
+				if (c_at(tcell) !== c_at(i) && c_at(i) !== 1) stride_scores[i] += NEARS[tcell][i];
 		}
 		for (var i = 0; i < 9; i++)
 			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ + spref(i);
