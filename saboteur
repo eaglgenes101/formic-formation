@@ -2,50 +2,65 @@
 
 function sok(cand)
 {
-	if (cand === 4) return true;
-	if (view[cand].ant !== null) return false;
+	if (cand.cell === 4) return true;
+	if (cand.hasOwnProperty("color")) return true;
+	if (view[cand.cell].food !== 0 && this_ant().food !== 0) return false;
+	if (view[cand.cell].ant !== null) return false; 
+	return cand;
+}
+
+function spref(cand)
+{
+	var okscore = 0;
+	if (cand === 4) okscore += 3;
+	//TODO: Try to avoid falling back into formations
 	if (this_ant().type === GATHERER)
 	{
 		//If a gatherer, don't realign with friendly queens
 		for (tcell of SCAN_MOVES)
 			if (NEARS[cand][tcell] > 1)
-				if (is_ally(tcell) && view[tcell].ant.type === QUEEN) return false;
-		return true;
+				if (is_ally(tcell) && view[tcell].ant.type === QUEEN) okscore -= 1;
 	}
 	else
 	{
 		//If a marcher, unless holding food, don't align more workers than we break alignment with
-		if (this_ant().food !== 0) return true;
-		var okscore = 0;
-		for (tcell of SCAN_MOVES)
-			if (is_ally(tcell) && view[tcell].ant.food === 0 && [MARCHER_A, MARCHER_B].includes(view[tcell].ant.type))
-			{
-				var wt = (view[tcell].ant.type === this_ant().type)?1:-1;
-				if (NEARS[4][tcell] === 5) okscore += wt;
-				if (NEARS[4][tcell] === 4) okscore -= wt;
-				if (NEARS[cand][tcell] === 5) okscore -= wt;
-				if (NEARS[cand][tcell] === 4) okscore += wt;
-			}
-		return okscore >= 0;
+		if (this_ant().food === 0)
+		{
+			for (tcell of SCAN_MOVES)
+				if (is_ally(tcell) && view[tcell].ant.food === 0)
+					if ([MARCHER_A, MARCHER_B].includes(view[tcell].ant.type))
+					{
+						var wt = (view[tcell].ant.type === this_ant().type)?1:-1;
+						if (NEARS[4][tcell] === 5) okscore += wt;
+						if (NEARS[4][tcell] === 4) okscore -= wt;
+						if (NEARS[cand][tcell] === 5) okscore -= wt;
+						if (NEARS[cand][tcell] === 4) okscore += wt;
+					}
+		}
 	}
+
+	return okscore*SPREFWT;
 	
 
 }
 
 function ssep()
 {
+	var has_ally = false;
 	var cands = [0,0,0,0,0,0,0,0,0];
+	for (var i = 0; i < 9; i++) cands[i] += spref(i);
 	for (tcell of SCAN_MOVES)
 	{
 		if (is_ally(tcell))
 		{
+			has_ally = true;
 			var wt = (is_like(tcell) || is_other(tcell))?3:1;
-			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i]*wt;
+			for (var i = 0; i < 9; i++) cands[i] -= NEARS[tcell][i]*wt;
 		}
 	}
-	if (Math.min(...cands) === 0) return null;
+	if (!has_ally) return null;
 	prox_order = index_sort(cands);
-	for (var i = 0; i < 9; i++)
+	for (var i = 8; i >= 0; i--)
 	{
 		var i_cell = prox_order[i];
 		if (sok(i_cell)) return {cell:i_cell};
@@ -55,16 +70,25 @@ function ssep()
 
 function sstep(col)
 {
-	var cands = [0,0,0,0,9,0,0,0,0];
+	if (c_at(4) === 1) return {cell: 4, color: col};
+	var cands = [0,0,0,0,0,0,0,0,0];
 	for (tcell of SCAN_MOVES)
 		if (c_at(tcell) === col)
-			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i];
+			for (var i = 0; i < 9; i++) cands[i] -= NEARS[tcell][i];
+	for (var i = 0; i < 9; i++) cands[i] += spref(i);
 	prox_order = index_sort(cands);
-	for (var i = 0; i < 9; i++)
+	for (var i = 8; i >= 0; i--)
 	{
 		var i_cell = prox_order[i];
 		if (sok(i_cell)) return {cell:i_cell};
 	}
+	return {cell:4, color:col};
+}
+
+function smove()
+{
+	for (tcell of SCAN_MOVES)
+		if (sok(tcell)) return {cell:tcell};
 	return {cell:4};
 }
 
@@ -80,7 +104,6 @@ function sdec_alone()
 			c = c_at(tcell);
 			break;
 		}
-	if (c_at(4) === 1) return {cell: 4, color: c};
 	//Try to move in straight lines
 	return sstep(c);
 }
@@ -94,7 +117,7 @@ function sdec_erase()
 		if (c_at(tcell) !== 1) return {cell:tcell, color:1};
 	if (c_at(4) !== 1) return {cell:4, color:1};
 
-	return {cell:0};
+	return sdec_alone();
 }
 
 function sdec_discolor()
@@ -104,16 +127,16 @@ function sdec_discolor()
 	if (c_at(2) !== c_at(3)) return {cell:3, color:c_at(2)};
 
 	var proximities = [0,0,0,0,0,0,0,0,0];
-	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
+	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ + spref(i);
 	for (tcell of SCAN_MOVES)
 		if (is_ally(tcell))
 			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
-	var prox_order = index_sort(proximities);
 
+	var prox_order = index_sort(proximities);
 	for (var i = 8; i >= 0; i--)
 		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
 
-	return {cell:0};
+	return smove();
 }
 
 function sdec_stride()
@@ -124,14 +147,16 @@ function sdec_stride()
 		for (tcell of SCAN_MOVES)
 		{
 			for (var i = 0; i < 9; i++) 
-				if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
-			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ;
+				if (c_at(tcell) !== c_at(i)) stride_scores[i] -= NEARS[tcell][i];
 		}
-		var max_stride_score = Math.max(...stride_scores);
 		for (var i = 0; i < 9; i++)
-			if (stride_scores[i] === max_stride_score) return {cell:i};
+			sstride_scores[i] += ant_rand()%SSTRIDE_FUZZ + spref(i);
+		
+		var prox_order = index_sort(stride_scores);
+		for (var i = 8; i >= 0; i--)
+			if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
 	}
-	return {cell:0};
+	return smove();
 }
 
 function sdec_obstruct_textured()
@@ -165,11 +190,12 @@ function sdec_obstruct_textured()
 	for (tcell of SCAN_MOVES)
 		if (is_ally(tcell))
 			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
+	for (var i = 0; i < 9; i++) proximities[i] += spref(i);
 	//Update prox_order
 	prox_order = index_sort(proximities);
 
 	for (var i = 8; i >= 0; i--)
-		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
+		if (sok(prox_order[i])) return {cell:prox_order[i]};
 	return {cell:4, color:1};
 }
 
@@ -185,7 +211,7 @@ function sdec_obstruct_flat()
 		}
 	}
 	for (var i = 0; i < 9; i++) proximities[i] += ant_rand()%SOBSTRUCT_FUZZ;
-	var prox_order = index_sort(proximities);
+	var prox_order;
 		
 	if (rand_choice(SRECOLOR_PROB))
 	{
@@ -201,11 +227,12 @@ function sdec_obstruct_flat()
 	for (tcell of SCAN_MOVES)
 		if (is_ally(tcell))
 			for (var i = 0; i < 9; i++) proximities[i] += NEARS[tcell][i];
+	for (var i = 0; i < 9; i++) proximities[i] += spref(i);
 	//Update prox_order
 	prox_order = index_sort(proximities);
 
 	for (var i = 8; i >= 0; i--)
-		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
+		if (sok(prox_order[i])) return {cell:prox_order[i]};
 	return {cell:4, color:1};
 }
 

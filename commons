@@ -91,6 +91,7 @@ const ERASET = 15;
 const SOBSTRUCT_FUZZ = 6;
 const SSTRIDE_FUZZ = 6;
 const OBSTRUCT_QWT = 3;
+const SPREFWT = 2;
 
 var state = null;
 
@@ -185,62 +186,6 @@ function is_enemy(cell)
 function is_harvestable(cell)
 {
 	return is_enemy(cell) && view[cell].ant.type === QUEEN && view[cell].ant.food > 0;
-}
-
-function antsep()
-{
-	var cands = [0,0,0,0,0,0,0,0,0];
-	for (tcell of SCAN_MOVES)
-		if (view[tcell].ant !== null)
-			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i];
-	var min = Math.min(...cands);
-	if (min === 0) return null;
-	for (var i = 0; i < 9; i++)
-		if (cands[i] === min) return {cell:i};
-}
-
-function forstep(col)
-{
-	var cands = [0,0,0,0,9,0,0,0,0];
-	for (tcell of SCAN_MOVES)
-		if (c_at(tcell) === col)
-			for (var i = 0; i < 9; i++) cands[i] += NEARS[tcell][i];
-	var min = Math.min(...cands);
-	for (var i = 0; i < 9; i++)
-		if (cands[i] === min) return {cell:i};
-}
-
-//Movement submission sanitizer
-function sanitize(prop)
-{
-	if (prop.cell < 0 || prop.cell > 8) prop.cell = 4;
-	if (prop.color < 1 || prop.color > 8) delete prop.color;
-	if (prop.type < 1 || prop.type > 4) delete prop.type;
-
-	if (prop.hasOwnProperty("type") && this_ant().type !== QUEEN) delete prop.type;
-	if (prop.hasOwnProperty("type"))
-	{
-		if (view[prop.cell].food === 0 && view[prop.cell].ant === null) return prop;
-		for (tcell of rand_perm(SAN_ORD[prop.cell]))
-			if (view[tcell].food === 0 && view[tcell].ant === null)
-			{
-				prop.cell = tcell;
-				return prop;
-			}
-		return {cell:4};
-	}
-
-	if (prop.hasOwnProperty("color")) return prop;
-
-	if (view[prop.cell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[prop.cell].food === 0)) 
-		return prop;
-	for (tcell of rand_perm(SAN_ORD[prop.cell]))
-		if (view[tcell].ant === null && (this_ant().type === QUEEN || this_ant().food === 0 || view[tcell].food === 0))
-		{
-			prop.cell = tcell;
-			return prop;
-		}
-	return {cell:4};
 }
 
 function lchk(c)

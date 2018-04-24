@@ -49,7 +49,7 @@ function gdec_ec_right(c)
 function gdec_cc_edged(c)
 {
 	//Look for queen at CCW[c][2]
-	if (view[CCW[c][2]].ant.type !== QUEEN) return sanitize(saboteur());
+	if (view[CCW[c][2]].ant.type !== QUEEN) return saboteur();
 	return {cell:CCW[c][1]};
 }
 
@@ -62,7 +62,7 @@ function gdec_three_block(c)
 function gdec_three_unstand(c)
 {
 	//Look for queen at CCW[c][5]
-	if (view[CCW[c][5]].ant.type !== QUEEN) return sanitize(saboteur());
+	if (view[CCW[c][5]].ant.type !== QUEEN) return saboteur();
 	return {cell:CCW[c][4]};
 }
 
@@ -79,23 +79,23 @@ function early_gatherer()
 	for (tcell of SCAN_MOVES)
 	{
 		if (is_ally(tcell) && view[tcell].ant.type === QUEEN) qcell = tcell;
-		else if (is_enemy(tcell)) sanitize(saboteur());
+		else if (is_enemy(tcell)) return saboteur();
 	}
-	if (qcell === null) return sanitize(saboteur());
+	if (qcell === null) return saboteur();
 	if (c_at(qcell) === D_FOOD) return {cell:CCW[qcell][7]};
 
 	if (this_ant().food === 0)
 	{
 		for (tcell of rand_perm(CORNERS))
-			if (view[tcell].food > 0) 
+			if (view[tcell].food > 0 && NEARS[tcell][qcell] === 5) 
 			{
-				if (c_at(tcell) === D_FOOD && NEARS[tcell][qcell] === 5) return {cell:tcell};
-				else if (c_at(tcell) !== D_FOOD) return {cell:tcell, color:D_FOOD};
+				if (c_at(tcell) === D_FOOD) return {cell:tcell};
+				else return {cell:tcell, color:D_FOOD};
 			}
 		for (tcell of rand_perm(EDGES))
 			if (view[tcell].food > 0) 
 			{
-				if (c_at(tcell) !== D_FOOD && NEARS[tcell][qcell] === 5) 
+				if (c_at(tcell) !== D_FOOD && NEARS[tcell][qcell] === 4) 
 					return {cell:tcell, color:D_FOOD};
 			}
 	}
@@ -105,7 +105,7 @@ function early_gatherer()
 
 function gatherer_retrieve()
 {
-	if (c_at(4) === U_PANIC) return sanitize(saboteur());
+	if (c_at(4) === U_PANIC) return saboteur();
 	var c = view_corner();
 	switch(neighbor_type(c))
 	{
@@ -117,27 +117,27 @@ function gatherer_retrieve()
 			return gwatch({cell:CCW[c][2]});
 		}
 		case FOUR_BENT: return gwatch(sigc(c_at(4), S_FRONT, c));
-		default: return sanitize(early_gatherer());
+		default: return early_gatherer();
 	}
 }
 
 function gatherer_return()
 {
-	if (c_at(4) === U_PANIC) return sanitize(saboteur());
+	if (c_at(4) === U_PANIC) return saboteur();
 	var c = view_corner();
 	switch(neighbor_type(c))
 	{
 		case EC_LEFT: return gwatch({cell:CCW[c][2]});
 		case THREE_BLOCK: return gwatch({cell:CCW[c][2]});
 		case FOUR_BENT: return gwatch({cell:CCW[c][4]});
-		default: return sanitize(early_gatherer());
+		default: return early_gatherer();
 	}
 }
 
 
 function gatherer_formation()
 {
-	if (c_at(4) === U_PANIC) return sanitize(saboteur());
+	if (c_at(4) === U_PANIC) return saboteur();
 	var c = view_corner();
 	switch (neighbor_type(c))
 	{
@@ -164,10 +164,10 @@ function gatherer_decision()
 			if (view[tcell].ant.type === GATHERER) gatherer_count++;
 			if (view[tcell].ant.type === QUEEN) queen_pos = tcell;
 		}
-	if (gatherer_count > 0) return sanitize(saboteur());
+	if (gatherer_count > 0) return saboteur();
 	if (this_ant().food > 0 && marcher_count > 0) return gwatch(gatherer_return());
 	else if (queen_pos !== null && marcher_count > 0) return gwatch(gatherer_formation());
 	else if (marcher_count > 0) return gwatch(gatherer_retrieve());
 	else if (queen_pos !== null) return egwatch(early_gatherer());
-	else return sanitize(saboteur());
+	else return saboteur();
 }

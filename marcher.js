@@ -4,7 +4,7 @@ function mdec_one_corner(c)
 {
 	if (view[c].ant.type === QUEEN)
 		return sigc(c_at(4), S_SIDE, c);
-	else return sanitize(saboteur());
+	else return saboteur();
 }
 
 function mdec_one_edge(c)
@@ -17,14 +17,14 @@ function mdec_one_edge(c)
 		if (is_ally(CCW[c][2]) && view[CCW[c][2]].ant.type === GATHERER) return {cell:c};
 	}
 	//Break away
-	return sanitize(saboteur());
+	return saboteur();
 }
 
 function mdec_ee_bent(c)
 {
 	//Eject in scenarios where we would otherwise deadlock
-	if (view[CCW[c][1]].ant.type === GATHERER && view[CCW[c][3]].ant.type === QUEEN) return sanitize(saboteur());
-	if (view[CCW[c][1]].ant.type === QUEEN && view[CCW[c][3]].ant.type === GATHERER) return sanitize(saboteur());
+	if (view[CCW[c][1]].ant.type === GATHERER && view[CCW[c][3]].ant.type === QUEEN) return saboteur();
+	if (view[CCW[c][1]].ant.type === QUEEN && view[CCW[c][3]].ant.type === GATHERER) return saboteur();
 
 	var u_sig = c_at(CCW[c][1]);
 	var d_sig = c_at(CCW[c][3]);
@@ -77,8 +77,8 @@ function mdec_ee_straight(c)
 function mdec_ec_left(c)
 {
 	//Eject in scenarios where we would otherwise deadlock
-	if (view[CCW[c][1]].ant.type === GATHERER && view[c].ant.type === QUEEN) return sanitize(saboteur());
-	if (view[CCW[c][1]].ant.type === QUEEN && view[c].ant.type === GATHERER) return sanitize(saboteur());
+	if (view[CCW[c][1]].ant.type === GATHERER && view[c].ant.type === QUEEN) return saboteur();
+	if (view[CCW[c][1]].ant.type === QUEEN && view[c].ant.type === GATHERER) return saboteur();
 
 	if (is_other(CCW[c][1]) && view[c].ant.type === QUEEN) return {cell:CCW[c][3]};
 
@@ -181,7 +181,7 @@ function mdec_ec_spawn(c)
 {
 	if (view[c].ant.type === QUEEN && c_at(c) === D_MARCH && c_at(CCW[c][3]) === D_STALLED)
 		if (c_at(4) === D_STALLED) return sigc(D_STALLED, S_SIDE, c); 
-	return sanitize(saboteur());
+	return saboteur();
 }
 
 function mdec_three_march(c)
@@ -548,9 +548,9 @@ function marcher_decision()
 		if (is_ally(tcell) && view[tcell].ant.type === GATHERER) gatherer_count++;
 		else if (is_enemy(tcell) && !is_harvestable(tcell))enemy_count++;
 	}
-	if (gatherer_count > 1 || enemy_count > 0) return sanitize(saboteur());
+	if (gatherer_count > 1 || enemy_count > 0) return saboteur();
 	var c = view_corner();
-	if (c_at(4) === U_PANIC || this_ant().food > 0) return sanitize(saboteur());
+	if (c_at(4) === U_PANIC || this_ant().food > 0) return saboteur();
 	switch (neighbor_type(c))
 	{
 		case ONE_CORNER: return mwatch(mdec_one_corner(c));
@@ -568,7 +568,7 @@ function marcher_decision()
 		case THREE_UNHANG: return mwatch(mdec_three_unhang(c));
 		case FOUR_Z: return mwatch(mdec_four_z(c));
 		case FOUR_STAIRS: return mwatch(mdec_four_stairs(c));
-		default: return sanitize(saboteur());
+		default: return saboteur();
 	}
 	
 }

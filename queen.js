@@ -5,15 +5,32 @@ function opening_queen()
 	for (tcell of rand_perm(SCAN_MOVES))
 		if (view[tcell].food === 1) return {cell:tcell};
 
-	var try_antsep = antsep();
-	if (try_antsep !== null) return try_antsep;
+	var has_ally = false;
+	var proxs = [0,0,0,0,0,0,0,0,0];
+	for (tcell of SCAN_MOVES)
+	{
+		if (view[tcell].ant !== null)
+		{
+			has_ally = true;
+			for (var i = 0; i < 9; i++) proxs[i] -= NEARS[tcell][i]*wt;
+		}
+	}
+	if (has_ally)
+	{
+		var prox_order = index_sort(proxs);
+		for (var i = 8; i >= 0; i--)
+		{
+			var i_cell = prox_order[i];
+			if (view[i_cell].ant === null && view[i_cell].food === 0) return {cell:i_cell};
+		}
+	}
 
 	if (this_ant().food > 0) 
 	{
-		var num_allies = 0;
+		var num_ants = 0;
 		for (tcell of SCAN_MOVES)
-			if (is_ally(tcell)) num_allies++;
-		if (num_allies === 0) 
+			if (view[tcell].ant !== null) num_ants++;
+		if (num_ants === 0) 
 		{
 			//Check the area for clearings
 			var is_clear = true;
@@ -31,9 +48,18 @@ function opening_queen()
 		}
 	}
 
-	if (c_at(4) !== 8) return {cell:4, color: 8};
-
-	return forstep(8);
+	if (c_at(4) !== 8) return {cell: 4, color: 8};
+	var cands = [0,0,0,0,9,0,0,0,0];
+	for (tcell of SCAN_MOVES)
+		if (c_at(tcell) === 8)
+			for (var i = 0; i < 9; i++) cands[i] -= NEARS[tcell][i];
+	var cand_order = index_sort(cands);
+	for (var i = 8; i >= 0; i--)
+	{
+		var i_cell = cand_order[i];
+		if (view[i_cell].ant === null && view[i_cell].food === 0) return {cell:i_cell};
+	}
+	return {cell:4, color:8};
 	
 }
 
@@ -53,10 +79,19 @@ function early_queen()
 
 	if (gcell === null) return opening_queen();
 
-	for (tcell of rand_perm(SCAN_MOVES))
+
+	for (tcell of rand_perm(CORNERS))
+		if (view[tcell].food > 0 && NEARS[tcell][gcell] === 5) 
+		{
+			if (c_at(tcell) === D_FOOD) return {cell:tcell};
+			else return {cell:tcell, color:D_FOOD};
+		}
+	for (tcell of rand_perm(EDGES))
 		if (view[tcell].food > 0) 
-			if (c_at(tcell) !== D_FOOD && NEARS[tcell][gcell] === 5) 
+		{
+			if (c_at(tcell) !== D_FOOD && NEARS[tcell][gcell] === 4) 
 				return {cell:tcell, color:D_FOOD};
+		}
 
 	if (c_at(4) === D_FOOD) 
 	{
@@ -133,23 +168,26 @@ function qdec_ee_bent(c)
 
 function qdec_ec_skewed(c)
 {
+	if (view[CCW[c][5]].ant.type !== GATHERER) return opening_queen();
 	if (this_ant().food > 0 && view[c].ant.type === MARCHER_A) return {cell:CCW[c][7], type:MARCHER_B};
 	if (this_ant().food > 0 && view[c].ant.type === MARCHER_B) return {cell:CCW[c][7], type:MARCHER_A};
-	return sanitize(opening_queen());
+	return opening_queen();
 }
 
 function qdec_ec_spawn(c)
 {
+	if (view[CCW[c][3]].ant.type !== GATHERER) return opening_queen();
 	if (this_ant().food > 0 && view[c].ant.type === MARCHER_A) return {cell:CCW[c][1], type:MARCHER_B};
 	if (this_ant().food > 0 && view[c].ant.type === MARCHER_B) return {cell:CCW[c][1], type:MARCHER_A};
-	return sanitize(opening_queen());
+	return opening_queen();
 }
 
 function qdec_cc_edged(c)
 {
+	if (view[c].ant.type !== GATHERER) return opening_queen();
 	if (this_ant().food > 0 && view[CCW[c][2]].ant.type === MARCHER_A) return {cell:CCW[c][1], type:MARCHER_B};
 	if (this_ant().food > 0 && view[CCW[c][2]].ant.type === MARCHER_B) return {cell:CCW[c][1], type:MARCHER_A};
-	return sanitize(opening_queen());
+	return opening_queen();
 }
 
 function qdec_three_march(c)
@@ -283,7 +321,7 @@ function queen_wait()
 	}
 
 	if (c_at(4) !== U_PANIC) return sigc(U_PANIC, S_SIDE, c); 
-	else return sanitize(opening_queen());
+	else return opening_queen();
 }
 
 function queen_march()
@@ -322,10 +360,10 @@ function queen_decision()
 				else excess_gatherers++;
 			}
 		}
-		else if (is_enemy(tcell)) return sanitize(opening_queen());
+		else if (is_enemy(tcell)) return opening_queen();
 	}
 	if (marcher_count > 0 && gatherer_count === 1 && excess_gatherers === 0) return qwatch(queen_march());
 	else if (marcher_count > 0 && gatherer_count === 0 && excess_gatherers === 0) return qwatch(queen_wait());
 	else if (gatherer_count === 1 && excess_gatherers === 0) return eqwatch(early_queen());
-	else return sanitize(opening_queen());
+	else return opening_queen();
 }
