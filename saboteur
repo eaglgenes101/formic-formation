@@ -2,17 +2,16 @@
 
 function sok(cand)
 {
-	if (cand.cell === 4) return true;
-	if (cand.hasOwnProperty("color")) return true;
-	if (view[cand.cell].food !== 0 && this_ant().food !== 0) return false;
-	if (view[cand.cell].ant !== null) return false; 
-	return cand;
+	if (cand === 4) return true;
+	if (view[cand].food !== 0 && this_ant().food !== 0) return false;
+	if (view[cand].ant !== null) return false; 
+	return true;
 }
 
 function spref(cand)
 {
 	var okscore = 0;
-	if (cand === 4) okscore += 3;
+	if (cand === 4) okscore -= 9;
 	//TODO: Try to avoid falling back into formations
 	if (this_ant().type === GATHERER)
 	{
@@ -134,7 +133,7 @@ function sdec_discolor()
 
 	var prox_order = index_sort(proximities);
 	for (var i = 8; i >= 0; i--)
-		if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
+		if (sok(prox_order[i])) return {cell:prox_order[i]};
 
 	return smove();
 }
@@ -147,14 +146,14 @@ function sdec_stride()
 		for (tcell of SCAN_MOVES)
 		{
 			for (var i = 0; i < 9; i++) 
-				if (c_at(tcell) !== c_at(i)) stride_scores[i] -= NEARS[tcell][i];
+				if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
 		}
 		for (var i = 0; i < 9; i++)
-			sstride_scores[i] += ant_rand()%SSTRIDE_FUZZ + spref(i);
+			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ + spref(i);
 		
 		var prox_order = index_sort(stride_scores);
 		for (var i = 8; i >= 0; i--)
-			if (sok(prox_order[i])) return {cell:prox_order[prox_order[i]]};
+			if (sok(prox_order[i])) return {cell:prox_order[i]};
 	}
 	return smove();
 }

@@ -12,7 +12,7 @@ function opening_queen()
 		if (view[tcell].ant !== null)
 		{
 			has_ally = true;
-			for (var i = 0; i < 9; i++) proxs[i] -= NEARS[tcell][i]*wt;
+			for (var i = 0; i < 9; i++) proxs[i] -= NEARS[tcell][i];
 		}
 	}
 	if (has_ally)
