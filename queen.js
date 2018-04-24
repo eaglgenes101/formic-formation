@@ -35,16 +35,21 @@ function opening_queen()
 			//Check the area for clearings
 			var is_clear = true;
 			var num_black_corners = 0;
+			var black_corner = null;
 			for (var tcell = 0; tcell < 9; tcell++)
 			{
 				if (CORNERS.includes(tcell))
 				{
-					if (c_at(tcell) === 8) num_black_corners++;
+					if (c_at(tcell) === 8) 
+					{	
+						num_black_corners++;
+						black_corner = tcell;
+					}
 					else if (c_at(tcell) !== 1) is_clear = false;
 				}
 				else if (c_at(tcell) !== 1) is_clear = false;
 			}
-			if (num_black_corners === 1 && is_clear) return {cell:0, type:GATHERER};
+			if (num_black_corners === 1 && is_clear) return {cell:CCW[black_corner][7], type:GATHERER};
 		}
 	}
 

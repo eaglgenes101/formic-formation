@@ -27,14 +27,22 @@ function spref(cand)
 		{
 			for (tcell of SCAN_MOVES)
 				if (is_ally(tcell) && view[tcell].ant.food === 0)
+				{
 					if ([MARCHER_A, MARCHER_B].includes(view[tcell].ant.type))
 					{
-						var wt = (view[tcell].ant.type === this_ant().type)?1:-1;
-						if (NEARS[4][tcell] === 5) okscore += wt;
-						if (NEARS[4][tcell] === 4) okscore -= wt;
-						if (NEARS[cand][tcell] === 5) okscore -= wt;
-						if (NEARS[cand][tcell] === 4) okscore += wt;
+						var has_common_enemy = false;
+						for (var i = 0; i < 9; i++)
+							if (is_enemy(i) && NEARS[tcell][i] >= 4) has_common_enemy = true;
+						if (!has_common_enemy)
+						{
+							var wt = (view[tcell].ant.type === this_ant().type)?1:-1;
+							if (NEARS[4][tcell] === 5) okscore += wt;
+							if (NEARS[4][tcell] === 4) okscore -= wt;
+							if (NEARS[cand][tcell] === 5) okscore -= wt;
+							if (NEARS[cand][tcell] === 4) okscore += wt;
+						}
 					}
+				}
 			if (okscore > 0) okscore = 0;
 		}
 	}
@@ -59,7 +67,7 @@ function ssep()
 		}
 	}
 	if (!has_ally) return null;
-	prox_order = index_sort(cands);
+	var prox_order = index_sort(cands);
 	for (var i = 8; i >= 0; i--)
 	{
 		var i_cell = prox_order[i];
@@ -76,7 +84,7 @@ function sstep(col)
 		if (c_at(tcell) === col)
 			for (var i = 0; i < 9; i++) cands[i] -= NEARS[tcell][i];
 	for (var i = 0; i < 9; i++) cands[i] += spref(i);
-	prox_order = index_sort(cands);
+	var prox_order = index_sort(cands);
 	for (var i = 8; i >= 0; i--)
 	{
 		var i_cell = prox_order[i];
@@ -87,7 +95,7 @@ function sstep(col)
 
 function smove()
 {
-	for (tcell of SCAN_MOVES)
+	for (tcell of rand_perm(SCAN_MOVES))
 		if (sok(tcell)) return {cell:tcell};
 	return {cell:4};
 }
@@ -141,7 +149,7 @@ function sdec_discolor()
 
 function sdec_stride()
 {
-	if (!rand_choice(SOFFSTRIDE_PROB))
+	if (rand_choice(SONSTRIDE_PROB))
 	{
 		var stride_scores = [0,0,0,0,0,0,0,0,0];
 		for (tcell of SCAN_MOVES)

@@ -76,7 +76,7 @@ const FINAL_SEED = 2338395782;
 
 //Tuneables
 const SRECOLOR_PROB = 0.7;
-const SOFFSTRIDE_PROB = 0.3;
+const SONSTRIDE_PROB = 0.5;
 const QFSPAWNP_MAX = 0.05;
 const QFSPAWNP_MIN = 0.00;
 const QFSPAWNP_DECAY = 0.005;

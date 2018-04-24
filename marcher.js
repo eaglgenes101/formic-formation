@@ -541,16 +541,23 @@ function mwatch(cand)
 
 function marcher_decision()
 {
+	if (c_at(4) === U_PANIC || this_ant().food > 0) return saboteur();
 	var gatherer_count = 0;
 	var enemy_count = 0;
 	for (tcell of SCAN_MOVES)
 	{
 		if (is_ally(tcell) && view[tcell].ant.type === GATHERER) gatherer_count++;
-		else if (is_enemy(tcell) && !is_harvestable(tcell))enemy_count++;
+		else if (is_enemy(tcell) && !is_harvestable(tcell)) enemy_count++;
 	}
 	if (gatherer_count > 1 || enemy_count > 0) return saboteur();
+	//If we can see more than 5 colored cells, I highly doubt we're in formation, and/or an enemy is screwing with us
+	
+	var colored_neighbors = 0;
+	for (tcell of SCAN_MOVES) 
+		if (c_at(tcell) > 1) colored_neighbors++;
+	if (colored_neighbors > 5) return saboteur();
+	
 	var c = view_corner();
-	if (c_at(4) === U_PANIC || this_ant().food > 0) return saboteur();
 	switch (neighbor_type(c))
 	{
 		case ONE_CORNER: return mwatch(mdec_one_corner(c));
