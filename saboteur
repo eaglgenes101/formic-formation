@@ -23,7 +23,7 @@ function spref(cand)
 	else
 	{
 		//If a marcher, unless holding food, don't align more workers than we break alignment with
-		if (this_ant().food === 0)
+		if (this_ant().food === 0 && view[cand].food !== 0)
 		{
 			for (tcell of SCAN_MOVES)
 				if (is_ally(tcell) && view[tcell].ant.food === 0)
@@ -35,6 +35,7 @@ function spref(cand)
 						if (NEARS[cand][tcell] === 5) okscore -= wt;
 						if (NEARS[cand][tcell] === 4) okscore += wt;
 					}
+			if (okscore > 0) okscore = 0;
 		}
 	}
 
@@ -145,8 +146,9 @@ function sdec_stride()
 		var stride_scores = [0,0,0,0,0,0,0,0,0];
 		for (tcell of SCAN_MOVES)
 		{
-			for (var i = 0; i < 9; i++) 
-				if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
+			if (c_at(tcell) !== 1)
+				for (var i = 0; i < 9; i++) 
+					if (c_at(tcell) !== c_at(i)) stride_scores[i] += NEARS[tcell][i];
 		}
 		for (var i = 0; i < 9; i++)
 			stride_scores[i] += ant_rand()%SSTRIDE_FUZZ + spref(i);
