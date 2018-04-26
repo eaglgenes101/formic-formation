@@ -83,8 +83,8 @@ const QFSPAWNP_DECAY = 0.005;
 const QBSPAWNP_MAX = 0.65;
 const QBSPAWNP_MIN = 0.55;
 const QBSPAWNP_DECAY = 0.01;
-const QFORMP_MAX = 0.4;
-const QFORMP_MIN = 0.2;
+const QFORMP_MAX = 0.5;
+const QFORMP_MIN = 0.3;
 const QFORMP_DECAY = 0.01;
 const DISCOLORT = 35;
 const ERASET = 20;
@@ -226,19 +226,23 @@ function lchk2(c)
 function sigc(output, order, c)
 {
 	if (c_at(4) === output)
-		for (tcell of order)
+		for (cell_off of order)
 		{
-			var off_cell = CCW[c][tcell];
-			if (!is_ally(off_cell) && c_at(off_cell) !== D_MARCH)
+			var tcell = CCW[c][cell_off];
+			if (!is_ally(tcell) && c_at(tcell) !== D_MARCH)
 			{
-				if (this_ant().type === QUEEN || view[off_cell].food !== 0) 
+				//To prevent deadlocks, if both we and queen/gatherer can see the food, don't clear it
+				if (view[tcell].food !== 0 && view[tcell].color === D_FOOD)
+				{
 					for (alt_cell of SCAN_MOVES)
 					{
-						var n_wt = NEARS[off_cell][alt_cell];
-						if (n_wt > 3 && n_wt < 6 && is_ally(alt_cell) && view[alt_cell].ant.type === GATHERER)
-							continue;
+						var n_wt = NEARS[tcell][alt_cell];
+						if (n_wt > 3 && n_wt < 6 && is_ally(alt_cell))
+							if (view[alt_cell].ant.type === QUEEN || view[alt_cell].ant.type === GATHERER)
+								continue;
 					}
-				return {cell:off_cell, color:D_MARCH};
+				}
+				return {cell:tcell, color:D_MARCH};
 			}
 		}
 	return {cell:4, color:output};

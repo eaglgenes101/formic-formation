@@ -103,3 +103,5 @@ Release notes
 1.3: Reduced queen spawning rate, gave saboteurs a tuneup
 
 1.3.1: Further reduced queen spawnrate, and fixed a disqualifying bug
+
+1.4: Parameter tuning
